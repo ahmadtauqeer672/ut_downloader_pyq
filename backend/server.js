@@ -97,9 +97,19 @@ db.serialize(() => {
   `);
 });
 
+const allowedOrigins = new Set([
+  'http://localhost:4200',
+  'https://ut-downloader-pyq.vercel.app'
+]);
+
 app.use(
   cors({
-    origin: ['http://localhost:4200', 'https://ut-downloader-pyq.vercel.app'],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.has(origin)) return callback(null, true);
+      if (origin.endsWith('.vercel.app')) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: false
   })
 );

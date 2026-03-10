@@ -20,7 +20,7 @@ export interface CompetitivePaperFilters {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = 'http://localhost:3000/api';
+  private readonly baseUrl = 'https://ut-downloader-pyq.onrender.com/api';
 
   constructor(private readonly http: HttpClient) {}
 

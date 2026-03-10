@@ -97,7 +97,12 @@ db.serialize(() => {
   `);
 });
 
-app.use(cors({ origin: ['http://localhost:4200'], credentials: false }));
+app.use(
+  cors({
+    origin: ['http://localhost:4200', 'https://ut-downloader-pyq.vercel.app'],
+    credentials: false
+  })
+);
 app.use(express.json());
 
 const allowedExt = new Set(['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']);

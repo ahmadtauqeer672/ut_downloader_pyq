@@ -116,8 +116,10 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         width: 100%;
         height: 100%;
         object-fit: contain;
-        padding: 0.24rem;
+        padding: 0.08rem;
         box-sizing: border-box;
+        transform: scale(1.18);
+        transform-origin: center;
       }
       .nav {
         display: flex;

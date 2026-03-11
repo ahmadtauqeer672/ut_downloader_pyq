@@ -10,5 +10,7 @@ export interface Paper {
   examType: string;
   fileName: string;
   driveUrl?: string;
+  fileUrl?: string;
+  filePublicId?: string;
   uploadedAt: string;
 }

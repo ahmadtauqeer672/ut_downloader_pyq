@@ -761,7 +761,7 @@ export class StudentPapersComponent implements OnInit {
   }
 
   previewType(paper: Paper): 'pdf' | 'image' | 'other' {
-    const lower = (paper.fileName || '').toLowerCase();
+    const lower = (paper.fileName || paper.fileUrl || '').toLowerCase().split('?')[0];
     if (lower.endsWith('.pdf')) return 'pdf';
     if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image';
     return 'other';

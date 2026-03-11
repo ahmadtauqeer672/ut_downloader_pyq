@@ -4,11 +4,49 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
+const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_UPLOAD_KEY = process.env.ADMIN_UPLOAD_KEY || 'admin123';
+const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || 'pyq-papers';
+
+const cloudinaryConfig = {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+};
+cloudinary.config(cloudinaryConfig);
+const isCloudinaryReady = Boolean(cloudinaryConfig.cloud_name && cloudinaryConfig.api_key && cloudinaryConfig.api_secret);
+
+async function uploadToCloudinary(localPath, originalName) {
+  if (!isCloudinaryReady) {
+    throw new Error('Cloudinary not configured');
+  }
+
+  const baseName = path.basename(originalName || 'paper', path.extname(originalName || ''));
+  const publicId = `${baseName}-${Date.now()}`;
+  const result = await cloudinary.uploader.upload(localPath, {
+    folder: CLOUDINARY_FOLDER,
+    public_id: publicId,
+    resource_type: 'auto'
+  });
+
+  return {
+    url: result.secure_url,
+    publicId: result.public_id
+  };
+}
+
+async function deleteFromCloudinary(publicId) {
+  if (!isCloudinaryReady || !publicId) return;
+  try {
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'auto' });
+  } catch (_err) {
+    // Keep delete success even if cloud cleanup fails.
+  }
+}
 
 function extractDriveFileId(rawUrl) {
   try {
@@ -59,6 +97,8 @@ db.serialize(() => {
       examType TEXT NOT NULL,
       fileName TEXT NOT NULL,
       driveUrl TEXT NOT NULL DEFAULT '',
+      fileUrl TEXT NOT NULL DEFAULT '',
+      filePublicId TEXT NOT NULL DEFAULT '',
       uploadedAt TEXT NOT NULL
     )
   `);
@@ -82,6 +122,12 @@ db.serialize(() => {
     if (!columnNames.has('driveUrl')) {
       db.run("ALTER TABLE papers ADD COLUMN driveUrl TEXT NOT NULL DEFAULT ''");
     }
+    if (!columnNames.has('fileUrl')) {
+      db.run("ALTER TABLE papers ADD COLUMN fileUrl TEXT NOT NULL DEFAULT ''");
+    }
+    if (!columnNames.has('filePublicId')) {
+      db.run("ALTER TABLE papers ADD COLUMN filePublicId TEXT NOT NULL DEFAULT ''");
+    }
   });
 
   db.run(`
@@ -92,9 +138,22 @@ db.serialize(() => {
       year INTEGER NOT NULL,
       fileName TEXT NOT NULL,
       driveUrl TEXT NOT NULL DEFAULT '',
+      fileUrl TEXT NOT NULL DEFAULT '',
+      filePublicId TEXT NOT NULL DEFAULT '',
       uploadedAt TEXT NOT NULL
     )
   `);
+
+  db.all('PRAGMA table_info(competitive_papers)', (err, columns) => {
+    if (err || !columns) return;
+    const columnNames = new Set(columns.map((col) => col.name));
+    if (!columnNames.has('fileUrl')) {
+      db.run("ALTER TABLE competitive_papers ADD COLUMN fileUrl TEXT NOT NULL DEFAULT ''");
+    }
+    if (!columnNames.has('filePublicId')) {
+      db.run("ALTER TABLE competitive_papers ADD COLUMN filePublicId TEXT NOT NULL DEFAULT ''");
+    }
+  });
 });
 
 const allowedOrigins = new Set([
@@ -185,96 +244,127 @@ app.get('/api/papers', (req, res) => {
   });
 });
 
-app.post('/api/papers', upload.single('file'), (req, res) => {
-  const providedKey = req.header('x-admin-key') || req.body.adminKey;
-  if (providedKey !== ADMIN_UPLOAD_KEY) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(401).json({ message: 'Invalid admin key' });
-  }
-
-  const { title, university, course, department = '', semester = '', subject, year, examType, driveUrl = '' } = req.body;
-  const normalizedDriveUrl = String(driveUrl).trim();
-  const hasLocalFile = Boolean(req.file);
-  const hasDriveUrl = Boolean(normalizedDriveUrl);
-
-  if (!title || !university || !course || !subject || !year || !examType) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ message: 'All fields are required' });
-  }
-
-  if (!hasLocalFile && !hasDriveUrl) {
-    return res.status(400).json({ message: 'Upload a file or provide a Google Drive link' });
-  }
-
-  if (hasDriveUrl && !extractDriveFileId(normalizedDriveUrl)) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ message: 'Provide a valid Google Drive file link' });
-  }
-
-  if (!/^\d+$/.test(String(year))) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ message: 'Year must be numeric' });
-  }
-
-  const normalizedUniversity = String(university).trim();
-  const normalizedCourse = String(course).trim().toUpperCase();
-  const normalizedDepartment = String(department).trim().toUpperCase();
-  const requiresDeptSem = normalizedCourse === 'BTECH';
-  if (requiresDeptSem && (!normalizedDepartment || !semester)) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ message: 'Department and semester are required for BTECH' });
-  }
-
-  let semesterValue = 0;
-  if (semester !== '') {
-    if (!/^\d+$/.test(String(semester)) || Number(semester) < 1 || Number(semester) > 8) {
+app.post('/api/papers', upload.single('file'), async (req, res) => {
+  try {
+    const providedKey = req.header('x-admin-key') || req.body.adminKey;
+    if (providedKey !== ADMIN_UPLOAD_KEY) {
       if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ message: 'Semester must be between 1 and 8' });
+      return res.status(401).json({ message: 'Invalid admin key' });
     }
-    semesterValue = Number(semester);
-  }
 
-  const stmt = `
-    INSERT INTO papers (title, university, course, department, semester, subject, year, examType, fileName, driveUrl, uploadedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+    const { title, university, course, department = '', semester = '', subject, year, examType, driveUrl = '' } = req.body;
+    const normalizedDriveUrl = String(driveUrl).trim();
+    const hasLocalFile = Boolean(req.file);
+    const hasDriveUrl = Boolean(normalizedDriveUrl);
 
-  db.run(
-    stmt,
-    [
-      title.trim(),
-      normalizedUniversity,
-      normalizedCourse,
-      normalizedDepartment,
-      semesterValue,
-      subject.trim(),
-      Number(year),
-      examType.trim(),
-      req.file ? req.file.filename : '',
-      normalizedDriveUrl,
-      new Date().toISOString()
-    ],
-    function onInsert(err) {
-      if (err) {
+    if (!title || !university || !course || !subject || !year || !examType) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    if (!hasLocalFile && !hasDriveUrl) {
+      return res.status(400).json({ message: 'Upload a file or provide a Google Drive link' });
+    }
+
+    if (hasDriveUrl && !extractDriveFileId(normalizedDriveUrl)) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: 'Provide a valid Google Drive file link' });
+    }
+
+    if (!/^\d+$/.test(String(year))) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: 'Year must be numeric' });
+    }
+
+    const normalizedUniversity = String(university).trim();
+    const normalizedCourse = String(course).trim().toUpperCase();
+    const normalizedDepartment = String(department).trim().toUpperCase();
+    const requiresDeptSem = normalizedCourse === 'BTECH';
+    if (requiresDeptSem && (!normalizedDepartment || !semester)) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: 'Department and semester are required for BTECH' });
+    }
+
+    let semesterValue = 0;
+    if (semester !== '') {
+      if (!/^\d+$/.test(String(semester)) || Number(semester) < 1 || Number(semester) > 8) {
         if (req.file) fs.unlinkSync(req.file.path);
-        return res.status(500).json({ message: 'Failed to save paper' });
+        return res.status(400).json({ message: 'Semester must be between 1 and 8' });
+      }
+      semesterValue = Number(semester);
+    }
+
+    let fileUrl = '';
+    let filePublicId = '';
+    const storedFileName = req.file ? req.file.originalname : '';
+
+    if (req.file) {
+      if (!isCloudinaryReady) {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.status(500).json({ message: 'File upload service is not configured' });
       }
 
-      res.status(201).json({
-        id: this.lastID,
-        title,
-        university: normalizedUniversity,
-        course: normalizedCourse,
-        department: normalizedDepartment,
-        semester: semesterValue,
-        subject,
-        year: Number(year),
-        examType,
-        fileName: req.file ? req.file.filename : '',
-        driveUrl: normalizedDriveUrl
-      });
+      try {
+        const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
+        fileUrl = uploaded.url;
+        filePublicId = uploaded.publicId;
+      } catch (_err) {
+        console.error('Cloudinary upload failed (academic):', _err?.message || _err);
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.status(500).json({ message: 'Failed to upload file to Cloudinary' });
+      } finally {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      }
     }
-  );
+
+    const stmt = `
+      INSERT INTO papers (title, university, course, department, semester, subject, year, examType, fileName, driveUrl, fileUrl, filePublicId, uploadedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(
+      stmt,
+      [
+        title.trim(),
+        normalizedUniversity,
+        normalizedCourse,
+        normalizedDepartment,
+        semesterValue,
+        subject.trim(),
+        Number(year),
+        examType.trim(),
+        storedFileName,
+        normalizedDriveUrl,
+        fileUrl,
+        filePublicId,
+        new Date().toISOString()
+      ],
+      function onInsert(err) {
+        if (err) {
+          return res.status(500).json({ message: 'Failed to save paper' });
+        }
+
+        res.status(201).json({
+          id: this.lastID,
+          title,
+          university: normalizedUniversity,
+          course: normalizedCourse,
+          department: normalizedDepartment,
+          semester: semesterValue,
+          subject,
+          year: Number(year),
+          examType,
+          fileName: storedFileName,
+          driveUrl: normalizedDriveUrl,
+          fileUrl,
+          filePublicId
+        });
+      }
+    );
+  } catch (_error) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(500).json({ message: 'Unexpected server error' });
+  }
 });
 
 app.get('/api/papers/:id/preview', (req, res) => {
@@ -289,6 +379,14 @@ app.get('/api/papers/:id/preview', (req, res) => {
     }
     if (!row) {
       return res.status(404).json({ message: 'Paper not found' });
+    }
+
+    if (row.fileUrl) {
+      return res.redirect(row.fileUrl);
+    }
+
+    if (row.fileUrl) {
+      return res.redirect(row.fileUrl);
     }
 
     if (row.driveUrl) {
@@ -335,6 +433,10 @@ app.get('/api/papers/:id/download', (req, res) => {
       return res.status(404).json({ message: 'Paper not found' });
     }
 
+    if (row.fileUrl) {
+      return res.redirect(row.fileUrl);
+    }
+
     if (row.driveUrl) {
       return res.redirect(toDriveDownloadUrl(row.driveUrl));
     }
@@ -374,6 +476,10 @@ app.delete('/api/papers/:id', (req, res) => {
     db.run('DELETE FROM papers WHERE id = ?', [id], function onDelete(deleteErr) {
       if (deleteErr) {
         return res.status(500).json({ message: 'Failed to delete paper' });
+      }
+
+      if (row.filePublicId) {
+        deleteFromCloudinary(row.filePublicId);
       }
 
       if (row.fileName) {
@@ -427,69 +533,100 @@ app.get('/api/competitive-papers', (req, res) => {
   });
 });
 
-app.post('/api/competitive-papers', upload.single('file'), (req, res) => {
-  const providedKey = req.header('x-admin-key') || req.body.adminKey;
-  if (providedKey !== ADMIN_UPLOAD_KEY) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(401).json({ message: 'Invalid admin key' });
-  }
+app.post('/api/competitive-papers', upload.single('file'), async (req, res) => {
+  try {
+    const providedKey = req.header('x-admin-key') || req.body.adminKey;
+    if (providedKey !== ADMIN_UPLOAD_KEY) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(401).json({ message: 'Invalid admin key' });
+    }
 
-  const { title, examName, year, driveUrl = '' } = req.body;
-  const normalizedDriveUrl = String(driveUrl).trim();
-  const hasLocalFile = Boolean(req.file);
-  const hasDriveUrl = Boolean(normalizedDriveUrl);
+    const { title, examName, year, driveUrl = '' } = req.body;
+    const normalizedDriveUrl = String(driveUrl).trim();
+    const hasLocalFile = Boolean(req.file);
+    const hasDriveUrl = Boolean(normalizedDriveUrl);
 
-  if (!title || !examName || !year) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ message: 'Title, exam name and year are required' });
-  }
+    if (!title || !examName || !year) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: 'Title, exam name and year are required' });
+    }
 
-  if (!hasLocalFile && !hasDriveUrl) {
-    return res.status(400).json({ message: 'Upload a file or provide a Google Drive link' });
-  }
+    if (!hasLocalFile && !hasDriveUrl) {
+      return res.status(400).json({ message: 'Upload a file or provide a Google Drive link' });
+    }
 
-  if (hasDriveUrl && !extractDriveFileId(normalizedDriveUrl)) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ message: 'Provide a valid Google Drive file link' });
-  }
+    if (hasDriveUrl && !extractDriveFileId(normalizedDriveUrl)) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: 'Provide a valid Google Drive file link' });
+    }
 
-  if (!/^\d{4}$/.test(String(year))) {
-    if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ message: 'Year must be a 4-digit number' });
-  }
+    if (!/^\d{4}$/.test(String(year))) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: 'Year must be a 4-digit number' });
+    }
 
-  const normalizedExamName = String(examName).trim().toUpperCase();
-  const stmt = `
-    INSERT INTO competitive_papers (title, examName, year, fileName, driveUrl, uploadedAt)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
+    const normalizedExamName = String(examName).trim().toUpperCase();
+    let fileUrl = '';
+    let filePublicId = '';
+    const storedFileName = req.file ? req.file.originalname : '';
 
-  db.run(
-    stmt,
-    [
-      String(title).trim(),
-      normalizedExamName,
-      Number(year),
-      req.file ? req.file.filename : '',
-      normalizedDriveUrl,
-      new Date().toISOString()
-    ],
-    function onInsert(err) {
-      if (err) {
-        if (req.file) fs.unlinkSync(req.file.path);
-        return res.status(500).json({ message: 'Failed to save competitive paper' });
+    if (req.file) {
+      if (!isCloudinaryReady) {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.status(500).json({ message: 'File upload service is not configured' });
       }
 
-      return res.status(201).json({
-        id: this.lastID,
-        title: String(title).trim(),
-        examName: normalizedExamName,
-        year: Number(year),
-        fileName: req.file ? req.file.filename : '',
-        driveUrl: normalizedDriveUrl
-      });
+      try {
+        const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
+        fileUrl = uploaded.url;
+        filePublicId = uploaded.publicId;
+      } catch (_err) {
+        console.error('Cloudinary upload failed (competitive):', _err?.message || _err);
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.status(500).json({ message: 'Failed to upload file to Cloudinary' });
+      } finally {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      }
     }
-  );
+
+    const stmt = `
+      INSERT INTO competitive_papers (title, examName, year, fileName, driveUrl, fileUrl, filePublicId, uploadedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(
+      stmt,
+      [
+        String(title).trim(),
+        normalizedExamName,
+        Number(year),
+        storedFileName,
+        normalizedDriveUrl,
+        fileUrl,
+        filePublicId,
+        new Date().toISOString()
+      ],
+      function onInsert(err) {
+        if (err) {
+          return res.status(500).json({ message: 'Failed to save competitive paper' });
+        }
+
+        return res.status(201).json({
+          id: this.lastID,
+          title: String(title).trim(),
+          examName: normalizedExamName,
+          year: Number(year),
+          fileName: storedFileName,
+          driveUrl: normalizedDriveUrl,
+          fileUrl,
+          filePublicId
+        });
+      }
+    );
+  } catch (_error) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(500).json({ message: 'Unexpected server error' });
+  }
 });
 
 app.get('/api/competitive-papers/:id/preview', (req, res) => {
@@ -550,6 +687,10 @@ app.get('/api/competitive-papers/:id/download', (req, res) => {
       return res.status(404).json({ message: 'Paper not found' });
     }
 
+    if (row.fileUrl) {
+      return res.redirect(row.fileUrl);
+    }
+
     if (row.driveUrl) {
       return res.redirect(toDriveDownloadUrl(row.driveUrl));
     }
@@ -589,6 +730,10 @@ app.delete('/api/competitive-papers/:id', (req, res) => {
     db.run('DELETE FROM competitive_papers WHERE id = ?', [id], function onDelete(deleteErr) {
       if (deleteErr) {
         return res.status(500).json({ message: 'Failed to delete paper' });
+      }
+
+      if (row.filePublicId) {
+        deleteFromCloudinary(row.filePublicId);
       }
 
       if (row.fileName) {

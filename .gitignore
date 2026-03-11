@@ -4,3 +4,6 @@ dist/
 backend/uploads/*
 !backend/uploads/.gitkeep
 backend/pyq.db
+pythoncode/
+.angular/
+**/*.tsbuildinfo

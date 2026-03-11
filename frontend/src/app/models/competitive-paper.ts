@@ -5,5 +5,7 @@ export interface CompetitivePaper {
   year: number;
   fileName: string;
   driveUrl?: string;
+  fileUrl?: string;
+  filePublicId?: string;
   uploadedAt: string;
 }

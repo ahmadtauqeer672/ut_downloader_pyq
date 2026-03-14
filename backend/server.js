@@ -3,7 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 const ADMIN_UPLOAD_KEY = process.env.ADMIN_UPLOAD_KEY || 'admin123';
 const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || 'pyq-papers';
 
+// ---- Cloudinary helpers ----
 const cloudinaryConfig = {
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -21,9 +22,7 @@ cloudinary.config(cloudinaryConfig);
 const isCloudinaryReady = Boolean(cloudinaryConfig.cloud_name && cloudinaryConfig.api_key && cloudinaryConfig.api_secret);
 
 async function uploadToCloudinary(localPath, originalName) {
-  if (!isCloudinaryReady) {
-    throw new Error('Cloudinary not configured');
-  }
+  if (!isCloudinaryReady) throw new Error('Cloudinary not configured');
 
   const baseName = path.basename(originalName || 'paper', path.extname(originalName || ''));
   const publicId = `${baseName}-${Date.now()}`;
@@ -32,11 +31,7 @@ async function uploadToCloudinary(localPath, originalName) {
     public_id: publicId,
     resource_type: 'auto'
   });
-
-  return {
-    url: result.secure_url,
-    publicId: result.public_id
-  };
+  return { url: result.secure_url, publicId: result.public_id };
 }
 
 async function deleteFromCloudinary(publicId) {
@@ -44,27 +39,18 @@ async function deleteFromCloudinary(publicId) {
   try {
     await cloudinary.uploader.destroy(publicId, { resource_type: 'auto' });
   } catch (_err) {
-    // Keep delete success even if cloud cleanup fails.
+    // ignore cleanup failures
   }
 }
 
 function extractDriveFileId(rawUrl) {
   try {
     const url = new URL(String(rawUrl));
-    if (!url.hostname.includes('drive.google.com')) {
-      return null;
-    }
-
+    if (!url.hostname.includes('drive.google.com')) return null;
     const idFromQuery = url.searchParams.get('id');
-    if (idFromQuery) {
-      return idFromQuery;
-    }
-
+    if (idFromQuery) return idFromQuery;
     const pathMatch = url.pathname.match(/\/file\/d\/([^/]+)/);
-    if (pathMatch && pathMatch[1]) {
-      return pathMatch[1];
-    }
-
+    if (pathMatch && pathMatch[1]) return pathMatch[1];
     return null;
   } catch (_error) {
     return null;
@@ -77,102 +63,11 @@ function toDriveDownloadUrl(rawUrl) {
   return `https://drive.google.com/uc?export=download&id=${fileId}`;
 }
 
+// ---- Storage for temporary uploads (files removed after Cloudinary upload) ----
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-
-const db = new sqlite3.Database(path.join(__dirname, 'pyq.db'));
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS papers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      university TEXT NOT NULL DEFAULT '',
-      course TEXT NOT NULL DEFAULT '',
-      department TEXT NOT NULL DEFAULT '',
-      semester INTEGER NOT NULL DEFAULT 0,
-      subject TEXT NOT NULL,
-      year INTEGER NOT NULL,
-      examType TEXT NOT NULL,
-      fileName TEXT NOT NULL,
-      driveUrl TEXT NOT NULL DEFAULT '',
-      fileUrl TEXT NOT NULL DEFAULT '',
-      filePublicId TEXT NOT NULL DEFAULT '',
-      uploadedAt TEXT NOT NULL
-    )
-  `);
-
-  db.all('PRAGMA table_info(papers)', (err, columns) => {
-    if (err || !columns) return;
-
-    const columnNames = new Set(columns.map((col) => col.name));
-    if (!columnNames.has('university')) {
-      db.run("ALTER TABLE papers ADD COLUMN university TEXT NOT NULL DEFAULT ''");
-    }
-    if (!columnNames.has('course')) {
-      db.run("ALTER TABLE papers ADD COLUMN course TEXT NOT NULL DEFAULT ''");
-    }
-    if (!columnNames.has('department')) {
-      db.run("ALTER TABLE papers ADD COLUMN department TEXT NOT NULL DEFAULT ''");
-    }
-    if (!columnNames.has('semester')) {
-      db.run("ALTER TABLE papers ADD COLUMN semester INTEGER NOT NULL DEFAULT 0");
-    }
-    if (!columnNames.has('driveUrl')) {
-      db.run("ALTER TABLE papers ADD COLUMN driveUrl TEXT NOT NULL DEFAULT ''");
-    }
-    if (!columnNames.has('fileUrl')) {
-      db.run("ALTER TABLE papers ADD COLUMN fileUrl TEXT NOT NULL DEFAULT ''");
-    }
-    if (!columnNames.has('filePublicId')) {
-      db.run("ALTER TABLE papers ADD COLUMN filePublicId TEXT NOT NULL DEFAULT ''");
-    }
-  });
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS competitive_papers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      examName TEXT NOT NULL,
-      year INTEGER NOT NULL,
-      fileName TEXT NOT NULL,
-      driveUrl TEXT NOT NULL DEFAULT '',
-      fileUrl TEXT NOT NULL DEFAULT '',
-      filePublicId TEXT NOT NULL DEFAULT '',
-      uploadedAt TEXT NOT NULL
-    )
-  `);
-
-  db.all('PRAGMA table_info(competitive_papers)', (err, columns) => {
-    if (err || !columns) return;
-    const columnNames = new Set(columns.map((col) => col.name));
-    if (!columnNames.has('fileUrl')) {
-      db.run("ALTER TABLE competitive_papers ADD COLUMN fileUrl TEXT NOT NULL DEFAULT ''");
-    }
-    if (!columnNames.has('filePublicId')) {
-      db.run("ALTER TABLE competitive_papers ADD COLUMN filePublicId TEXT NOT NULL DEFAULT ''");
-    }
-  });
-});
-
-const allowedOrigins = new Set([
-  'http://localhost:4200',
-  'https://ut-downloader-pyq.vercel.app'
-]);
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.has(origin)) return callback(null, true);
-      if (origin.endsWith('.vercel.app')) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: false
-  })
-);
-app.use(express.json());
 
 const allowedExt = new Set(['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']);
 const storage = multer.diskStorage({
@@ -188,64 +83,125 @@ const upload = multer({
   limits: { fileSize: 30 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (!allowedExt.has(ext)) {
-      return cb(new Error('Invalid file type'));
-    }
+    if (!allowedExt.has(ext)) return cb(new Error('Invalid file type'));
     cb(null, true);
   }
 });
 
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true });
+// ---- Postgres ----
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+  ssl: process.env.POSTGRES_SSL === 'false' ? false : { rejectUnauthorized: false }
 });
 
-app.get('/api/papers', (req, res) => {
-  const { university = '', course = '', department = '', semester = '', subject = '', year = '' } = req.query;
-  let sql = 'SELECT * FROM papers WHERE 1=1';
-  const params = [];
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS papers (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      university TEXT NOT NULL DEFAULT '',
+      course TEXT NOT NULL DEFAULT '',
+      department TEXT NOT NULL DEFAULT '',
+      semester INTEGER NOT NULL DEFAULT 0,
+      subject TEXT NOT NULL,
+      year INTEGER NOT NULL,
+      examType TEXT NOT NULL,
+      fileName TEXT NOT NULL DEFAULT '',
+      driveUrl TEXT NOT NULL DEFAULT '',
+      fileUrl TEXT NOT NULL DEFAULT '',
+      filePublicId TEXT NOT NULL DEFAULT '',
+      uploadedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
 
-  if (university) {
-    sql += ' AND university LIKE ?';
-    params.push(`%${university}%`);
-  }
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS competitive_papers (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      examName TEXT NOT NULL,
+      year INTEGER NOT NULL,
+      fileName TEXT NOT NULL DEFAULT '',
+      driveUrl TEXT NOT NULL DEFAULT '',
+      fileUrl TEXT NOT NULL DEFAULT '',
+      filePublicId TEXT NOT NULL DEFAULT '',
+      uploadedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+}
 
-  if (course) {
-    sql += ' AND course LIKE ?';
-    params.push(`%${course}%`);
-  }
+initDb().catch((err) => {
+  console.error('Database init failed:', err);
+  process.exit(1);
+});
 
-  if (department) {
-    sql += ' AND department LIKE ?';
-    params.push(`%${department}%`);
-  }
+// ---- Middleware ----
+const allowedOrigins = new Set(['http://localhost:4200', 'https://ut-downloader-pyq.vercel.app']);
 
-  if (semester && /^\d+$/.test(semester)) {
-    sql += ' AND semester = ?';
-    params.push(Number(semester));
-  }
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.has(origin) || origin.endsWith('.vercel.app')) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: false
+  })
+);
+app.use(express.json());
 
-  if (subject) {
-    sql += ' AND subject LIKE ?';
-    params.push(`%${subject}%`);
-  }
+const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-  if (year && /^\d+$/.test(year)) {
-    sql += ' AND year = ?';
-    params.push(Number(year));
-  }
+// ---- Routes ----
+app.get(
+  '/api/health',
+  asyncHandler(async (_req, res) => {
+    await pool.query('SELECT 1');
+    res.json({ ok: true });
+  })
+);
 
-  sql += ' ORDER BY year DESC, uploadedAt DESC';
+app.get(
+  '/api/papers',
+  asyncHandler(async (req, res) => {
+    const { university = '', course = '', department = '', semester = '', subject = '', year = '' } = req.query;
+    let sql = 'SELECT * FROM papers WHERE 1=1';
+    const params = [];
 
-  db.all(sql, params, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to fetch papers' });
+    if (university) {
+      params.push(`%${university}%`);
+      sql += ` AND university ILIKE $${params.length}`;
     }
-    res.json(rows);
-  });
-});
+    if (course) {
+      params.push(`%${course}%`);
+      sql += ` AND course ILIKE $${params.length}`;
+    }
+    if (department) {
+      params.push(`%${department}%`);
+      sql += ` AND department ILIKE $${params.length}`;
+    }
+    if (semester && /^\d+$/.test(semester)) {
+      params.push(Number(semester));
+      sql += ` AND semester = $${params.length}`;
+    }
+    if (subject) {
+      params.push(`%${subject}%`);
+      sql += ` AND subject ILIKE $${params.length}`;
+    }
+    if (year && /^\d+$/.test(year)) {
+      params.push(Number(year));
+      sql += ` AND year = $${params.length}`;
+    }
 
-app.post('/api/papers', upload.single('file'), async (req, res) => {
-  try {
+    sql += ' ORDER BY year DESC, uploadedAt DESC, id DESC';
+    const { rows } = await pool.query(sql, params);
+    res.json(rows);
+  })
+);
+
+app.post(
+  '/api/papers',
+  upload.single('file'),
+  asyncHandler(async (req, res) => {
     const providedKey = req.header('x-admin-key') || req.body.adminKey;
     if (providedKey !== ADMIN_UPLOAD_KEY) {
       if (req.file) fs.unlinkSync(req.file.path);
@@ -319,222 +275,144 @@ app.post('/api/papers', upload.single('file'), async (req, res) => {
 
     const stmt = `
       INSERT INTO papers (title, university, course, department, semester, subject, year, examType, fileName, driveUrl, fileUrl, filePublicId, uploadedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING *
     `;
 
-    db.run(
-      stmt,
-      [
-        title.trim(),
-        normalizedUniversity,
-        normalizedCourse,
-        normalizedDepartment,
-        semesterValue,
-        subject.trim(),
-        Number(year),
-        examType.trim(),
-        storedFileName,
-        normalizedDriveUrl,
-        fileUrl,
-        filePublicId,
-        new Date().toISOString()
-      ],
-      function onInsert(err) {
-        if (err) {
-          return res.status(500).json({ message: 'Failed to save paper' });
-        }
+    const { rows } = await pool.query(stmt, [
+      title.trim(),
+      normalizedUniversity,
+      normalizedCourse,
+      normalizedDepartment,
+      semesterValue,
+      subject.trim(),
+      Number(year),
+      examType.trim(),
+      storedFileName,
+      normalizedDriveUrl,
+      fileUrl,
+      filePublicId,
+      new Date().toISOString()
+    ]);
 
-        res.status(201).json({
-          id: this.lastID,
-          title,
-          university: normalizedUniversity,
-          course: normalizedCourse,
-          department: normalizedDepartment,
-          semester: semesterValue,
-          subject,
-          year: Number(year),
-          examType,
-          fileName: storedFileName,
-          driveUrl: normalizedDriveUrl,
-          fileUrl,
-          filePublicId
-        });
-      }
-    );
-  } catch (_error) {
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(500).json({ message: 'Unexpected server error' });
-  }
-});
+    res.status(201).json(rows[0]);
+  })
+);
 
-app.get('/api/papers/:id/preview', (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid paper id' });
-  }
+app.get(
+  '/api/papers/:id/preview',
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-  db.get('SELECT * FROM papers WHERE id = ?', [id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to load paper' });
-    }
-    if (!row) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
+    const { rows } = await pool.query('SELECT * FROM papers WHERE id = $1', [id]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    if (row.fileUrl) {
-      return res.redirect(row.fileUrl);
-    }
+    if (row.fileUrl) return res.redirect(row.fileUrl);
+    if (row.driveUrl) return res.redirect(row.driveUrl);
 
-    if (row.fileUrl) {
-      return res.redirect(row.fileUrl);
-    }
-
-    if (row.driveUrl) {
-      return res.redirect(row.driveUrl);
-    }
-
-    if (!row.fileName) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
     const absPath = path.join(uploadDir, row.fileName);
-    if (!fs.existsSync(absPath)) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!fs.existsSync(absPath)) return res.status(404).json({ message: 'File not found on server' });
 
     const ext = path.extname(row.fileName).toLowerCase();
-    const mimeByExt = {
-      '.pdf': 'application/pdf',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg'
-    };
-
+    const mimeByExt = { '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
     if (mimeByExt[ext]) {
       res.type(mimeByExt[ext]);
-      res.setHeader('Content-Disposition', `inline; filename=\"${row.fileName}\"`);
+      res.setHeader('Content-Disposition', `inline; filename="${row.fileName}"`);
     }
-
     return res.sendFile(absPath);
-  });
-});
+  })
+);
 
-app.get('/api/papers/:id/download', (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid paper id' });
-  }
+app.get(
+  '/api/papers/:id/download',
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-  db.get('SELECT * FROM papers WHERE id = ?', [id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to load paper' });
-    }
-    if (!row) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
+    const { rows } = await pool.query('SELECT * FROM papers WHERE id = $1', [id]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    if (row.fileUrl) {
-      return res.redirect(row.fileUrl);
-    }
+    if (row.fileUrl) return res.redirect(row.fileUrl);
+    if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
 
-    if (row.driveUrl) {
-      return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    }
-
-    if (!row.fileName) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
     const absPath = path.join(uploadDir, row.fileName);
-    if (!fs.existsSync(absPath)) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!fs.existsSync(absPath)) return res.status(404).json({ message: 'File not found on server' });
 
-    res.download(absPath, row.fileName);
-  });
-});
+    return res.download(absPath, row.fileName);
+  })
+);
 
-app.delete('/api/papers/:id', (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid paper id' });
-  }
+app.delete(
+  '/api/papers/:id',
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-  const providedKey = req.header('x-admin-key') || req.query.adminKey;
-  if (providedKey !== ADMIN_UPLOAD_KEY) {
-    return res.status(401).json({ message: 'Invalid admin key' });
-  }
+    const providedKey = req.header('x-admin-key') || req.query.adminKey;
+    if (providedKey !== ADMIN_UPLOAD_KEY) return res.status(401).json({ message: 'Invalid admin key' });
 
-  db.get('SELECT * FROM papers WHERE id = ?', [id], (findErr, row) => {
-    if (findErr) {
-      return res.status(500).json({ message: 'Failed to load paper' });
-    }
-    if (!row) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
+    const { rows } = await pool.query('SELECT * FROM papers WHERE id = $1', [id]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    db.run('DELETE FROM papers WHERE id = ?', [id], function onDelete(deleteErr) {
-      if (deleteErr) {
-        return res.status(500).json({ message: 'Failed to delete paper' });
+    await pool.query('DELETE FROM papers WHERE id = $1', [id]);
+    if (row.filePublicId) deleteFromCloudinary(row.filePublicId);
+
+    const absPath = path.join(uploadDir, row.fileName);
+    if (row.fileName && fs.existsSync(absPath)) {
+      try {
+        fs.unlinkSync(absPath);
+      } catch (_err) {
+        // ignore
       }
-
-      if (row.filePublicId) {
-        deleteFromCloudinary(row.filePublicId);
-      }
-
-      if (row.fileName) {
-        const absPath = path.join(uploadDir, row.fileName);
-        if (fs.existsSync(absPath)) {
-          try {
-            fs.unlinkSync(absPath);
-          } catch (_unlinkErr) {
-            // Keep API success if DB row is deleted and file cleanup fails.
-          }
-        }
-      }
-
-      return res.json({ message: 'Paper deleted successfully' });
-    });
-  });
-});
-
-app.get('/api/competitive-exams', (_req, res) => {
-  const sql = 'SELECT DISTINCT examName FROM competitive_papers ORDER BY examName ASC';
-  db.all(sql, [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to fetch competitive exams' });
     }
-    return res.json(rows.map((row) => row.examName));
-  });
-});
 
-app.get('/api/competitive-papers', (req, res) => {
-  const { examName = '', year = '' } = req.query;
-  let sql = 'SELECT * FROM competitive_papers WHERE 1=1';
-  const params = [];
+    return res.json({ message: 'Paper deleted successfully' });
+  })
+);
 
-  if (examName) {
-    sql += ' AND examName = ?';
-    params.push(String(examName).trim().toUpperCase());
-  }
+app.get(
+  '/api/competitive-exams',
+  asyncHandler(async (_req, res) => {
+    const { rows } = await pool.query('SELECT DISTINCT examName FROM competitive_papers ORDER BY examName ASC');
+    res.json(rows.map((r) => r.examname));
+  })
+);
 
-  if (year && /^\d+$/.test(String(year))) {
-    sql += ' AND year = ?';
-    params.push(Number(year));
-  }
+app.get(
+  '/api/competitive-papers',
+  asyncHandler(async (req, res) => {
+    const { examName = '', year = '' } = req.query;
+    let sql = 'SELECT * FROM competitive_papers WHERE 1=1';
+    const params = [];
 
-  sql += ' ORDER BY year DESC, uploadedAt DESC';
-
-  db.all(sql, params, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to fetch competitive papers' });
+    if (examName) {
+      params.push(String(examName).trim().toUpperCase());
+      sql += ` AND examName = $${params.length}`;
     }
-    return res.json(rows);
-  });
-});
 
-app.post('/api/competitive-papers', upload.single('file'), async (req, res) => {
-  try {
+    if (year && /^\d{4}$/.test(String(year))) {
+      params.push(Number(year));
+      sql += ` AND year = $${params.length}`;
+    }
+
+    sql += ' ORDER BY year DESC, uploadedAt DESC, id DESC';
+    const { rows } = await pool.query(sql, params);
+    res.json(rows);
+  })
+);
+
+app.post(
+  '/api/competitive-papers',
+  upload.single('file'),
+  asyncHandler(async (req, res) => {
     const providedKey = req.header('x-admin-key') || req.body.adminKey;
     if (providedKey !== ADMIN_UPLOAD_KEY) {
       if (req.file) fs.unlinkSync(req.file.path);
@@ -591,167 +469,105 @@ app.post('/api/competitive-papers', upload.single('file'), async (req, res) => {
 
     const stmt = `
       INSERT INTO competitive_papers (title, examName, year, fileName, driveUrl, fileUrl, filePublicId, uploadedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
     `;
 
-    db.run(
-      stmt,
-      [
-        String(title).trim(),
-        normalizedExamName,
-        Number(year),
-        storedFileName,
-        normalizedDriveUrl,
-        fileUrl,
-        filePublicId,
-        new Date().toISOString()
-      ],
-      function onInsert(err) {
-        if (err) {
-          return res.status(500).json({ message: 'Failed to save competitive paper' });
-        }
+    const { rows } = await pool.query(stmt, [
+      String(title).trim(),
+      normalizedExamName,
+      Number(year),
+      storedFileName,
+      normalizedDriveUrl,
+      fileUrl,
+      filePublicId,
+      new Date().toISOString()
+    ]);
 
-        return res.status(201).json({
-          id: this.lastID,
-          title: String(title).trim(),
-          examName: normalizedExamName,
-          year: Number(year),
-          fileName: storedFileName,
-          driveUrl: normalizedDriveUrl,
-          fileUrl,
-          filePublicId
-        });
-      }
-    );
-  } catch (_error) {
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(500).json({ message: 'Unexpected server error' });
-  }
-});
+    res.status(201).json(rows[0]);
+  })
+);
 
-app.get('/api/competitive-papers/:id/preview', (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid paper id' });
-  }
+app.get(
+  '/api/competitive-papers/:id/preview',
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-  db.get('SELECT * FROM competitive_papers WHERE id = ?', [id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to load paper' });
-    }
-    if (!row) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
+    const { rows } = await pool.query('SELECT * FROM competitive_papers WHERE id = $1', [id]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    if (row.driveUrl) {
-      return res.redirect(row.driveUrl);
-    }
+    if (row.fileUrl) return res.redirect(row.fileUrl);
+    if (row.driveUrl) return res.redirect(row.driveUrl);
 
-    if (!row.fileName) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
     const absPath = path.join(uploadDir, row.fileName);
-    if (!fs.existsSync(absPath)) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!fs.existsSync(absPath)) return res.status(404).json({ message: 'File not found on server' });
 
     const ext = path.extname(row.fileName).toLowerCase();
-    const mimeByExt = {
-      '.pdf': 'application/pdf',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg'
-    };
-
+    const mimeByExt = { '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
     if (mimeByExt[ext]) {
       res.type(mimeByExt[ext]);
-      res.setHeader('Content-Disposition', `inline; filename=\"${row.fileName}\"`);
+      res.setHeader('Content-Disposition', `inline; filename="${row.fileName}"`);
     }
-
     return res.sendFile(absPath);
-  });
-});
+  })
+);
 
-app.get('/api/competitive-papers/:id/download', (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid paper id' });
-  }
+app.get(
+  '/api/competitive-papers/:id/download',
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-  db.get('SELECT * FROM competitive_papers WHERE id = ?', [id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to load paper' });
-    }
-    if (!row) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
+    const { rows } = await pool.query('SELECT * FROM competitive_papers WHERE id = $1', [id]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    if (row.fileUrl) {
-      return res.redirect(row.fileUrl);
-    }
+    if (row.fileUrl) return res.redirect(row.fileUrl);
+    if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
 
-    if (row.driveUrl) {
-      return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    }
-
-    if (!row.fileName) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
     const absPath = path.join(uploadDir, row.fileName);
-    if (!fs.existsSync(absPath)) {
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    if (!fs.existsSync(absPath)) return res.status(404).json({ message: 'File not found on server' });
 
     return res.download(absPath, row.fileName);
-  });
-});
+  })
+);
 
-app.delete('/api/competitive-papers/:id', (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Invalid paper id' });
-  }
+app.delete(
+  '/api/competitive-papers/:id',
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-  const providedKey = req.header('x-admin-key') || req.query.adminKey;
-  if (providedKey !== ADMIN_UPLOAD_KEY) {
-    return res.status(401).json({ message: 'Invalid admin key' });
-  }
+    const providedKey = req.header('x-admin-key') || req.query.adminKey;
+    if (providedKey !== ADMIN_UPLOAD_KEY) return res.status(401).json({ message: 'Invalid admin key' });
 
-  db.get('SELECT * FROM competitive_papers WHERE id = ?', [id], (findErr, row) => {
-    if (findErr) {
-      return res.status(500).json({ message: 'Failed to load paper' });
+    const { rows } = await pool.query('SELECT * FROM competitive_papers WHERE id = $1', [id]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ message: 'Paper not found' });
+
+    await pool.query('DELETE FROM competitive_papers WHERE id = $1', [id]);
+    if (row.filePublicId) deleteFromCloudinary(row.filePublicId);
+
+    const absPath = path.join(uploadDir, row.fileName);
+    if (row.fileName && fs.existsSync(absPath)) {
+      try {
+        fs.unlinkSync(absPath);
+      } catch (_err) {
+        // ignore
+      }
     }
-    if (!row) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
 
-    db.run('DELETE FROM competitive_papers WHERE id = ?', [id], function onDelete(deleteErr) {
-      if (deleteErr) {
-        return res.status(500).json({ message: 'Failed to delete paper' });
-      }
+    return res.json({ message: 'Competitive paper deleted successfully' });
+  })
+);
 
-      if (row.filePublicId) {
-        deleteFromCloudinary(row.filePublicId);
-      }
-
-      if (row.fileName) {
-        const absPath = path.join(uploadDir, row.fileName);
-        if (fs.existsSync(absPath)) {
-          try {
-            fs.unlinkSync(absPath);
-          } catch (_unlinkErr) {
-            // Keep API success if DB row is deleted and file cleanup fails.
-          }
-        }
-      }
-
-      return res.json({ message: 'Competitive paper deleted successfully' });
-    });
-  });
-});
-
+// ---- Error handling ----
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ message: err.message });
@@ -759,6 +575,7 @@ app.use((err, _req, res, _next) => {
   if (err.message === 'Invalid file type') {
     return res.status(400).json({ message: 'Allowed types: pdf, jpg, jpeg, png, doc, docx' });
   }
+  console.error('Unhandled error:', err);
   res.status(500).json({ message: 'Unexpected server error' });
 });
 

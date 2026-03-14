@@ -29,7 +29,9 @@ async function uploadToCloudinary(localPath, originalName) {
   const result = await cloudinary.uploader.upload(localPath, {
     folder: CLOUDINARY_FOLDER,
     public_id: publicId,
-    resource_type: 'auto'
+    resource_type: 'auto',
+    type: 'upload',
+    access_mode: 'public'
   });
   return { url: result.secure_url, publicId: result.public_id };
 }

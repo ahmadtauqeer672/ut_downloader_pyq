@@ -164,7 +164,8 @@ app.get(
   '/api/papers',
   asyncHandler(async (req, res) => {
     const { university = '', course = '', department = '', semester = '', subject = '', year = '' } = req.query;
-    let sql = 'SELECT * FROM papers WHERE 1=1';
+    let sql =
+      'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM papers WHERE 1=1';
     const params = [];
 
     if (university) {
@@ -305,7 +306,10 @@ app.get(
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-    const { rows } = await pool.query('SELECT * FROM papers WHERE id = $1', [id]);
+    const { rows } = await pool.query(
+      'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM papers WHERE id = $1',
+      [id]
+    );
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
@@ -333,7 +337,10 @@ app.get(
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-    const { rows } = await pool.query('SELECT * FROM papers WHERE id = $1', [id]);
+    const { rows } = await pool.query(
+      'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM papers WHERE id = $1',
+      [id]
+    );
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
@@ -358,7 +365,10 @@ app.delete(
     const providedKey = req.header('x-admin-key') || req.query.adminKey;
     if (providedKey !== ADMIN_UPLOAD_KEY) return res.status(401).json({ message: 'Invalid admin key' });
 
-    const { rows } = await pool.query('SELECT * FROM papers WHERE id = $1', [id]);
+    const { rows } = await pool.query(
+      'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM papers WHERE id = $1',
+      [id]
+    );
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
@@ -390,7 +400,8 @@ app.get(
   '/api/competitive-papers',
   asyncHandler(async (req, res) => {
     const { examName = '', year = '' } = req.query;
-    let sql = 'SELECT * FROM competitive_papers WHERE 1=1';
+    let sql =
+      'SELECT id, title, examname AS "examName", year, filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM competitive_papers WHERE 1=1';
     const params = [];
 
     if (examName) {
@@ -494,7 +505,10 @@ app.get(
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-    const { rows } = await pool.query('SELECT * FROM competitive_papers WHERE id = $1', [id]);
+    const { rows } = await pool.query(
+      'SELECT id, title, examname AS "examName", year, filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM competitive_papers WHERE id = $1',
+      [id]
+    );
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
@@ -522,7 +536,10 @@ app.get(
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
 
-    const { rows } = await pool.query('SELECT * FROM competitive_papers WHERE id = $1', [id]);
+    const { rows } = await pool.query(
+      'SELECT id, title, examname AS "examName", year, filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM competitive_papers WHERE id = $1',
+      [id]
+    );
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
@@ -547,7 +564,10 @@ app.delete(
     const providedKey = req.header('x-admin-key') || req.query.adminKey;
     if (providedKey !== ADMIN_UPLOAD_KEY) return res.status(401).json({ message: 'Invalid admin key' });
 
-    const { rows } = await pool.query('SELECT * FROM competitive_papers WHERE id = $1', [id]);
+    const { rows } = await pool.query(
+      'SELECT id, title, examname AS "examName", year, filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM competitive_papers WHERE id = $1',
+      [id]
+    );
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 

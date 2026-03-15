@@ -65,6 +65,45 @@ function toDriveDownloadUrl(rawUrl) {
   return `https://drive.google.com/uc?export=download&id=${fileId}`;
 }
 
+const SIGNED_URL_TTL_SECONDS = 10 * 60; // 10 minutes
+const imageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tif', '.tiff', '.svg']);
+const videoExtensions = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.mpeg', '.mpg']);
+
+function inferResourceType(fileName = '') {
+  const ext = path.extname(String(fileName)).toLowerCase();
+  if (imageExtensions.has(ext)) return 'image';
+  if (videoExtensions.has(ext)) return 'video';
+  return 'raw';
+}
+
+function parseCloudinaryResource(fileUrl = '') {
+  try {
+    const { pathname } = new URL(String(fileUrl));
+    const parts = pathname.split('/').filter(Boolean);
+    // Expected structure: /<cloud_name>/<resource_type>/<type>/...
+    if (parts.length >= 3) {
+      return { resource_type: parts[1], type: parts[2] };
+    }
+  } catch (_err) {
+    // ignore parse errors
+  }
+  return {};
+}
+
+function buildSignedCloudinaryUrl(publicId, fileName = '', fileUrl = '', { attachment = false } = {}) {
+  if (!isCloudinaryReady || !publicId) return null;
+  const { resource_type, type } = parseCloudinaryResource(fileUrl);
+  const options = {
+    secure: true,
+    sign_url: true,
+    expires_at: Math.floor(Date.now() / 1000) + SIGNED_URL_TTL_SECONDS,
+    resource_type: resource_type || inferResourceType(fileName),
+    type: type || 'upload'
+  };
+  if (attachment) options.flags = 'attachment';
+  return cloudinary.url(publicId, options);
+}
+
 // ---- Storage for temporary uploads (files removed after Cloudinary upload) ----
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -315,6 +354,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
+    if (signedUrl) return res.redirect(signedUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(row.driveUrl);
 
@@ -346,6 +387,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
+    if (signedUrl) return res.redirect(signedUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
 
@@ -514,6 +557,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
+    if (signedUrl) return res.redirect(signedUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(row.driveUrl);
 
@@ -545,6 +590,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
+    if (signedUrl) return res.redirect(signedUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
 

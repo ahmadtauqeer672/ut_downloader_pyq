@@ -115,14 +115,21 @@ function inferFormat(fileName = '', fileUrl = '') {
 function buildSignedCloudinaryUrl(publicId, fileName = '', fileUrl = '', { attachment = false } = {}) {
   if (!isCloudinaryReady || !publicId) return null;
   const { resource_type, type, version, format } = parseCloudinaryResource(fileUrl);
+  const inferredFormat = format || inferFormat(fileName, fileUrl);
+  let finalResourceType = resource_type || inferResourceType(fileName);
+  // PDFs and docs are better served as raw to avoid invalid responses from image delivery
+  if (finalResourceType === 'image' && inferredFormat && ['pdf', 'doc', 'docx'].includes(inferredFormat)) {
+    finalResourceType = 'raw';
+  }
+
   const options = {
     secure: true,
     sign_url: true,
     expires_at: Math.floor(Date.now() / 1000) + SIGNED_URL_TTL_SECONDS,
-    resource_type: resource_type || inferResourceType(fileName),
+    resource_type: finalResourceType,
     type: type || 'upload',
     version,
-    format: format || inferFormat(fileName, fileUrl)
+    format: inferredFormat
   };
   if (attachment) options.flags = 'attachment';
   return cloudinary.url(publicId, options);

@@ -26,10 +26,12 @@ async function uploadToCloudinary(localPath, originalName) {
 
   const baseName = path.basename(originalName || 'paper', path.extname(originalName || ''));
   const publicId = `${baseName}-${Date.now()}`;
+  const ext = path.extname(originalName || '').toLowerCase();
+  const resourceType = ['.pdf', '.doc', '.docx'].includes(ext) ? 'raw' : 'auto';
   const result = await cloudinary.uploader.upload(localPath, {
     folder: CLOUDINARY_FOLDER,
     public_id: publicId,
-    resource_type: 'auto',
+    resource_type: resourceType,
     type: 'upload',
     access_mode: 'public'
   });
@@ -121,6 +123,24 @@ function buildSignedCloudinaryUrl(publicId, fileName = '', fileUrl = '', { attac
     sign_url: true,
     expires_at: Math.floor(Date.now() / 1000) + SIGNED_URL_TTL_SECONDS,
     resource_type: resource_type || inferResourceType(fileName),
+    type: type || 'upload',
+    version,
+    format: inferredFormat
+  };
+  if (attachment) options.flags = 'attachment';
+  return cloudinary.url(publicId, options);
+}
+
+function buildPublicCloudinaryUrl(publicId, fileName = '', fileUrl = '', { attachment = false } = {}) {
+  if (!isCloudinaryReady || !publicId) return null;
+  const { resource_type, type, version, format } = parseCloudinaryResource(fileUrl);
+  const inferredFormat = format || inferFormat(fileName, fileUrl);
+  const ext = (inferredFormat || '').toLowerCase();
+  const isDoc = ['pdf', 'doc', 'docx'].includes(ext);
+  const options = {
+    secure: true,
+    sign_url: false,
+    resource_type: resource_type || (isDoc ? 'raw' : inferResourceType(fileName)),
     type: type || 'upload',
     version,
     format: inferredFormat
@@ -379,6 +399,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const directUrl = buildPublicCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
+    if (directUrl) return res.redirect(directUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
     if (signedUrl) return res.redirect(signedUrl);
@@ -412,6 +434,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const directUrl = buildPublicCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
+    if (directUrl) return res.redirect(directUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
     if (signedUrl) return res.redirect(signedUrl);
@@ -582,6 +606,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const directUrl = buildPublicCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
+    if (directUrl) return res.redirect(directUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
     if (signedUrl) return res.redirect(signedUrl);
@@ -615,6 +641,8 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const directUrl = buildPublicCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
+    if (directUrl) return res.redirect(directUrl);
     if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
     if (signedUrl) return res.redirect(signedUrl);

@@ -81,24 +81,48 @@ function parseCloudinaryResource(fileUrl = '') {
     const { pathname } = new URL(String(fileUrl));
     const parts = pathname.split('/').filter(Boolean);
     // Expected structure: /<cloud_name>/<resource_type>/<type>/...
-    if (parts.length >= 3) {
-      return { resource_type: parts[1], type: parts[2] };
-    }
+    const resource_type = parts[1];
+    const type = parts[2];
+    const versionPart = parts.find((p) => /^v\d+$/i.test(p));
+    const version = versionPart ? Number(versionPart.slice(1)) : undefined;
+
+    let format;
+    const last = parts[parts.length - 1] || '';
+    const dot = last.lastIndexOf('.');
+    if (dot !== -1) format = last.slice(dot + 1).toLowerCase();
+
+    if (resource_type && type) return { resource_type, type, version, format };
   } catch (_err) {
     // ignore parse errors
   }
   return {};
 }
 
+function inferFormat(fileName = '', fileUrl = '') {
+  const nameExt = path.extname(String(fileName)).toLowerCase();
+  if (nameExt) return nameExt.replace('.', '');
+  try {
+    const { pathname } = new URL(String(fileUrl));
+    const last = pathname.split('/').filter(Boolean).pop() || '';
+    const dot = last.lastIndexOf('.');
+    if (dot !== -1) return last.slice(dot + 1).toLowerCase();
+  } catch (_err) {
+    // ignore
+  }
+  return undefined;
+}
+
 function buildSignedCloudinaryUrl(publicId, fileName = '', fileUrl = '', { attachment = false } = {}) {
   if (!isCloudinaryReady || !publicId) return null;
-  const { resource_type, type } = parseCloudinaryResource(fileUrl);
+  const { resource_type, type, version, format } = parseCloudinaryResource(fileUrl);
   const options = {
     secure: true,
     sign_url: true,
     expires_at: Math.floor(Date.now() / 1000) + SIGNED_URL_TTL_SECONDS,
     resource_type: resource_type || inferResourceType(fileName),
-    type: type || 'upload'
+    type: type || 'upload',
+    version,
+    format: format || inferFormat(fileName, fileUrl)
   };
   if (attachment) options.flags = 'attachment';
   return cloudinary.url(publicId, options);

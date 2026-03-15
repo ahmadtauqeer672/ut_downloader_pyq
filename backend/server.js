@@ -5,12 +5,20 @@ const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
+const { google } = require('googleapis');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_UPLOAD_KEY = process.env.ADMIN_UPLOAD_KEY || 'admin123';
 const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || 'pyq-papers';
+const USE_DRIVE_UPLOAD = String(process.env.USE_DRIVE_UPLOAD || '').toLowerCase() === 'true';
+const DRIVE_PARENT_FOLDER_ID =
+  process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID || process.env.GOOGLE_DRIVE_FOLDER_ID || '';
+const DRIVE_SERVICE_EMAIL = process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL || '';
+const DRIVE_PRIVATE_KEY = process.env.GOOGLE_DRIVE_PRIVATE_KEY
+  ? process.env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n')
+  : '';
 
 // ---- Cloudinary helpers ----
 const cloudinaryConfig = {
@@ -112,6 +120,60 @@ function inferFormat(fileName = '', fileUrl = '') {
     // ignore
   }
   return undefined;
+}
+
+const mimeByExt = {
+  '.pdf': 'application/pdf',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp'
+};
+
+function guessMime(fileName = '') {
+  const ext = path.extname(String(fileName)).toLowerCase();
+  return mimeByExt[ext] || 'application/octet-stream';
+}
+
+const isDriveReady = Boolean(DRIVE_SERVICE_EMAIL && DRIVE_PRIVATE_KEY);
+
+function getDriveClient() {
+  if (!isDriveReady) throw new Error('Google Drive not configured');
+  const auth = new google.auth.JWT({
+    email: DRIVE_SERVICE_EMAIL,
+    key: DRIVE_PRIVATE_KEY,
+    scopes: ['https://www.googleapis.com/auth/drive.file']
+  });
+  return google.drive({ version: 'v3', auth });
+}
+
+async function uploadToDrive(localPath, originalName) {
+  const drive = getDriveClient();
+  const fileName = originalName || path.basename(localPath);
+  const requestBody = { name: fileName };
+  if (DRIVE_PARENT_FOLDER_ID) requestBody.parents = [DRIVE_PARENT_FOLDER_ID];
+
+  const media = {
+    mimeType: guessMime(originalName),
+    body: fs.createReadStream(localPath)
+  };
+
+  const { data } = await drive.files.create({
+    requestBody,
+    media,
+    fields: 'id, name, mimeType'
+  });
+
+  await drive.permissions.create({
+    fileId: data.id,
+    requestBody: { role: 'reader', type: 'anyone' }
+  });
+
+  const viewUrl = `https://drive.google.com/file/d/${data.id}/view?usp=share_link`;
+  return { viewUrl, id: data.id };
 }
 
 function buildSignedCloudinaryUrl(publicId, fileName = '', fileUrl = '', { attachment = false } = {}) {
@@ -297,6 +359,7 @@ app.post(
 
     const { title, university, course, department = '', semester = '', subject, year, examType, driveUrl = '' } = req.body;
     const normalizedDriveUrl = String(driveUrl).trim();
+    let driveUrlValue = normalizedDriveUrl;
     const hasLocalFile = Boolean(req.file);
     const hasDriveUrl = Boolean(normalizedDriveUrl);
 
@@ -342,21 +405,25 @@ app.post(
     const storedFileName = req.file ? req.file.originalname : '';
 
     if (req.file) {
-      if (!isCloudinaryReady) {
-        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        return res.status(500).json({ message: 'File upload service is not configured' });
-      }
-
       try {
-        const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
-        fileUrl = uploaded.url;
-        filePublicId = uploaded.publicId;
+        if (USE_DRIVE_UPLOAD && isDriveReady) {
+          const uploaded = await uploadToDrive(req.file.path, req.file.originalname);
+          driveUrlValue = uploaded.viewUrl;
+          filePublicId = uploaded.id;
+          fileUrl = '';
+        } else {
+          if (!isCloudinaryReady) throw new Error('File upload service is not configured');
+          const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
+          fileUrl = uploaded.url;
+          filePublicId = uploaded.publicId;
+        }
       } catch (_err) {
-        console.error('Cloudinary upload failed (academic):', _err?.message || _err);
+        console.error('File upload failed (academic):', _err?.message || _err);
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        return res.status(500).json({ message: 'Failed to upload file to Cloudinary' });
+        const message = _err?.message || 'Failed to upload file';
+        return res.status(500).json({ message });
       } finally {
-        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       }
     }
 
@@ -376,7 +443,7 @@ app.post(
       Number(year),
       examType.trim(),
       storedFileName,
-      normalizedDriveUrl,
+      driveUrlValue,
       fileUrl,
       filePublicId,
       new Date().toISOString()
@@ -526,6 +593,7 @@ app.post(
 
     const { title, examName, year, driveUrl = '' } = req.body;
     const normalizedDriveUrl = String(driveUrl).trim();
+    let driveUrlValue = normalizedDriveUrl;
     const hasLocalFile = Boolean(req.file);
     const hasDriveUrl = Boolean(normalizedDriveUrl);
 
@@ -554,21 +622,25 @@ app.post(
     const storedFileName = req.file ? req.file.originalname : '';
 
     if (req.file) {
-      if (!isCloudinaryReady) {
-        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        return res.status(500).json({ message: 'File upload service is not configured' });
-      }
-
       try {
-        const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
-        fileUrl = uploaded.url;
-        filePublicId = uploaded.publicId;
+        if (USE_DRIVE_UPLOAD && isDriveReady) {
+          const uploaded = await uploadToDrive(req.file.path, req.file.originalname);
+          driveUrlValue = uploaded.viewUrl;
+          filePublicId = uploaded.id;
+          fileUrl = '';
+        } else {
+          if (!isCloudinaryReady) throw new Error('File upload service is not configured');
+          const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
+          fileUrl = uploaded.url;
+          filePublicId = uploaded.publicId;
+        }
       } catch (_err) {
-        console.error('Cloudinary upload failed (competitive):', _err?.message || _err);
+        console.error('File upload failed (competitive):', _err?.message || _err);
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        return res.status(500).json({ message: 'Failed to upload file to Cloudinary' });
+        const message = _err?.message || 'Failed to upload file';
+        return res.status(500).json({ message });
       } finally {
-        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       }
     }
 
@@ -583,7 +655,7 @@ app.post(
       normalizedExamName,
       Number(year),
       storedFileName,
-      normalizedDriveUrl,
+      driveUrlValue,
       fileUrl,
       filePublicId,
       new Date().toISOString()

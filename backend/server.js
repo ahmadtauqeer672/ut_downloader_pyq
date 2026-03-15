@@ -116,17 +116,11 @@ function buildSignedCloudinaryUrl(publicId, fileName = '', fileUrl = '', { attac
   if (!isCloudinaryReady || !publicId) return null;
   const { resource_type, type, version, format } = parseCloudinaryResource(fileUrl);
   const inferredFormat = format || inferFormat(fileName, fileUrl);
-  let finalResourceType = resource_type || inferResourceType(fileName);
-  // PDFs and docs are better served as raw to avoid invalid responses from image delivery
-  if (finalResourceType === 'image' && inferredFormat && ['pdf', 'doc', 'docx'].includes(inferredFormat)) {
-    finalResourceType = 'raw';
-  }
-
   const options = {
     secure: true,
     sign_url: true,
     expires_at: Math.floor(Date.now() / 1000) + SIGNED_URL_TTL_SECONDS,
-    resource_type: finalResourceType,
+    resource_type: resource_type || inferResourceType(fileName),
     type: type || 'upload',
     version,
     format: inferredFormat
@@ -385,9 +379,9 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
     if (signedUrl) return res.redirect(signedUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(row.driveUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -418,9 +412,9 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
     if (signedUrl) return res.redirect(signedUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -588,9 +582,9 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: false });
     if (signedUrl) return res.redirect(signedUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(row.driveUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -621,9 +615,9 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    if (row.fileUrl) return res.redirect(row.fileUrl);
     const signedUrl = buildSignedCloudinaryUrl(row.filePublicId, row.fileName, row.fileUrl, { attachment: true });
     if (signedUrl) return res.redirect(signedUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });

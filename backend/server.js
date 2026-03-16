@@ -63,15 +63,10 @@ function normalizeCloudinaryPdfUrl(url = '') {
   return url;
 }
 
-function buildSignedPdfUrl(publicId = '') {
+// Build a public raw URL from a publicId (no signature, uses the latest version).
+function buildPublicRawUrl(publicId = '') {
   if (!publicId) return '';
-  const baseId = publicId.toLowerCase().endsWith('.pdf') ? publicId.slice(0, -4) : publicId;
-  const expiresAt = Math.floor(Date.now() / 1000) + 3600; // 1 hour
-  return cloudinary.utils.private_download_url(baseId, 'pdf', {
-    resource_type: 'raw',
-    attachment: false,
-    expires_at: expiresAt
-  });
+  return cloudinary.url(publicId, { resource_type: 'raw', type: 'upload', secure: true });
 }
 
 async function uploadToCloudinary(localPath, originalName) {
@@ -285,7 +280,7 @@ app.post(
         const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
         driveUrlValue = '';
         filePublicId = uploaded.publicId;
-        fileUrl = uploaded.url;
+        fileUrl = normalizeCloudinaryPdfUrl(uploaded.url);
       } catch (_err) {
         console.error('File upload failed (academic):', _err?.message || _err);
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -336,10 +331,10 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
-    const signedUrl = buildSignedPdfUrl(row.filePublicId);
-    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -370,10 +365,10 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    const signedUrl = buildSignedPdfUrl(row.filePublicId);
-    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -491,7 +486,7 @@ app.post(
         const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
         driveUrlValue = '';
         filePublicId = uploaded.publicId;
-        fileUrl = uploaded.url;
+        fileUrl = normalizeCloudinaryPdfUrl(uploaded.url);
       } catch (_err) {
         console.error('File upload failed (competitive):', _err?.message || _err);
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -537,10 +532,10 @@ app.get(
   if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
-    const signedUrl = buildSignedPdfUrl(row.filePublicId);
-    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -571,10 +566,10 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    const signedUrl = buildSignedPdfUrl(row.filePublicId);
-    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 

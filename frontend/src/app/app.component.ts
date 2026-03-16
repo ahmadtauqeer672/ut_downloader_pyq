@@ -87,7 +87,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        gap: 0.9rem;
+        gap: 0.65rem;
         min-height: 74px;
       }
       .nav-inner.page {
@@ -97,10 +97,13 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       .nav {
         display: flex;
         gap: 0.28rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         margin-left: auto;
         justify-content: flex-end;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.2rem 0.1rem;
       }
       .nav a {
         text-decoration: none;
@@ -111,12 +114,14 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         background: transparent;
         font-weight: 600;
         transition: color 180ms ease, background 180ms ease;
+        white-space: nowrap;
       }
       .brand {
         display: flex;
         align-items: center;
         text-decoration: none;
         color: inherit;
+        margin-left: 0.3rem;
       }
       .brand-logo-frame {
         width: 88px;
@@ -216,23 +221,25 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       }
       @media (max-width: 760px) {
         .nav-inner {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 0.55rem;
-          min-height: auto;
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 0.4rem;
+          min-height: 64px;
         }
         .nav {
-          width: 100%;
-          gap: 0.4rem;
+          width: auto;
+          gap: 0.28rem;
           justify-content: flex-end;
+          padding: 0.12rem 0;
         }
         .nav a {
-          flex: 1 1 120px;
-          text-align: center;
+          padding: 0.36rem 0.5rem;
+          font-size: 0.95rem;
         }
         .brand-logo-frame {
-          width: 76px;
-          height: 76px;
+          width: 68px;
+          height: 68px;
         }
         .footer-grid {
           grid-template-columns: 1fr;

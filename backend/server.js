@@ -53,11 +53,21 @@ function guessMime(fileName = '') {
   return mimeByExt[ext] || 'application/octet-stream';
 }
 
+// Ensure any stored Cloudinary PDF URL points to the raw delivery endpoint.
+function normalizeCloudinaryPdfUrl(url = '') {
+  if (!url) return url;
+  const lower = url.toLowerCase();
+  if (!lower.endsWith('.pdf')) return url;
+  if (url.includes('/raw/upload/')) return url;
+  if (url.includes('/image/upload/')) return url.replace('/image/upload/', '/raw/upload/');
+  return url;
+}
+
 async function uploadToCloudinary(localPath, originalName) {
   const folder = process.env.CLOUDINARY_FOLDER || undefined;
   const res = await cloudinary.uploader.upload(localPath, {
     folder,
-    resource_type: 'auto', // PDFs stay PDFs but remain publicly downloadable
+    resource_type: 'raw', // keep PDFs as raw files for direct download
     type: 'upload',
     use_filename: true,
     unique_filename: true,
@@ -315,7 +325,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -346,7 +357,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -510,7 +522,8 @@ app.get(
   if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -541,7 +554,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 

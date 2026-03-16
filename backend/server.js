@@ -53,6 +53,17 @@ function guessMime(fileName = '') {
   return mimeByExt[ext] || 'application/octet-stream';
 }
 
+// Cloudinary can store PDFs either under image/ or raw/. Ensure PDF links point to raw/ so browsers load correctly.
+function normalizeCloudinaryPdfUrl(url = '') {
+  if (!url) return url;
+  const lower = url.toLowerCase();
+  const usesImageResource = url.includes('/image/upload/');
+  if (lower.includes('.pdf') && usesImageResource) {
+    return url.replace('/image/upload/', '/raw/upload/');
+  }
+  return url;
+}
+
 async function uploadToCloudinary(localPath, originalName) {
   const publicIdBase = path.basename(originalName || localPath, path.extname(originalName || localPath));
   const folder = process.env.CLOUDINARY_FOLDER || undefined;
@@ -70,7 +81,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const allowedExt = new Set(['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']);
+const allowedExt = new Set(['.pdf']);
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
   filename: (_req, file, cb) => {
@@ -313,7 +324,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -344,7 +356,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -503,12 +516,13 @@ app.get(
     const { rows } = await pool.query(
       'SELECT id, title, examname AS "examName", year, filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM competitive_papers WHERE id = $1',
       [id]
-    );
-    const row = rows[0];
-    if (!row) return res.status(404).json({ message: 'Paper not found' });
+  );
+  const row = rows[0];
+  if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -539,7 +553,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
-    if (row.fileUrl) return res.redirect(row.fileUrl);
+    const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
+    if (fileUrl) return res.redirect(fileUrl);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
 
@@ -586,7 +601,7 @@ app.use((err, _req, res, _next) => {
     return res.status(400).json({ message: err.message });
   }
   if (err.message === 'Invalid file type') {
-    return res.status(400).json({ message: 'Allowed types: pdf, jpg, jpeg, png, doc, docx' });
+    return res.status(400).json({ message: 'Only PDF files are allowed' });
   }
   console.error('Unhandled error:', err);
   res.status(500).json({ message: 'Unexpected server error' });

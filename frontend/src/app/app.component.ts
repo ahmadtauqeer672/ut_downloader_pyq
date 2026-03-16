@@ -9,20 +9,19 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     <header class="site-header">
       <div class="nav-shell">
         <div class="nav-inner page">
-          <a class="brand" routerLink="/">
-            <span class="brand-logo-frame">
-              <img
-                class="brand-logo"
-                src="assets/ut-logo.png"
-                alt="UT Logo"
-              />
-            </span>
-          </a>
-
           <nav class="nav">
             <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
             <a routerLink="/" fragment="directory">Question Papers</a>
             <a routerLink="/upload" routerLinkActive="active">Upload</a>
+            <a class="brand" routerLink="/">
+              <span class="brand-logo-frame">
+                <img
+                  class="brand-logo"
+                  src="assets/ut-logo.png"
+                  alt="UT Logo"
+                />
+              </span>
+            </a>
           </nav>
         </div>
       </div>
@@ -87,39 +86,13 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       .nav-inner {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 0.9rem;
         min-height: 74px;
       }
       .nav-inner.page {
         max-width: 960px;
         padding: 0.35rem 0.9rem;
-      }
-      .brand {
-        display: flex;
-        align-items: center;
-        text-decoration: none;
-        color: inherit;
-      }
-      .brand-logo-frame {
-        width: 74px;
-        height: 74px;
-        border-radius: 12px;
-        background: #ffffff;
-        border: 1px solid #d6dde6;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-        display: grid;
-        place-items: center;
-        overflow: hidden;
-      }
-      .brand-logo {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        padding: 0.08rem;
-        box-sizing: border-box;
-        transform: scale(1.18);
-        transform-origin: center;
       }
       .nav {
         display: flex;
@@ -136,6 +109,32 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         background: transparent;
         font-weight: 600;
         transition: color 180ms ease, background 180ms ease;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+      }
+      .brand-logo-frame {
+        width: 88px;
+        height: 88px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #d6dde6;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .brand-logo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 0.08rem;
+        box-sizing: border-box;
+        transform: scale(1.2);
+        transform-origin: center;
       }
       .nav a:hover {
         color: #132b44;
@@ -220,9 +219,17 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           gap: 0.55rem;
           min-height: auto;
         }
+        .nav {
+          width: 100%;
+          gap: 0.4rem;
+        }
+        .nav a {
+          flex: 1 1 120px;
+          text-align: center;
+        }
         .brand-logo-frame {
-          width: 64px;
-          height: 64px;
+          width: 76px;
+          height: 76px;
         }
         .footer-grid {
           grid-template-columns: 1fr;

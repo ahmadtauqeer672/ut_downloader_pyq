@@ -4,18 +4,18 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
-const { google } = require('googleapis');
+const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_UPLOAD_KEY = process.env.ADMIN_UPLOAD_KEY || 'admin123';
-const DRIVE_PARENT_FOLDER_ID =
-  process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID || process.env.GOOGLE_DRIVE_FOLDER_ID || '';
-const DRIVE_SERVICE_EMAIL = process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL || '';
-const DRIVE_PRIVATE_KEY = process.env.GOOGLE_DRIVE_PRIVATE_KEY
-  ? process.env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n')
-  : '';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 function extractDriveFileId(rawUrl) {
   try {
@@ -53,42 +53,15 @@ function guessMime(fileName = '') {
   return mimeByExt[ext] || 'application/octet-stream';
 }
 
-const isDriveReady = Boolean(DRIVE_SERVICE_EMAIL && DRIVE_PRIVATE_KEY);
-
-function getDriveClient() {
-  if (!isDriveReady) throw new Error('Google Drive not configured');
-  const auth = new google.auth.JWT({
-    email: DRIVE_SERVICE_EMAIL,
-    key: DRIVE_PRIVATE_KEY,
-    scopes: ['https://www.googleapis.com/auth/drive.file']
+async function uploadToCloudinary(localPath, originalName) {
+  const publicIdBase = path.basename(originalName || localPath, path.extname(originalName || localPath));
+  const folder = process.env.CLOUDINARY_FOLDER || undefined;
+  const res = await cloudinary.uploader.upload(localPath, {
+    folder,
+    public_id: publicIdBase,
+    resource_type: 'raw' // supports pdf/doc/etc.
   });
-  return google.drive({ version: 'v3', auth });
-}
-
-async function uploadToDrive(localPath, originalName) {
-  const drive = getDriveClient();
-  const fileName = originalName || path.basename(localPath);
-  const requestBody = { name: fileName };
-  if (DRIVE_PARENT_FOLDER_ID) requestBody.parents = [DRIVE_PARENT_FOLDER_ID];
-
-  const media = {
-    mimeType: guessMime(originalName),
-    body: fs.createReadStream(localPath)
-  };
-
-  const { data } = await drive.files.create({
-    requestBody,
-    media,
-    fields: 'id, name, mimeType'
-  });
-
-  await drive.permissions.create({
-    fileId: data.id,
-    requestBody: { role: 'reader', type: 'anyone' }
-  });
-
-  const viewUrl = `https://drive.google.com/file/d/${data.id}/view?usp=share_link`;
-  return { viewUrl, id: data.id };
+  return { url: res.secure_url || res.url, publicId: res.public_id };
 }
 
 // ---- Storage for temporary uploads (files removed after upload) ----
@@ -286,11 +259,10 @@ app.post(
 
     if (req.file) {
       try {
-        if (!isDriveReady) throw new Error('File upload service is not configured');
-        const uploaded = await uploadToDrive(req.file.path, req.file.originalname);
-        driveUrlValue = uploaded.viewUrl;
-        filePublicId = uploaded.id;
-        fileUrl = '';
+        const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
+        driveUrlValue = '';
+        filePublicId = uploaded.publicId;
+        fileUrl = uploaded.url;
       } catch (_err) {
         console.error('File upload failed (academic):', _err?.message || _err);
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -487,11 +459,10 @@ app.post(
 
     if (req.file) {
       try {
-        if (!isDriveReady) throw new Error('File upload service is not configured');
-        const uploaded = await uploadToDrive(req.file.path, req.file.originalname);
-        driveUrlValue = uploaded.viewUrl;
-        filePublicId = uploaded.id;
-        fileUrl = '';
+        const uploaded = await uploadToCloudinary(req.file.path, req.file.originalname);
+        driveUrlValue = '';
+        filePublicId = uploaded.publicId;
+        fileUrl = uploaded.url;
       } catch (_err) {
         console.error('File upload failed (competitive):', _err?.message || _err);
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);

@@ -57,7 +57,7 @@ async function uploadToCloudinary(localPath, originalName) {
   const folder = process.env.CLOUDINARY_FOLDER || undefined;
   const res = await cloudinary.uploader.upload(localPath, {
     folder,
-    resource_type: 'raw', // ensures PDFs stay PDFs
+    resource_type: 'auto', // PDFs stay PDFs but remain publicly downloadable
     type: 'upload',
     use_filename: true,
     unique_filename: true,

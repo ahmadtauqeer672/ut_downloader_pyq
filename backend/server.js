@@ -65,8 +65,9 @@ function normalizeCloudinaryPdfUrl(url = '') {
 
 function buildSignedPdfUrl(publicId = '') {
   if (!publicId) return '';
+  const baseId = publicId.toLowerCase().endsWith('.pdf') ? publicId.slice(0, -4) : publicId;
   const expiresAt = Math.floor(Date.now() / 1000) + 3600; // 1 hour
-  return cloudinary.utils.private_download_url(publicId, 'pdf', {
+  return cloudinary.utils.private_download_url(baseId, 'pdf', {
     resource_type: 'raw',
     attachment: false,
     expires_at: expiresAt

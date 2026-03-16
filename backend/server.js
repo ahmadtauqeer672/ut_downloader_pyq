@@ -63,6 +63,16 @@ function normalizeCloudinaryPdfUrl(url = '') {
   return url;
 }
 
+function buildSignedPdfUrl(publicId = '') {
+  if (!publicId) return '';
+  const expiresAt = Math.floor(Date.now() / 1000) + 3600; // 1 hour
+  return cloudinary.utils.private_download_url(publicId, 'pdf', {
+    resource_type: 'raw',
+    attachment: false,
+    expires_at: expiresAt
+  });
+}
+
 async function uploadToCloudinary(localPath, originalName) {
   const folder = process.env.CLOUDINARY_FOLDER || undefined;
   const res = await cloudinary.uploader.upload(localPath, {
@@ -325,6 +335,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
+    const signedUrl = buildSignedPdfUrl(row.filePublicId);
+    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
 
@@ -357,6 +369,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
+    const signedUrl = buildSignedPdfUrl(row.filePublicId);
+    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
 
@@ -522,6 +536,8 @@ app.get(
   if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(row.driveUrl);
+    const signedUrl = buildSignedPdfUrl(row.filePublicId);
+    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
 
@@ -554,6 +570,8 @@ app.get(
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
+    const signedUrl = buildSignedPdfUrl(row.filePublicId);
+    if (signedUrl) return res.redirect(signedUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
     if (fileUrl) return res.redirect(fileUrl);
 

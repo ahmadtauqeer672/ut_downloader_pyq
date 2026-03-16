@@ -86,7 +86,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       .nav-inner {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: flex-end;
         gap: 0.9rem;
         min-height: 74px;
       }
@@ -99,6 +99,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         gap: 0.28rem;
         flex-wrap: wrap;
         align-items: center;
+        margin-left: auto;
+        justify-content: flex-end;
       }
       .nav a {
         text-decoration: none;
@@ -222,6 +224,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         .nav {
           width: 100%;
           gap: 0.4rem;
+          justify-content: flex-end;
         }
         .nav a {
           flex: 1 1 120px;

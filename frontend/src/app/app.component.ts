@@ -47,7 +47,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         </div>
         <div>
           <h4>Support</h4>
-          <p>Email: help&#64;pyqportal.in</p>
+          <p>Email: tauqeerahmad672&#64;gmail.com</p>
           <p>For wrong, duplicate, or outdated papers, contact admin for removal.</p>
         </div>
       </section>

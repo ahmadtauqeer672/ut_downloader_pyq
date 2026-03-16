@@ -126,7 +126,6 @@ interface CompetitiveYearGroup {
                     {{ paperLine(paper) }}
                   </a>
                   <div class="row-actions">
-                    <button type="button" class="preview" (click)="openPreview(paper)">Preview</button>
                     <a [href]="downloadHref(paper)" target="_blank" rel="noopener">Download</a>
                   </div>
                 </div>
@@ -147,7 +146,6 @@ interface CompetitiveYearGroup {
               <h3>Competitive Exams (Year-wise)</h3>
               <p>Select an exam to view all uploaded papers year-wise.</p>
             </div>
-            <button type="button" class="refresh-competitive" (click)="loadCompetitiveExams()">Refresh</button>
           </header>
 
           <p *ngIf="competitiveMessage" class="message">{{ competitiveMessage }}</p>
@@ -180,7 +178,6 @@ interface CompetitiveYearGroup {
                     {{ paper.title }} - {{ paper.year }}
                   </a>
                   <div class="row-actions">
-                    <a class="preview-link" [href]="competitivePreviewHref(paper)" target="_blank" rel="noopener">Open</a>
                     <a [href]="competitiveDownloadHref(paper)" target="_blank" rel="noopener">Download</a>
                   </div>
                 </div>
@@ -195,32 +192,6 @@ interface CompetitiveYearGroup {
       </div>
     </section>
 
-    <section class="preview-overlay" *ngIf="previewPaper" (click)="closePreview()">
-      <article class="preview-modal" (click)="$event.stopPropagation()">
-        <header>
-          <h3>{{ previewPaper.title }}</h3>
-          <button type="button" (click)="closePreview()">Close</button>
-        </header>
-
-        <div class="preview-body">
-          <iframe
-            *ngIf="previewType(previewPaper) === 'pdf'"
-            [src]="api.previewUrl(previewPaper.id)"
-            title="PDF Preview"
-          ></iframe>
-
-          <img
-            *ngIf="previewType(previewPaper) === 'image'"
-            [src]="api.previewUrl(previewPaper.id)"
-            alt="Paper preview"
-          />
-
-          <div class="unsupported" *ngIf="previewType(previewPaper) === 'other'">
-            Preview not supported for this file type. Use download.
-          </div>
-        </div>
-      </article>
-    </section>
   `,
   styles: [
     `
@@ -433,24 +404,17 @@ interface CompetitiveYearGroup {
       .row-actions {
         display: flex;
         gap: 0.5rem;
+        flex-wrap: wrap;
         flex-shrink: 0;
       }
-      .row-actions button,
       .row-actions a {
         border-radius: 8px;
         border: 1px solid #0f766e;
-        padding: 0.45rem 0.7rem;
+        padding: 0.52rem 0.8rem;
         text-decoration: none;
-        font-size: 0.84rem;
-        font-weight: 600;
+        font-size: 0.9rem;
+        font-weight: 700;
         cursor: pointer;
-      }
-      .row-actions button,
-      .row-actions .preview-link {
-        background: #ffffff;
-        color: #0f766e;
-      }
-      .row-actions a {
         background: #0f766e;
         color: #ffffff;
       }
@@ -464,15 +428,6 @@ interface CompetitiveYearGroup {
       .competitive-head p {
         margin: 0.2rem 0 0;
         color: #4d5d70;
-      }
-      .refresh-competitive {
-        border: 1px solid #0f766e;
-        background: #0f766e;
-        color: #fff;
-        border-radius: 8px;
-        padding: 0.5rem 0.72rem;
-        font-weight: 600;
-        cursor: pointer;
       }
       .exam-chip-wrap {
         display: flex;
@@ -503,59 +458,6 @@ interface CompetitiveYearGroup {
         color: #4d5d70;
         background: #ffffff;
       }
-      .preview-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(7, 16, 29, 0.6);
-        display: grid;
-        place-items: center;
-        z-index: 80;
-        padding: 1rem;
-      }
-      .preview-modal {
-        width: min(1000px, 95vw);
-        background: #ffffff;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #d5dfeb;
-      }
-      .preview-modal header {
-        padding: 0.65rem 0.8rem;
-        border-bottom: 1px solid #e4eaf3;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.8rem;
-      }
-      .preview-modal h3 {
-        margin: 0;
-        font-size: 1rem;
-      }
-      .preview-modal header button {
-        border: 1px solid #c7d3e1;
-        background: #ffffff;
-        border-radius: 8px;
-        padding: 0.4rem 0.65rem;
-        cursor: pointer;
-      }
-      .preview-body {
-        height: min(78vh, 760px);
-        background: #f8fafc;
-      }
-      .preview-body iframe,
-      .preview-body img {
-        width: 100%;
-        height: 100%;
-        border: 0;
-        display: block;
-        object-fit: contain;
-      }
-      .unsupported {
-        display: grid;
-        place-items: center;
-        height: 100%;
-        color: #475569;
-      }
       @media (max-width: 1080px) {
         .content-columns {
           grid-template-columns: 1fr;
@@ -582,6 +484,42 @@ interface CompetitiveYearGroup {
           align-items: flex-start;
         }
       }
+      @media (max-width: 640px) {
+        .hero {
+          padding: 0.9rem;
+          gap: 0.55rem;
+        }
+        .hero h2 {
+          font-size: 1.35rem;
+        }
+        .hero-stat {
+          flex: 1;
+          min-width: 140px;
+        }
+        .directory-card,
+        .competitive-card {
+          padding: 0.9rem 0.85rem;
+        }
+        .directory-card header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .panel button {
+          padding: 0.5rem 0.6rem;
+        }
+        .semester-head,
+        .year-head {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .row-actions {
+          width: 100%;
+        }
+        .row-actions a {
+          width: 100%;
+          text-align: center;
+        }
+      }
     `
   ]
 })
@@ -589,7 +527,6 @@ export class StudentPapersComponent implements OnInit {
   papers: Paper[] = [];
   semesterGroups: SemesterGroup[] = [];
   message = '';
-  previewPaper: Paper | null = null;
 
   competitiveExams: string[] = [];
   selectedCompetitiveExam = '';
@@ -742,29 +679,9 @@ export class StudentPapersComponent implements OnInit {
         error: () => {
           this.competitivePapers = [];
           this.competitiveYearGroups = [];
-          this.competitiveMessage = 'Failed to load competitive papers.';
-        }
-      });
-  }
-
-  openPreview(paper: Paper): void {
-    const driveUrl = (paper.driveUrl || '').trim();
-    if (driveUrl) {
-      window.open(driveUrl, '_blank', 'noopener');
-      return;
-    }
-    this.previewPaper = paper;
-  }
-
-  closePreview(): void {
-    this.previewPaper = null;
-  }
-
-  previewType(paper: Paper): 'pdf' | 'image' | 'other' {
-    const lower = (paper.fileName || paper.fileUrl || '').toLowerCase().split('?')[0];
-    if (lower.endsWith('.pdf')) return 'pdf';
-    if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image';
-    return 'other';
+        this.competitiveMessage = 'Failed to load competitive papers.';
+      }
+    });
   }
 
   semesterTitle(semester: number): string {

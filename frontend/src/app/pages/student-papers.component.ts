@@ -4,6 +4,7 @@ import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 interface UniversityMenu {
   name: string;
@@ -571,11 +572,12 @@ export class StudentPapersComponent implements OnInit {
   departmentFilter = '';
   semesterFilter = '';
 
-  readonly pageSize = 25;
+  readonly pageSize = 15;
   totalAcademicCount = 0;
   hasMorePapers = true;
   isLoadingPapers = false;
   nextOffset = 0;
+  private papersSub?: Subscription;
 
   readonly btechDepartments = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];
   readonly semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
@@ -670,9 +672,11 @@ export class StudentPapersComponent implements OnInit {
 
   private loadPapersPage(): void {
     if (this.isLoadingPapers || !this.hasMorePapers) return;
+    // Cancel any in-flight request to avoid slow responses overwriting latest filter selection.
+    this.papersSub?.unsubscribe();
     this.isLoadingPapers = true;
 
-    this.api
+    this.papersSub = this.api
       .listPapers(
         {
           university: this.universityFilter,

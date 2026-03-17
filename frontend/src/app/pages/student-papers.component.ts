@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
 
 interface UniversityMenu {
   name: string;
@@ -25,7 +24,6 @@ interface CompetitiveYearGroup {
   selector: 'app-student-papers',
   standalone: true,
   imports: [CommonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="hero">
       <div>
@@ -578,8 +576,6 @@ export class StudentPapersComponent implements OnInit {
   hasMorePapers = true;
   isLoadingPapers = false;
   nextOffset = 0;
-  private papersSub?: Subscription;
-  private currentPageSize = this.firstPageSize;
 
   readonly btechDepartments = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];
   readonly semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
@@ -663,24 +659,20 @@ export class StudentPapersComponent implements OnInit {
   }
 
   private resetAndLoadPapers(): void {
-    this.api.clearPapersCache();
     this.papers = [];
     this.semesterGroups = [];
     this.totalAcademicCount = 0;
     this.hasMorePapers = true;
     this.nextOffset = 0;
     this.message = '';
-    this.currentPageSize = this.firstPageSize;
     this.loadPapersPage();
   }
 
   private loadPapersPage(): void {
     if (this.isLoadingPapers || !this.hasMorePapers) return;
-    // Cancel any in-flight request to avoid slow responses overwriting latest filter selection.
-    this.papersSub?.unsubscribe();
     this.isLoadingPapers = true;
 
-    this.papersSub = this.api
+    this.api
       .listPapers(
         {
           university: this.universityFilter,
@@ -688,7 +680,7 @@ export class StudentPapersComponent implements OnInit {
           department: this.departmentFilter,
           semester: this.semesterFilter
         },
-        { limit: this.currentPageSize, offset: this.nextOffset }
+        { limit: this.pageSize, offset: this.nextOffset }
       )
       .pipe(finalize(() => (this.isLoadingPapers = false)))
       .subscribe({
@@ -707,10 +699,6 @@ export class StudentPapersComponent implements OnInit {
           this.papers = [...this.papers, ...items];
           this.buildSemesterGroups();
           this.nextOffset = res.nextOffset ?? this.nextOffset + items.length;
-          // After first batch, use larger page size for fewer round trips.
-          if (this.nextOffset > 0) {
-            this.currentPageSize = this.pageSize;
-          }
           this.hasMorePapers = res.hasMore;
           this.message = '';
         },

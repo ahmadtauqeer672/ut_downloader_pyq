@@ -1,5 +1,4 @@
 const express = require('express');
-const compression = require('compression');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
@@ -54,13 +53,6 @@ function guessMime(fileName = '') {
   return mimeByExt[ext] || 'application/octet-stream';
 }
 
-function extractCloudinaryVersion(url = '') {
-  const match = String(url).match(/\/v(\d+)\//);
-  if (!match) return null;
-  const num = Number(match[1]);
-  return Number.isFinite(num) ? num : null;
-}
-
 // Ensure any stored Cloudinary PDF URL points to the raw delivery endpoint.
 function normalizeCloudinaryPdfUrl(url = '') {
   if (!url) return url;
@@ -73,14 +65,8 @@ function normalizeCloudinaryPdfUrl(url = '') {
 
 // Build a public raw URL from a publicId (no signature, uses the latest version).
 function buildPublicRawUrl(publicId = '') {
-  return buildPublicRawUrlWithVersion(publicId, null);
-}
-
-function buildPublicRawUrlWithVersion(publicId = '', version = null) {
   if (!publicId) return '';
-  const options = { resource_type: 'raw', type: 'upload', secure: true };
-  if (version) options.version = version;
-  return cloudinary.url(publicId, options);
+  return cloudinary.url(publicId, { resource_type: 'raw', type: 'upload', secure: true });
 }
 
 async function uploadToCloudinary(localPath, originalName) {
@@ -147,11 +133,6 @@ async function initDb() {
     );
   `);
 
-  // Helpful index for common directory filters and ordering.
-  await pool.query(
-    'CREATE INDEX IF NOT EXISTS idx_papers_filters ON papers (university, course, department, semester, year, uploadedAt, id)'
-  );
-
   await pool.query(`
     CREATE TABLE IF NOT EXISTS competitive_papers (
       id SERIAL PRIMARY KEY,
@@ -166,9 +147,6 @@ async function initDb() {
     );
   `);
 
-  await pool.query(
-    'CREATE INDEX IF NOT EXISTS idx_competitive_exam_year ON competitive_papers (examName, year, uploadedAt, id)'
-  );
 }
 
 initDb().catch((err) => {
@@ -179,7 +157,6 @@ initDb().catch((err) => {
 // ---- Middleware ----
 const allowedOrigins = new Set(['http://localhost:4200', 'https://ut-downloader-pyq.vercel.app']);
 
-app.use(compression());
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -397,23 +374,13 @@ app.get(
       'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM papers WHERE id = $1',
       [id]
     );
-    const row = rows[0];
-    if (!row) return res.status(404).json({ message: 'Paper not found' });
+  const row = rows[0];
+  if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-
-    if (row.driveUrl) {
-      return res.redirect(row.driveUrl);
-    }
-
+    if (row.driveUrl) return res.redirect(row.driveUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) {
-      setLongCache();
-      return res.redirect(fileUrl);
-    }
-
-    const version = extractCloudinaryVersion(row.fileUrl);
-    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
+    if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -444,16 +411,10 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) {
-      setLongCache();
-      return res.redirect(fileUrl);
-    }
-    const version = extractCloudinaryVersion(row.fileUrl);
-    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
+    if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -617,16 +578,10 @@ app.get(
   const row = rows[0];
   if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-
     if (row.driveUrl) return res.redirect(row.driveUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) {
-      setLongCache();
-      return res.redirect(fileUrl);
-    }
-    const version = extractCloudinaryVersion(row.fileUrl);
-    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
+    if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -654,19 +609,13 @@ app.get(
       'SELECT id, title, examname AS "examName", year, filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM competitive_papers WHERE id = $1',
       [id]
     );
-    const row = rows[0];
-    if (!row) return res.status(404).json({ message: 'Paper not found' });
-
-    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  const row = rows[0];
+  if (!row) return res.status(404).json({ message: 'Paper not found' });
 
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) {
-      setLongCache();
-      return res.redirect(fileUrl);
-    }
-    const version = extractCloudinaryVersion(row.fileUrl);
-    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
+    if (fileUrl) return res.redirect(fileUrl);
+    const publicRaw = buildPublicRawUrl(row.filePublicId);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });

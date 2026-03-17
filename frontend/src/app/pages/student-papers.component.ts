@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
@@ -24,6 +24,7 @@ interface CompetitiveYearGroup {
   selector: 'app-student-papers',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="hero">
       <div>
@@ -116,14 +117,14 @@ interface CompetitiveYearGroup {
           <div class="loading" *ngIf="isLoadingPapers && !papers.length">Loading papers...</div>
 
           <div class="semester-wrap" *ngIf="semesterGroups.length > 0; else emptyAcademic">
-            <article class="semester-block" *ngFor="let group of semesterGroups">
+            <article class="semester-block" *ngFor="let group of semesterGroups; trackBy: trackSemester">
               <header class="semester-head">
                 <h4>{{ semesterTitle(group.semester) }}</h4>
                 <small>{{ group.papers.length }} papers</small>
               </header>
 
               <div class="semester-list">
-                <div class="paper-row" *ngFor="let paper of group.papers">
+                <div class="paper-row" *ngFor="let paper of group.papers; trackBy: trackPaper">
                   <a class="paper-link" [href]="downloadHref(paper)" target="_blank" rel="noopener">
                     {{ paperLine(paper) }}
                   </a>
@@ -174,14 +175,14 @@ interface CompetitiveYearGroup {
           </ng-template>
 
           <div class="competitive-year-wrap" *ngIf="selectedCompetitiveExam && competitiveYearGroups.length > 0">
-            <article class="year-block" *ngFor="let group of competitiveYearGroups">
+            <article class="year-block" *ngFor="let group of competitiveYearGroups; trackBy: trackYearGroup">
               <header class="year-head">
                 <h4>{{ selectedCompetitiveExam }} {{ group.year }} PAPERS</h4>
                 <small>{{ group.papers.length }} papers</small>
               </header>
 
               <div class="year-list">
-                <div class="paper-row" *ngFor="let paper of group.papers">
+                <div class="paper-row" *ngFor="let paper of group.papers; trackBy: trackCompetitivePaper">
                   <a class="paper-link" [href]="competitiveDownloadHref(paper)" target="_blank" rel="noopener">
                     {{ paper.title }} - {{ paper.year }}
                   </a>
@@ -711,6 +712,22 @@ export class StudentPapersComponent implements OnInit {
       });
   }
 
+  trackSemester(_index: number, group: SemesterGroup): number {
+    return group.semester;
+  }
+
+  trackPaper(_index: number, paper: Paper): number {
+    return paper.id;
+  }
+
+  trackYearGroup(_index: number, group: CompetitiveYearGroup): number {
+    return group.year;
+  }
+
+  trackCompetitivePaper(_index: number, paper: CompetitivePaper): number {
+    return paper.id;
+  }
+
   loadCompetitiveExams(): void {
     this.api.listCompetitiveExams().subscribe({
       next: (rows) => {
@@ -722,10 +739,13 @@ export class StudentPapersComponent implements OnInit {
           return;
         }
 
-        if (!this.selectedCompetitiveExam || !rows.includes(this.selectedCompetitiveExam)) {
-          this.selectedCompetitiveExam = rows[0];
+        if (this.selectedCompetitiveExam && rows.includes(this.selectedCompetitiveExam)) {
+          this.loadCompetitivePapers();
+        } else {
+          this.selectedCompetitiveExam = '';
+          this.competitivePapers = [];
+          this.competitiveYearGroups = [];
         }
-        this.loadCompetitivePapers();
       },
       error: () => {
         this.competitiveExams = [];

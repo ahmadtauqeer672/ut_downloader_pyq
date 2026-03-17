@@ -54,6 +54,13 @@ function guessMime(fileName = '') {
   return mimeByExt[ext] || 'application/octet-stream';
 }
 
+function extractCloudinaryVersion(url = '') {
+  const match = String(url).match(/\/v(\d+)\//);
+  if (!match) return null;
+  const num = Number(match[1]);
+  return Number.isFinite(num) ? num : null;
+}
+
 // Ensure any stored Cloudinary PDF URL points to the raw delivery endpoint.
 function normalizeCloudinaryPdfUrl(url = '') {
   if (!url) return url;
@@ -66,8 +73,14 @@ function normalizeCloudinaryPdfUrl(url = '') {
 
 // Build a public raw URL from a publicId (no signature, uses the latest version).
 function buildPublicRawUrl(publicId = '') {
+  return buildPublicRawUrlWithVersion(publicId, null);
+}
+
+function buildPublicRawUrlWithVersion(publicId = '', version = null) {
   if (!publicId) return '';
-  return cloudinary.url(publicId, { resource_type: 'raw', type: 'upload', secure: true });
+  const options = { resource_type: 'raw', type: 'upload', secure: true };
+  if (version) options.version = version;
+  return cloudinary.url(publicId, options);
 }
 
 async function uploadToCloudinary(localPath, originalName) {
@@ -387,10 +400,20 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
-    if (row.driveUrl) return res.redirect(row.driveUrl);
+    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    if (row.driveUrl) {
+      return res.redirect(row.driveUrl);
+    }
+
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) return res.redirect(fileUrl);
-    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (fileUrl) {
+      setLongCache();
+      return res.redirect(fileUrl);
+    }
+
+    const version = extractCloudinaryVersion(row.fileUrl);
+    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -421,10 +444,16 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) return res.redirect(fileUrl);
-    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (fileUrl) {
+      setLongCache();
+      return res.redirect(fileUrl);
+    }
+    const version = extractCloudinaryVersion(row.fileUrl);
+    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -588,10 +617,16 @@ app.get(
   const row = rows[0];
   if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
     if (row.driveUrl) return res.redirect(row.driveUrl);
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) return res.redirect(fileUrl);
-    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (fileUrl) {
+      setLongCache();
+      return res.redirect(fileUrl);
+    }
+    const version = extractCloudinaryVersion(row.fileUrl);
+    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });
@@ -622,10 +657,16 @@ app.get(
     const row = rows[0];
     if (!row) return res.status(404).json({ message: 'Paper not found' });
 
+    const setLongCache = () => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
     if (row.driveUrl) return res.redirect(toDriveDownloadUrl(row.driveUrl));
     const fileUrl = normalizeCloudinaryPdfUrl(row.fileUrl);
-    if (fileUrl) return res.redirect(fileUrl);
-    const publicRaw = buildPublicRawUrl(row.filePublicId);
+    if (fileUrl) {
+      setLongCache();
+      return res.redirect(fileUrl);
+    }
+    const version = extractCloudinaryVersion(row.fileUrl);
+    const publicRaw = buildPublicRawUrlWithVersion(row.filePublicId, version);
     if (publicRaw) return res.redirect(publicRaw);
 
     if (!row.fileName) return res.status(404).json({ message: 'File not found on server' });

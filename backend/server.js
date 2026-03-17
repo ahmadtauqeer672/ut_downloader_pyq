@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
@@ -165,6 +166,7 @@ initDb().catch((err) => {
 // ---- Middleware ----
 const allowedOrigins = new Set(['http://localhost:4200', 'https://ut-downloader-pyq.vercel.app']);
 
+app.use(compression());
 app.use(
   cors({
     origin: (origin, callback) => {

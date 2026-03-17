@@ -572,12 +572,14 @@ export class StudentPapersComponent implements OnInit {
   departmentFilter = '';
   semesterFilter = '';
 
-  readonly pageSize = 15;
+  readonly firstPageSize = 8;
+  readonly pageSize = 25;
   totalAcademicCount = 0;
   hasMorePapers = true;
   isLoadingPapers = false;
   nextOffset = 0;
   private papersSub?: Subscription;
+  private currentPageSize = this.firstPageSize;
 
   readonly btechDepartments = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];
   readonly semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
@@ -668,6 +670,7 @@ export class StudentPapersComponent implements OnInit {
     this.hasMorePapers = true;
     this.nextOffset = 0;
     this.message = '';
+    this.currentPageSize = this.firstPageSize;
     this.loadPapersPage();
   }
 
@@ -685,7 +688,7 @@ export class StudentPapersComponent implements OnInit {
           department: this.departmentFilter,
           semester: this.semesterFilter
         },
-        { limit: this.pageSize, offset: this.nextOffset }
+        { limit: this.currentPageSize, offset: this.nextOffset }
       )
       .pipe(finalize(() => (this.isLoadingPapers = false)))
       .subscribe({
@@ -704,6 +707,10 @@ export class StudentPapersComponent implements OnInit {
           this.papers = [...this.papers, ...items];
           this.buildSemesterGroups();
           this.nextOffset = res.nextOffset ?? this.nextOffset + items.length;
+          // After first batch, use larger page size for fewer round trips.
+          if (this.nextOffset > 0) {
+            this.currentPageSize = this.pageSize;
+          }
           this.hasMorePapers = res.hasMore;
           this.message = '';
         },

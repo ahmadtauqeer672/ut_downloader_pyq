@@ -13,6 +13,20 @@ export interface PaperFilters {
   year?: string;
 }
 
+export interface PaperListResponse {
+  items: Paper[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+}
+
+export interface PaginationOptions {
+  limit?: number;
+  offset?: number;
+}
+
 export interface CompetitivePaperFilters {
   examName?: string;
   year?: string;
@@ -24,15 +38,29 @@ export class ApiService {
 
   constructor(private readonly http: HttpClient) {}
 
-  listPapers(filters: PaperFilters): Observable<Paper[]> {
+  listPapers(filters: PaperFilters): Observable<Paper[]>;
+  listPapers(filters: PaperFilters, pagination: PaginationOptions): Observable<PaperListResponse>;
+  listPapers(filters: PaperFilters, pagination?: PaginationOptions): Observable<PaperListResponse | Paper[]> {
+    const usePagination = Boolean(pagination);
     let params = new HttpParams();
+    if (usePagination) {
+      params = params.set('paginate', 'true');
+    }
     if (filters.university?.trim()) params = params.set('university', filters.university.trim());
     if (filters.course?.trim()) params = params.set('course', filters.course.trim());
     if (filters.department?.trim()) params = params.set('department', filters.department.trim());
     if (filters.semester?.trim()) params = params.set('semester', filters.semester.trim());
     if (filters.subject?.trim()) params = params.set('subject', filters.subject.trim());
     if (filters.year?.trim()) params = params.set('year', filters.year.trim());
-    return this.http.get<Paper[]>(`${this.baseUrl}/papers`, { params });
+
+    if (usePagination && pagination?.limit !== undefined) {
+      params = params.set('limit', String(pagination.limit));
+    }
+    if (usePagination && pagination?.offset !== undefined) {
+      params = params.set('offset', String(pagination.offset));
+    }
+
+    return this.http.get<PaperListResponse | Paper[]>(`${this.baseUrl}/papers`, { params });
   }
 
   uploadPaper(form: FormData, adminKey: string): Observable<unknown> {

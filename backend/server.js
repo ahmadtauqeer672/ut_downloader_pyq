@@ -182,9 +182,23 @@ app.get(
 app.get(
   '/api/papers',
   asyncHandler(async (req, res) => {
-    const { university = '', course = '', department = '', semester = '', subject = '', year = '' } = req.query;
-    let sql =
-      'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM papers WHERE 1=1';
+    const {
+      university = '',
+      course = '',
+      department = '',
+      semester = '',
+      subject = '',
+      year = '',
+      limit = '',
+      offset = '',
+      paginate = 'false'
+    } = req.query;
+
+    const shouldPaginate = String(paginate).toLowerCase() === 'true';
+
+    const selectBase =
+      'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt"';
+    let sql = ' FROM papers WHERE 1=1';
     const params = [];
 
     if (university) {
@@ -212,8 +226,40 @@ app.get(
       sql += ` AND year = $${params.length}`;
     }
 
-    sql += ' ORDER BY year DESC, uploadedAt DESC, id DESC';
-    const { rows } = await pool.query(sql, params);
+    const orderClause = ' ORDER BY year DESC, uploadedAt DESC, id DESC';
+
+    if (shouldPaginate) {
+      const parsedLimit = Number(limit);
+      const parsedOffset = Number(offset);
+      const limitValue = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 100);
+      const offsetValue = Math.max(Number.isFinite(parsedOffset) ? parsedOffset : 0, 0);
+
+      const limitIndex = params.length + 1;
+      const offsetIndex = params.length + 2;
+      params.push(limitValue, offsetValue);
+
+      const paginatedSql = `
+        ${selectBase}, COUNT(*) OVER() AS "totalCount"
+        ${sql}
+        ${orderClause}
+        LIMIT $${limitIndex} OFFSET $${offsetIndex}
+      `;
+
+      const { rows } = await pool.query(paginatedSql, params);
+      const total = rows[0]?.totalCount ? Number(rows[0].totalCount) : 0;
+      const items = rows.map(({ totalCount, ...rest }) => rest);
+      const hasMore = offsetValue + items.length < total;
+      return res.json({
+        items,
+        total,
+        limit: limitValue,
+        offset: offsetValue,
+        hasMore,
+        nextOffset: hasMore ? offsetValue + limitValue : null
+      });
+    }
+
+    const { rows } = await pool.query(`${selectBase}${sql}${orderClause}`, params);
     res.json(rows);
   })
 );

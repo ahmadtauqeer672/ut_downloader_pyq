@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
+import { finalize } from 'rxjs/operators';
 
 interface UniversityMenu {
   name: string;
@@ -32,7 +33,7 @@ interface CompetitiveYearGroup {
       </div>
       <div class="hero-stat-wrap">
         <div class="hero-stat">
-          <span>{{ papers.length }}</span>
+          <span>{{ totalAcademicCount }}</span>
           <small>Academic Papers</small>
         </div>
         <div class="hero-stat">
@@ -112,6 +113,7 @@ interface CompetitiveYearGroup {
 
         <section class="result-wrap">
           <p *ngIf="message" class="message">{{ message }}</p>
+          <div class="loading" *ngIf="isLoadingPapers && !papers.length">Loading papers...</div>
 
           <div class="semester-wrap" *ngIf="semesterGroups.length > 0; else emptyAcademic">
             <article class="semester-block" *ngFor="let group of semesterGroups">
@@ -131,6 +133,12 @@ interface CompetitiveYearGroup {
                 </div>
               </div>
             </article>
+
+            <div class="load-more" *ngIf="hasMorePapers">
+              <button type="button" (click)="loadMorePapers()" [disabled]="isLoadingPapers">
+                {{ isLoadingPapers ? 'Loading more...' : 'Load more papers' }}
+              </button>
+            </div>
           </div>
 
           <ng-template #emptyAcademic>
@@ -458,6 +466,29 @@ interface CompetitiveYearGroup {
         color: #4d5d70;
         background: #ffffff;
       }
+      .loading {
+        margin: 0.4rem 0;
+        color: #0f2f7a;
+        font-weight: 600;
+      }
+      .load-more {
+        display: flex;
+        justify-content: center;
+        margin: 0.6rem 0 0.2rem;
+      }
+      .load-more button {
+        border-radius: 10px;
+        border: 1px solid #0f766e;
+        padding: 0.55rem 1rem;
+        background: #0f766e;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .load-more button[disabled] {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
       @media (max-width: 1080px) {
         .content-columns {
           grid-template-columns: 1fr;
@@ -539,6 +570,12 @@ export class StudentPapersComponent implements OnInit {
   departmentFilter = '';
   semesterFilter = '';
 
+  readonly pageSize = 25;
+  totalAcademicCount = 0;
+  hasMorePapers = true;
+  isLoadingPapers = false;
+  nextOffset = 0;
+
   readonly btechDepartments = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];
   readonly semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
@@ -559,6 +596,16 @@ export class StudentPapersComponent implements OnInit {
     this.loadCompetitiveExams();
   }
 
+  @HostListener('window:scroll', [])
+  onWindowScroll(): void {
+    if (this.isLoadingPapers || !this.hasMorePapers) return;
+    const doc = document.documentElement;
+    const distanceFromBottom = doc.scrollHeight - (doc.scrollTop + doc.clientHeight);
+    if (distanceFromBottom < 320) {
+      this.loadMorePapers();
+    }
+  }
+
   isBtechSelected(): boolean {
     return this.courseFilter.trim().toUpperCase() === 'BTECH';
   }
@@ -569,61 +616,97 @@ export class StudentPapersComponent implements OnInit {
     this.courseFilter = '';
     this.departmentFilter = '';
     this.semesterFilter = '';
-    this.loadPapers();
+    this.resetAndLoadPapers();
   }
 
   pickAllCourses(): void {
     this.courseFilter = '';
     this.departmentFilter = '';
     this.semesterFilter = '';
-    this.loadPapers();
+    this.resetAndLoadPapers();
   }
 
   pickCourse(course: string): void {
     this.courseFilter = course;
     this.departmentFilter = '';
     this.semesterFilter = '';
-    this.loadPapers();
+    this.resetAndLoadPapers();
   }
 
   pickAllDepartments(): void {
     this.departmentFilter = '';
-    this.loadPapers();
+    this.resetAndLoadPapers();
   }
 
   pickDepartment(department: string): void {
     this.departmentFilter = department;
-    this.loadPapers();
+    this.resetAndLoadPapers();
   }
 
   pickAllSemesters(): void {
     this.semesterFilter = '';
-    this.loadPapers();
+    this.resetAndLoadPapers();
   }
 
   pickSemester(semester: string): void {
     this.semesterFilter = semester;
-    this.loadPapers();
+    this.resetAndLoadPapers();
   }
 
-  loadPapers(): void {
+  loadMorePapers(): void {
+    this.loadPapersPage();
+  }
+
+  private resetAndLoadPapers(): void {
+    this.papers = [];
+    this.semesterGroups = [];
+    this.totalAcademicCount = 0;
+    this.hasMorePapers = true;
+    this.nextOffset = 0;
+    this.message = '';
+    this.loadPapersPage();
+  }
+
+  private loadPapersPage(): void {
+    if (this.isLoadingPapers || !this.hasMorePapers) return;
+    this.isLoadingPapers = true;
+
     this.api
-      .listPapers({
-        university: this.universityFilter,
-        course: this.courseFilter,
-        department: this.departmentFilter,
-        semester: this.semesterFilter
-      })
+      .listPapers(
+        {
+          university: this.universityFilter,
+          course: this.courseFilter,
+          department: this.departmentFilter,
+          semester: this.semesterFilter
+        },
+        { limit: this.pageSize, offset: this.nextOffset }
+      )
+      .pipe(finalize(() => (this.isLoadingPapers = false)))
       .subscribe({
-        next: (rows) => {
-          this.papers = rows;
+        next: (res) => {
+          const items = res.items || [];
+          this.totalAcademicCount = res.total ?? items.length;
+
+          if (this.nextOffset === 0 && !items.length) {
+            this.papers = [];
+            this.semesterGroups = [];
+            this.hasMorePapers = false;
+            this.message = 'No academic papers found for this selection.';
+            return;
+          }
+
+          this.papers = [...this.papers, ...items];
           this.buildSemesterGroups();
+          this.nextOffset = res.nextOffset ?? this.nextOffset + items.length;
+          this.hasMorePapers = res.hasMore;
           this.message = '';
         },
         error: () => {
-          this.papers = [];
-          this.semesterGroups = [];
-          this.message = 'Failed to load papers.';
+          if (!this.papers.length) {
+            this.message = 'Failed to load papers.';
+            this.semesterGroups = [];
+          }
+          this.hasMorePapers = false;
         }
       });
   }
@@ -679,9 +762,9 @@ export class StudentPapersComponent implements OnInit {
         error: () => {
           this.competitivePapers = [];
           this.competitiveYearGroups = [];
-        this.competitiveMessage = 'Failed to load competitive papers.';
-      }
-    });
+          this.competitiveMessage = 'Failed to load competitive papers.';
+        }
+      });
   }
 
   semesterTitle(semester: number): string {

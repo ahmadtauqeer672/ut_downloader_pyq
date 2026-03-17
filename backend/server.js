@@ -133,6 +133,11 @@ async function initDb() {
     );
   `);
 
+  // Helpful index for common directory filters and ordering.
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_papers_filters ON papers (university, course, department, semester, year, uploadedAt, id)'
+  );
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS competitive_papers (
       id SERIAL PRIMARY KEY,
@@ -146,6 +151,10 @@ async function initDb() {
       uploadedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_competitive_exam_year ON competitive_papers (examName, year, uploadedAt, id)'
+  );
 }
 
 initDb().catch((err) => {

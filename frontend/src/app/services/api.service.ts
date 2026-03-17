@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
+import { shareReplay } from 'rxjs/operators';
 
 export interface PaperFilters {
   university?: string;
@@ -35,6 +36,7 @@ export interface CompetitivePaperFilters {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly baseUrl = 'https://ut-downloader-pyq.onrender.com/api';
+  private papersCache = new Map<string, Observable<PaperListResponse | Paper[]>>();
 
   constructor(private readonly http: HttpClient) {}
 
@@ -60,7 +62,20 @@ export class ApiService {
       params = params.set('offset', String(pagination.offset));
     }
 
-    return this.http.get<PaperListResponse | Paper[]>(`${this.baseUrl}/papers`, { params });
+    const cacheKey = usePagination ? this.buildCacheKey(filters, pagination) : '';
+    if (usePagination && this.papersCache.has(cacheKey)) {
+      return this.papersCache.get(cacheKey)!;
+    }
+
+    const request$ = this.http
+      .get<PaperListResponse | Paper[]>(`${this.baseUrl}/papers`, { params })
+      .pipe(usePagination ? shareReplay(1) : (src) => src);
+
+    if (usePagination) {
+      this.papersCache.set(cacheKey, request$);
+    }
+
+    return request$;
   }
 
   uploadPaper(form: FormData, adminKey: string): Observable<unknown> {
@@ -120,5 +135,23 @@ export class ApiService {
 
   competitivePreviewUrl(id: number): string {
     return `${this.baseUrl}/competitive-papers/${id}/preview`;
+  }
+
+  clearPapersCache(): void {
+    this.papersCache.clear();
+  }
+
+  private buildCacheKey(filters: PaperFilters, pagination?: PaginationOptions): string {
+    return JSON.stringify({
+      f: {
+        university: filters.university?.trim() || '',
+        course: filters.course?.trim() || '',
+        department: filters.department?.trim() || '',
+        semester: filters.semester?.trim() || '',
+        subject: filters.subject?.trim() || '',
+        year: filters.year?.trim() || ''
+      },
+      p: pagination || {}
+    });
   }
 }

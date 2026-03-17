@@ -661,6 +661,7 @@ export class StudentPapersComponent implements OnInit {
   }
 
   private resetAndLoadPapers(): void {
+    this.api.clearPapersCache();
     this.papers = [];
     this.semesterGroups = [];
     this.totalAcademicCount = 0;

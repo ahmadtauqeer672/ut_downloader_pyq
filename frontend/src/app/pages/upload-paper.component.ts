@@ -5,6 +5,11 @@ import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
 
+interface UploadUniversityOption {
+  name: string;
+  courses: string[];
+}
+
 @Component({
   selector: 'app-upload-paper',
   standalone: true,
@@ -16,9 +21,9 @@ import { CompetitivePaper } from '../models/competitive-paper';
 
       <form (submit)="uploadAcademic($event)" class="grid">
         <input [(ngModel)]="uploadTitle" name="uploadTitle" placeholder="Paper Title" required />
-        <select [(ngModel)]="uploadUniversity" name="uploadUniversity" required>
+        <select [(ngModel)]="uploadUniversity" name="uploadUniversity" (change)="onUniversityChange()" required>
           <option value="" disabled>Select university</option>
-          <option *ngFor="let u of universityOptions" [value]="u">{{ u }}</option>
+          <option *ngFor="let u of universityOptions" [value]="u.name">{{ u.name }}</option>
         </select>
 
         <select [(ngModel)]="uploadCourse" name="uploadCourse" (change)="onCourseChange()" required>
@@ -260,8 +265,14 @@ import { CompetitivePaper } from '../models/competitive-paper';
   ]
 })
 export class UploadPaperComponent implements OnInit {
-  readonly universityOptions = ['PTU', 'PU Chandigarh', 'GNDU', 'MDU', 'GTU', 'OTHER'];
-  readonly courseOptions = ['BTECH', 'BCA', 'BBA', 'MBA', 'MCA', 'MTECH', 'BSC', 'B.COM', 'OTHER'];
+  readonly universityOptions: UploadUniversityOption[] = [
+    { name: 'PTU', courses: ['BTECH', 'BCA', 'BBA', 'MBA', 'MCA'] },
+    { name: 'PU Chandigarh', courses: ['BTECH', 'BSC', 'BCA', 'MTECH'] },
+    { name: 'GNDU', courses: ['BTECH', 'B.COM', 'MCA', 'MSC-IT'] },
+    { name: 'MDU', courses: ['BTECH', 'BBA', 'MTECH', 'MBA'] },
+    { name: 'GTU', courses: ['BTECH', 'BPHARM', 'MBA', 'MCA'] },
+    { name: 'OTHER', courses: ['OTHER'] }
+  ];
   readonly btechDepartments = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];
   readonly semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
@@ -301,6 +312,7 @@ export class UploadPaperComponent implements OnInit {
   constructor(private readonly api: ApiService) {}
 
   ngOnInit(): void {
+    this.onUniversityChange();
     this.loadUploadedPapers();
     this.loadCompetitiveExams();
     this.loadCompetitivePapers();
@@ -314,6 +326,21 @@ export class UploadPaperComponent implements OnInit {
   onCompetitiveFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.competitiveSelectedFile = input.files?.[0] ?? null;
+  }
+
+  get courseOptions(): string[] {
+    return this.selectedUniversityOption?.courses ?? [];
+  }
+
+  private get selectedUniversityOption(): UploadUniversityOption | undefined {
+    return this.universityOptions.find((option) => option.name === this.uploadUniversity);
+  }
+
+  onUniversityChange(): void {
+    if (!this.courseOptions.includes(this.uploadCourse)) {
+      this.uploadCourse = '';
+    }
+    this.onCourseChange();
   }
 
   onCourseChange(): void {

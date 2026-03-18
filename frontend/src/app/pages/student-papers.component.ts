@@ -164,6 +164,7 @@ interface CompetitiveYearGroup {
               *ngFor="let exam of competitiveExams"
               (click)="selectCompetitiveExam(exam)"
               [class.active]="selectedCompetitiveExam === exam"
+              [disabled]="isLoadingCompetitivePapers && selectedCompetitiveExam === exam"
             >
               {{ exam }}
             </button>
@@ -172,6 +173,10 @@ interface CompetitiveYearGroup {
           <ng-template #noExam>
             <div class="empty">No competitive exams uploaded yet.</div>
           </ng-template>
+
+          <div class="loading" *ngIf="selectedCompetitiveExam && isLoadingCompetitivePapers">
+            Loading papers for {{ selectedCompetitiveExam }}...
+          </div>
 
           <div class="competitive-year-wrap" *ngIf="selectedCompetitiveExam && competitiveYearGroups.length > 0">
             <article class="year-block" *ngFor="let group of competitiveYearGroups; trackBy: trackYearGroup">
@@ -193,7 +198,7 @@ interface CompetitiveYearGroup {
             </article>
           </div>
 
-          <div class="empty" *ngIf="selectedCompetitiveExam && competitiveYearGroups.length === 0">
+          <div class="empty" *ngIf="selectedCompetitiveExam && !isLoadingCompetitivePapers && competitiveYearGroups.length === 0">
             No papers found for {{ selectedCompetitiveExam }}.
           </div>
         </section>
@@ -564,6 +569,8 @@ export class StudentPapersComponent implements OnInit {
   competitivePapers: CompetitivePaper[] = [];
   competitiveYearGroups: CompetitiveYearGroup[] = [];
   competitiveMessage = '';
+  isLoadingCompetitivePapers = false;
+  private competitiveRequestId = 0;
 
   universityFilter = '';
   courseFilter = '';
@@ -732,6 +739,7 @@ export class StudentPapersComponent implements OnInit {
     this.api.listCompetitiveExams().subscribe({
       next: (rows) => {
         this.competitiveExams = rows;
+        this.competitiveMessage = '';
         if (!rows.length) {
           this.selectedCompetitiveExam = '';
           this.competitivePapers = [];
@@ -758,31 +766,50 @@ export class StudentPapersComponent implements OnInit {
   }
 
   selectCompetitiveExam(exam: string): void {
+    if (this.selectedCompetitiveExam === exam && this.isLoadingCompetitivePapers) {
+      return;
+    }
     this.selectedCompetitiveExam = exam;
     this.loadCompetitivePapers();
   }
 
   loadCompetitivePapers(): void {
     if (!this.selectedCompetitiveExam) {
+      this.isLoadingCompetitivePapers = false;
       this.competitivePapers = [];
       this.competitiveYearGroups = [];
       return;
     }
 
+    const examName = this.selectedCompetitiveExam;
+    const requestId = ++this.competitiveRequestId;
+    this.isLoadingCompetitivePapers = true;
+    this.competitiveMessage = '';
+    this.competitivePapers = [];
+    this.competitiveYearGroups = [];
+
     this.api
       .listCompetitivePapers({
-        examName: this.selectedCompetitiveExam
+        examName
       })
       .subscribe({
         next: (rows) => {
+          if (requestId !== this.competitiveRequestId || this.selectedCompetitiveExam !== examName) {
+            return;
+          }
           this.competitivePapers = rows;
           this.buildCompetitiveYearGroups();
           this.competitiveMessage = '';
+          this.isLoadingCompetitivePapers = false;
         },
         error: () => {
+          if (requestId !== this.competitiveRequestId || this.selectedCompetitiveExam !== examName) {
+            return;
+          }
           this.competitivePapers = [];
           this.competitiveYearGroups = [];
           this.competitiveMessage = 'Failed to load competitive papers.';
+          this.isLoadingCompetitivePapers = false;
         }
       });
   }

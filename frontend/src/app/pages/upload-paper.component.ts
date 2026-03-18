@@ -10,6 +10,25 @@ interface UploadUniversityOption {
   courses: string[];
 }
 
+interface AcademicEditDraft {
+  title: string;
+  university: string;
+  course: string;
+  department: string;
+  semester: string;
+  subject: string;
+  year: string;
+  examType: string;
+  driveUrl: string;
+}
+
+interface CompetitiveEditDraft {
+  examName: string;
+  title: string;
+  year: string;
+  driveUrl: string;
+}
+
 @Component({
   selector: 'app-upload-paper',
   standalone: true,
@@ -59,13 +78,13 @@ interface UploadUniversityOption {
         <button type="button" class="refresh-btn" (click)="loadUploadedPapers()">Refresh</button>
       </div>
 
-      <p class="hint">Enter Admin Key for delete access.</p>
+      <p class="hint">Enter Admin Key for edit and delete access.</p>
       <div class="manage-auth">
         <input
           [(ngModel)]="manageAdminKey"
           name="manageAdminKey"
           type="password"
-          placeholder="Admin Key for Academic Delete"
+          placeholder="Admin Key for Academic Edit/Delete"
         />
       </div>
       <p *ngIf="manageMessage" class="manage-message">{{ manageMessage }}</p>
@@ -75,21 +94,73 @@ interface UploadUniversityOption {
 
       <div class="paper-list" *ngIf="!loadingPapers && papers.length > 0">
         <article class="paper-row" *ngFor="let paper of papers">
-          <div class="paper-meta">
-            <h4>{{ paper.title }}</h4>
-            <p>
-              {{ paper.course }}{{ paper.department ? ' / ' + paper.department : '' }}
-              {{ paper.semester ? '/ Sem ' + paper.semester : '' }} / {{ paper.subject }} / {{ paper.year }}
-            </p>
+          <div class="paper-main">
+            <div class="paper-meta">
+              <h4>{{ paper.title }}</h4>
+              <p>
+                {{ paper.course }}{{ paper.department ? ' / ' + paper.department : '' }}
+                {{ paper.semester ? '/ Sem ' + paper.semester : '' }} / {{ paper.subject }} / {{ paper.year }}
+              </p>
+            </div>
+
+            <form *ngIf="editingPaperId === paper.id && editPaperDraft" class="edit-grid" (submit)="savePaperEdit($event, paper)">
+              <input [(ngModel)]="editPaperDraft.title" name="editTitle" placeholder="Paper Title" required />
+
+              <select [(ngModel)]="editPaperDraft.university" name="editUniversity" (change)="onEditUniversityChange()" required>
+                <option value="" disabled>Select university</option>
+                <option *ngFor="let u of universityOptions" [value]="u.name">{{ u.name }}</option>
+              </select>
+
+              <select [(ngModel)]="editPaperDraft.course" name="editCourse" (change)="onEditCourseChange()" required>
+                <option value="" disabled>Select course</option>
+                <option *ngFor="let c of editCourseOptions" [value]="c">{{ c }}</option>
+              </select>
+
+              <select *ngIf="isEditingBtechSelected()" [(ngModel)]="editPaperDraft.department" name="editDepartment" required>
+                <option value="" disabled>Select BTECH department</option>
+                <option *ngFor="let d of btechDepartments" [value]="d">{{ d }}</option>
+              </select>
+
+              <select *ngIf="isEditingBtechSelected()" [(ngModel)]="editPaperDraft.semester" name="editSemester" required>
+                <option value="" disabled>Select semester</option>
+                <option *ngFor="let s of semesters" [value]="s">Semester {{ s }}</option>
+              </select>
+
+              <input [(ngModel)]="editPaperDraft.subject" name="editSubject" placeholder="Subject" required />
+              <input [(ngModel)]="editPaperDraft.year" name="editYear" placeholder="Year" required />
+              <input [(ngModel)]="editPaperDraft.examType" name="editExamType" placeholder="Exam Type" required />
+              <input [(ngModel)]="editPaperDraft.driveUrl" name="editDriveUrl" placeholder="New Google Drive Link (optional)" />
+              <input type="file" (change)="onEditFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+
+              <p class="edit-note">Leave replacement file and Drive link empty to keep the current file source.</p>
+
+              <div class="row-actions edit-actions">
+                <button type="submit" class="save-btn" [disabled]="saveInProgressId === paper.id">
+                  {{ saveInProgressId === paper.id ? 'Saving...' : 'Save' }}
+                </button>
+                <button type="button" class="cancel-btn" (click)="cancelPaperEdit()" [disabled]="saveInProgressId === paper.id">Cancel</button>
+              </div>
+            </form>
           </div>
-          <button
-            type="button"
-            class="delete-btn"
-            (click)="deletePaper(paper)"
-            [disabled]="deleteInProgressId === paper.id"
-          >
-            {{ deleteInProgressId === paper.id ? 'Deleting...' : 'Delete' }}
-          </button>
+
+          <div class="row-actions">
+            <button
+              type="button"
+              class="edit-btn"
+              (click)="startPaperEdit(paper)"
+              [disabled]="saveInProgressId === paper.id"
+            >
+              {{ editingPaperId === paper.id ? 'Editing' : 'Edit' }}
+            </button>
+            <button
+              type="button"
+              class="delete-btn"
+              (click)="deletePaper(paper)"
+              [disabled]="deleteInProgressId === paper.id || saveInProgressId === paper.id"
+            >
+              {{ deleteInProgressId === paper.id ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
         </article>
       </div>
     </section>
@@ -117,13 +188,13 @@ interface UploadUniversityOption {
         <button type="button" class="refresh-btn" (click)="loadCompetitivePapers()">Refresh</button>
       </div>
 
-      <p class="hint">Select exam (optional) and delete old competitive papers.</p>
+      <p class="hint">Select exam (optional) and edit or delete competitive papers.</p>
       <div class="manage-grid">
         <input
           [(ngModel)]="manageCompetitiveAdminKey"
           name="manageCompetitiveAdminKey"
           type="password"
-          placeholder="Admin Key for Competitive Delete"
+          placeholder="Admin Key for Competitive Edit/Delete"
         />
         <select [(ngModel)]="manageCompetitiveExamFilter" name="manageCompetitiveExamFilter" (change)="loadCompetitivePapers()">
           <option value="">All Competitive Exams</option>
@@ -137,18 +208,59 @@ interface UploadUniversityOption {
 
       <div class="paper-list" *ngIf="!loadingCompetitivePapers && competitivePapers.length > 0">
         <article class="paper-row" *ngFor="let paper of competitivePapers">
-          <div class="paper-meta">
-            <h4>{{ paper.title }}</h4>
-            <p>{{ paper.examName }} / Year {{ paper.year }}</p>
+          <div class="paper-main">
+            <div class="paper-meta">
+              <h4>{{ paper.title }}</h4>
+              <p>{{ paper.examName }} / Year {{ paper.year }}</p>
+            </div>
+
+            <form
+              *ngIf="editingCompetitivePaperId === paper.id && editCompetitiveDraft"
+              class="edit-grid"
+              (submit)="saveCompetitivePaperEdit($event, paper)"
+            >
+              <input [(ngModel)]="editCompetitiveDraft.examName" name="editCompetitiveExamName" placeholder="Exam Name" required />
+              <input [(ngModel)]="editCompetitiveDraft.title" name="editCompetitiveTitle" placeholder="Paper Title" required />
+              <input [(ngModel)]="editCompetitiveDraft.year" name="editCompetitiveYear" placeholder="Year (YYYY)" required />
+              <input [(ngModel)]="editCompetitiveDraft.driveUrl" name="editCompetitiveDriveUrl" placeholder="New Google Drive Link (optional)" />
+              <input type="file" (change)="onCompetitiveEditFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+
+              <p class="edit-note">Leave replacement file and Drive link empty to keep the current file source.</p>
+
+              <div class="row-actions edit-actions">
+                <button type="submit" class="save-btn" [disabled]="competitiveSaveInProgressId === paper.id">
+                  {{ competitiveSaveInProgressId === paper.id ? 'Saving...' : 'Save' }}
+                </button>
+                <button
+                  type="button"
+                  class="cancel-btn"
+                  (click)="cancelCompetitivePaperEdit()"
+                  [disabled]="competitiveSaveInProgressId === paper.id"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
-          <button
-            type="button"
-            class="delete-btn"
-            (click)="deleteCompetitivePaper(paper)"
-            [disabled]="competitiveDeleteInProgressId === paper.id"
-          >
-            {{ competitiveDeleteInProgressId === paper.id ? 'Deleting...' : 'Delete' }}
-          </button>
+
+          <div class="row-actions">
+            <button
+              type="button"
+              class="edit-btn"
+              (click)="startCompetitivePaperEdit(paper)"
+              [disabled]="competitiveSaveInProgressId === paper.id"
+            >
+              {{ editingCompetitivePaperId === paper.id ? 'Editing' : 'Edit' }}
+            </button>
+            <button
+              type="button"
+              class="delete-btn"
+              (click)="deleteCompetitivePaper(paper)"
+              [disabled]="competitiveDeleteInProgressId === paper.id || competitiveSaveInProgressId === paper.id"
+            >
+              {{ competitiveDeleteInProgressId === paper.id ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
         </article>
       </div>
     </section>
@@ -226,15 +338,42 @@ interface UploadUniversityOption {
         display: grid;
         gap: 0.55rem;
       }
+      .paper-main {
+        flex: 1;
+        min-width: 0;
+      }
       .paper-row {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 0.8rem;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
         background: #fff;
         padding: 0.65rem 0.75rem;
+      }
+      .row-actions {
+        display: flex;
+        gap: 0.55rem;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+      .edit-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.65rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px dashed #d8e1ea;
+      }
+      .edit-note {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.82rem;
+        grid-column: 1 / -1;
+      }
+      .edit-actions {
+        grid-column: 1 / -1;
       }
       .paper-meta h4 {
         margin: 0;
@@ -245,12 +384,27 @@ interface UploadUniversityOption {
         color: #475569;
         font-size: 0.84rem;
       }
+      .edit-btn {
+        background: #1d4ed8;
+        color: #fff;
+      }
+      .save-btn {
+        background: #15803d;
+        color: #fff;
+      }
+      .cancel-btn {
+        background: #64748b;
+        color: #fff;
+      }
       .delete-btn {
         background: #b91c1c;
         color: #fff;
         border: none;
         white-space: nowrap;
       }
+      .edit-btn:disabled,
+      .save-btn:disabled,
+      .cancel-btn:disabled,
       .delete-btn:disabled {
         opacity: 0.65;
         cursor: not-allowed;
@@ -293,6 +447,10 @@ export class UploadPaperComponent implements OnInit {
   papers: Paper[] = [];
   loadingPapers = false;
   deleteInProgressId: number | null = null;
+  saveInProgressId: number | null = null;
+  editingPaperId: number | null = null;
+  editPaperDraft: AcademicEditDraft | null = null;
+  editSelectedFile: File | null = null;
 
   competitiveMessage = '';
   competitiveManageMessage = '';
@@ -308,6 +466,10 @@ export class UploadPaperComponent implements OnInit {
   manageCompetitiveExamFilter = '';
   loadingCompetitivePapers = false;
   competitiveDeleteInProgressId: number | null = null;
+  competitiveSaveInProgressId: number | null = null;
+  editingCompetitivePaperId: number | null = null;
+  editCompetitiveDraft: CompetitiveEditDraft | null = null;
+  competitiveEditSelectedFile: File | null = null;
 
   constructor(private readonly api: ApiService) {}
 
@@ -332,8 +494,17 @@ export class UploadPaperComponent implements OnInit {
     return this.selectedUniversityOption?.courses ?? [];
   }
 
+  get editCourseOptions(): string[] {
+    return this.selectedEditUniversityOption?.courses ?? [];
+  }
+
   private get selectedUniversityOption(): UploadUniversityOption | undefined {
     return this.universityOptions.find((option) => option.name === this.uploadUniversity);
+  }
+
+  private get selectedEditUniversityOption(): UploadUniversityOption | undefined {
+    if (!this.editPaperDraft) return undefined;
+    return this.universityOptions.find((option) => option.name === this.editPaperDraft?.university);
   }
 
   onUniversityChange(): void {
@@ -352,6 +523,36 @@ export class UploadPaperComponent implements OnInit {
 
   isBtechSelected(): boolean {
     return this.uploadCourse.trim().toUpperCase() === 'BTECH';
+  }
+
+  isEditingBtechSelected(): boolean {
+    return this.editPaperDraft?.course.trim().toUpperCase() === 'BTECH';
+  }
+
+  onEditFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.editSelectedFile = input.files?.[0] ?? null;
+  }
+
+  onCompetitiveEditFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.competitiveEditSelectedFile = input.files?.[0] ?? null;
+  }
+
+  onEditUniversityChange(): void {
+    if (!this.editPaperDraft) return;
+    if (!this.editCourseOptions.includes(this.editPaperDraft.course)) {
+      this.editPaperDraft.course = '';
+    }
+    this.onEditCourseChange();
+  }
+
+  onEditCourseChange(): void {
+    if (!this.editPaperDraft) return;
+    if (!this.isEditingBtechSelected()) {
+      this.editPaperDraft.department = '';
+      this.editPaperDraft.semester = '';
+    }
   }
 
   uploadAcademic(event: Event): void {
@@ -415,6 +616,90 @@ export class UploadPaperComponent implements OnInit {
     });
   }
 
+  startPaperEdit(paper: Paper): void {
+    this.editingPaperId = paper.id;
+    this.editSelectedFile = null;
+    this.editPaperDraft = {
+      title: paper.title,
+      university: paper.university,
+      course: paper.course,
+      department: paper.department || '',
+      semester: paper.semester ? String(paper.semester) : '',
+      subject: paper.subject,
+      year: String(paper.year),
+      examType: paper.examType,
+      driveUrl: paper.driveUrl || ''
+    };
+  }
+
+  cancelPaperEdit(): void {
+    this.editingPaperId = null;
+    this.editPaperDraft = null;
+    this.editSelectedFile = null;
+  }
+
+  savePaperEdit(event: Event, paper: Paper): void {
+    event.preventDefault();
+
+    const key = this.manageAdminKey.trim();
+    if (!key) {
+      this.manageMessage = 'Enter Admin Key in manage section before editing.';
+      return;
+    }
+
+    if (!this.editPaperDraft) {
+      return;
+    }
+
+    const draft = this.editPaperDraft;
+    const normalizedDriveUrl = draft.driveUrl.trim();
+    if (!draft.course) {
+      this.manageMessage = 'Select course before saving.';
+      return;
+    }
+
+    if (this.isEditingBtechSelected() && (!draft.department || !draft.semester)) {
+      this.manageMessage = 'For BTECH, select department and semester before saving.';
+      return;
+    }
+
+    if (!/^\d{4}$/.test(draft.year.trim())) {
+      this.manageMessage = 'Enter a valid 4-digit year before saving.';
+      return;
+    }
+
+    const form = new FormData();
+    form.append('title', draft.title);
+    form.append('university', draft.university);
+    form.append('course', draft.course);
+    form.append('department', draft.department);
+    form.append('semester', draft.semester);
+    form.append('subject', draft.subject);
+    form.append('year', draft.year);
+    form.append('examType', draft.examType);
+    if (normalizedDriveUrl) {
+      form.append('driveUrl', normalizedDriveUrl);
+    }
+    if (this.editSelectedFile) {
+      form.append('file', this.editSelectedFile);
+    }
+
+    this.saveInProgressId = paper.id;
+    this.api.updatePaper(form, paper.id, key).subscribe({
+      next: () => {
+        this.manageMessage = 'Paper updated successfully.';
+        this.cancelPaperEdit();
+        this.loadUploadedPapers();
+      },
+      error: (err) => {
+        this.manageMessage = err?.error?.message || 'Update failed.';
+      },
+      complete: () => {
+        this.saveInProgressId = null;
+      }
+    });
+  }
+
   uploadCompetitive(event: Event): void {
     event.preventDefault();
 
@@ -466,11 +751,88 @@ export class UploadPaperComponent implements OnInit {
     });
   }
 
+  startCompetitivePaperEdit(paper: CompetitivePaper): void {
+    this.editingCompetitivePaperId = paper.id;
+    this.competitiveEditSelectedFile = null;
+    this.editCompetitiveDraft = {
+      examName: paper.examName,
+      title: paper.title,
+      year: String(paper.year),
+      driveUrl: paper.driveUrl || ''
+    };
+  }
+
+  cancelCompetitivePaperEdit(): void {
+    this.editingCompetitivePaperId = null;
+    this.editCompetitiveDraft = null;
+    this.competitiveEditSelectedFile = null;
+  }
+
+  saveCompetitivePaperEdit(event: Event, paper: CompetitivePaper): void {
+    event.preventDefault();
+
+    const key = this.manageCompetitiveAdminKey.trim();
+    if (!key) {
+      this.competitiveManageMessage = 'Enter Admin Key in competitive manage section before editing.';
+      return;
+    }
+
+    if (!this.editCompetitiveDraft) {
+      return;
+    }
+
+    const draft = this.editCompetitiveDraft;
+    const examName = draft.examName.trim();
+    const title = draft.title.trim();
+    const year = draft.year.trim();
+    const driveUrl = draft.driveUrl.trim();
+
+    if (!examName || !title || !year) {
+      this.competitiveManageMessage = 'Exam name, title and year are required before saving.';
+      return;
+    }
+
+    if (!/^\d{4}$/.test(year)) {
+      this.competitiveManageMessage = 'Enter a valid 4-digit year before saving.';
+      return;
+    }
+
+    const form = new FormData();
+    form.append('examName', examName);
+    form.append('title', title);
+    form.append('year', year);
+    if (driveUrl) {
+      form.append('driveUrl', driveUrl);
+    }
+    if (this.competitiveEditSelectedFile) {
+      form.append('file', this.competitiveEditSelectedFile);
+    }
+
+    this.competitiveSaveInProgressId = paper.id;
+    this.api.updateCompetitivePaper(form, paper.id, key).subscribe({
+      next: () => {
+        this.competitiveManageMessage = 'Competitive paper updated successfully.';
+        this.cancelCompetitivePaperEdit();
+        this.loadCompetitiveExams();
+        this.loadCompetitivePapers();
+      },
+      error: (err) => {
+        this.competitiveManageMessage = err?.error?.message || 'Update failed.';
+      },
+      complete: () => {
+        this.competitiveSaveInProgressId = null;
+      }
+    });
+  }
+
   loadUploadedPapers(): void {
     this.loadingPapers = true;
     this.api.listPapers({}).subscribe({
       next: (rows) => {
         this.papers = rows;
+        if (this.editingPaperId && !rows.some((row) => row.id === this.editingPaperId)) {
+          this.cancelPaperEdit();
+        }
         this.manageMessage = '';
         this.loadingPapers = false;
       },
@@ -501,6 +863,9 @@ export class UploadPaperComponent implements OnInit {
       .subscribe({
         next: (rows) => {
           this.competitivePapers = rows;
+          if (this.editingCompetitivePaperId && !rows.some((row) => row.id === this.editingCompetitivePaperId)) {
+            this.cancelCompetitivePaperEdit();
+          }
           this.competitiveManageMessage = '';
           this.loadingCompetitivePapers = false;
         },
@@ -526,6 +891,9 @@ export class UploadPaperComponent implements OnInit {
       next: (resp) => {
         this.manageMessage = resp.message || 'Paper deleted successfully.';
         this.papers = this.papers.filter((row) => row.id !== paper.id);
+        if (this.editingPaperId === paper.id) {
+          this.cancelPaperEdit();
+        }
       },
       error: (err) => {
         this.manageMessage = err?.error?.message || 'Delete failed.';
@@ -551,6 +919,9 @@ export class UploadPaperComponent implements OnInit {
       next: (resp) => {
         this.competitiveManageMessage = resp.message || 'Competitive paper deleted successfully.';
         this.competitivePapers = this.competitivePapers.filter((row) => row.id !== paper.id);
+        if (this.editingCompetitivePaperId === paper.id) {
+          this.cancelCompetitivePaperEdit();
+        }
         this.loadCompetitiveExams();
       },
       error: (err) => {

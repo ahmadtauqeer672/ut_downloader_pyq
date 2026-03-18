@@ -71,6 +71,14 @@ export class ApiService {
     });
   }
 
+  updatePaper(form: FormData, id: number, adminKey: string): Observable<Paper> {
+    return this.http.put<Paper>(`${this.baseUrl}/papers/${id}`, form, {
+      headers: {
+        'x-admin-key': adminKey
+      }
+    });
+  }
+
   deletePaper(id: number, adminKey: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/papers/${id}`, {
       headers: {
@@ -92,6 +100,14 @@ export class ApiService {
 
   uploadCompetitivePaper(form: FormData, adminKey: string): Observable<unknown> {
     return this.http.post(`${this.baseUrl}/competitive-papers`, form, {
+      headers: {
+        'x-admin-key': adminKey
+      }
+    });
+  }
+
+  updateCompetitivePaper(form: FormData, id: number, adminKey: string): Observable<CompetitivePaper> {
+    return this.http.put<CompetitivePaper>(`${this.baseUrl}/competitive-papers/${id}`, form, {
       headers: {
         'x-admin-key': adminKey
       }

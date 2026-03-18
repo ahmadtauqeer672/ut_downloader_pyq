@@ -4,6 +4,7 @@ import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
 import { finalize } from 'rxjs/operators';
+import { ACADEMIC_UNIVERSITY_OPTIONS, BTECH_DEPARTMENTS, SEMESTERS } from '../data/academic-options';
 
 interface UniversityMenu {
   name: string;
@@ -585,16 +586,10 @@ export class StudentPapersComponent implements OnInit {
   isLoadingPapers = false;
   nextOffset = 0;
 
-  readonly btechDepartments = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];
-  readonly semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
+  readonly btechDepartments = BTECH_DEPARTMENTS;
+  readonly semesters = SEMESTERS;
 
-  universityMenus: UniversityMenu[] = [
-    { name: 'PTU', courses: ['BTECH', 'BCA', 'BBA', 'MBA', 'MCA'] },
-    { name: 'PU Chandigarh', courses: ['BTECH', 'BSC', 'BCA', 'MTECH'] },
-    { name: 'GNDU', courses: ['BTECH', 'B.COM', 'MCA', 'MSC-IT'] },
-    { name: 'MDU', courses: ['BTECH', 'BBA', 'MTECH', 'MBA'] },
-    { name: 'GTU', courses: ['BTECH', 'BPHARM', 'MBA', 'MCA'] }
-  ];
+  universityMenus: UniversityMenu[] = ACADEMIC_UNIVERSITY_OPTIONS;
 
   activeUniversity: UniversityMenu = this.universityMenus[0];
 

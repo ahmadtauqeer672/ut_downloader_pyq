@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
-
-interface UploadUniversityOption {
-  name: string;
-  courses: string[];
-}
+import {
+  ACADEMIC_UNIVERSITY_OPTIONS,
+  AcademicUniversityOption,
+  BTECH_DEPARTMENTS,
+  SEMESTERS
+} from '../data/academic-options';
 
 interface AcademicEditDraft {
   title: string;
@@ -419,16 +420,9 @@ interface CompetitiveEditDraft {
   ]
 })
 export class UploadPaperComponent implements OnInit {
-  readonly universityOptions: UploadUniversityOption[] = [
-    { name: 'PTU', courses: ['BTECH', 'BCA', 'BBA', 'MBA', 'MCA'] },
-    { name: 'PU Chandigarh', courses: ['BTECH', 'BSC', 'BCA', 'MTECH'] },
-    { name: 'GNDU', courses: ['BTECH', 'B.COM', 'MCA', 'MSC-IT'] },
-    { name: 'MDU', courses: ['BTECH', 'BBA', 'MTECH', 'MBA'] },
-    { name: 'GTU', courses: ['BTECH', 'BPHARM', 'MBA', 'MCA'] },
-    { name: 'OTHER', courses: ['OTHER'] }
-  ];
-  readonly btechDepartments = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];
-  readonly semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
+  readonly universityOptions = ACADEMIC_UNIVERSITY_OPTIONS;
+  readonly btechDepartments = BTECH_DEPARTMENTS;
+  readonly semesters = SEMESTERS;
 
   message = '';
   manageMessage = '';
@@ -498,11 +492,11 @@ export class UploadPaperComponent implements OnInit {
     return this.selectedEditUniversityOption?.courses ?? [];
   }
 
-  private get selectedUniversityOption(): UploadUniversityOption | undefined {
+  private get selectedUniversityOption(): AcademicUniversityOption | undefined {
     return this.universityOptions.find((option) => option.name === this.uploadUniversity);
   }
 
-  private get selectedEditUniversityOption(): UploadUniversityOption | undefined {
+  private get selectedEditUniversityOption(): AcademicUniversityOption | undefined {
     if (!this.editPaperDraft) return undefined;
     return this.universityOptions.find((option) => option.name === this.editPaperDraft?.university);
   }

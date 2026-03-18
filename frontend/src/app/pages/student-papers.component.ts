@@ -37,7 +37,7 @@ interface CompetitiveYearGroup {
           <small>Academic Papers</small>
         </div>
         <div class="hero-stat">
-          <span>{{ competitivePapers.length }}</span>
+          <span>{{ totalCompetitiveCount }}</span>
           <small>Competitive Papers</small>
         </div>
       </div>
@@ -568,6 +568,7 @@ export class StudentPapersComponent implements OnInit {
   selectedCompetitiveExam = '';
   competitivePapers: CompetitivePaper[] = [];
   competitiveYearGroups: CompetitiveYearGroup[] = [];
+  totalCompetitiveCount = 0;
   competitiveMessage = '';
   isLoadingCompetitivePapers = false;
   private competitiveRequestId = 0;
@@ -741,11 +742,14 @@ export class StudentPapersComponent implements OnInit {
         this.competitiveExams = rows;
         this.competitiveMessage = '';
         if (!rows.length) {
+          this.totalCompetitiveCount = 0;
           this.selectedCompetitiveExam = '';
           this.competitivePapers = [];
           this.competitiveYearGroups = [];
           return;
         }
+
+        this.loadCompetitiveTotalCount();
 
         if (this.selectedCompetitiveExam && rows.includes(this.selectedCompetitiveExam)) {
           this.loadCompetitivePapers();
@@ -757,6 +761,7 @@ export class StudentPapersComponent implements OnInit {
       },
       error: () => {
         this.competitiveExams = [];
+        this.totalCompetitiveCount = 0;
         this.selectedCompetitiveExam = '';
         this.competitivePapers = [];
         this.competitiveYearGroups = [];
@@ -812,6 +817,17 @@ export class StudentPapersComponent implements OnInit {
           this.isLoadingCompetitivePapers = false;
         }
       });
+  }
+
+  private loadCompetitiveTotalCount(): void {
+    this.api.listCompetitivePapers({}).subscribe({
+      next: (rows) => {
+        this.totalCompetitiveCount = rows.length;
+      },
+      error: () => {
+        this.totalCompetitiveCount = 0;
+      }
+    });
   }
 
   semesterTitle(semester: number): string {

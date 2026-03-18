@@ -1,5 +1,6 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
@@ -24,7 +25,7 @@ interface CompetitiveYearGroup {
 @Component({
   selector: 'app-student-papers',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <section class="hero">
       <div>
@@ -54,60 +55,36 @@ interface CompetitiveYearGroup {
 
           <div class="directory-grid">
             <div class="panel">
-              <h4>Universities</h4>
-              <button
-                type="button"
-                *ngFor="let uni of universityMenus"
-                (click)="pickUniversity(uni)"
-                [class.active]="universityFilter === uni.name"
-              >
-                {{ uni.name }}
-              </button>
+              <h4>University</h4>
+              <select [ngModel]="universityFilter" (ngModelChange)="onUniversitySelectionChange($event)" name="universityFilter">
+                <option *ngFor="let uni of universityMenus" [ngValue]="uni.name">{{ uni.name }}</option>
+              </select>
             </div>
 
             <div class="panel">
-              <h4>Courses</h4>
-              <button type="button" (click)="pickAllCourses()" [class.active]="courseFilter === ''">All Courses</button>
-              <button
-                type="button"
-                *ngFor="let c of activeUniversity.courses"
-                (click)="pickCourse(c)"
-                [class.active]="courseFilter === c"
-              >
-                {{ c }}
-              </button>
+              <h4>Course</h4>
+              <select [ngModel]="courseFilter" (ngModelChange)="onCourseSelectionChange($event)" name="courseFilter">
+                <option value="">All Courses</option>
+                <option *ngFor="let c of activeUniversity.courses" [ngValue]="c">{{ c }}</option>
+              </select>
             </div>
           </div>
 
           <div class="btech-controls" *ngIf="isBtechSelected()">
             <div class="btech-panel">
-              <h4>BTECH Departments</h4>
-              <div class="chip-wrap">
-                <button type="button" (click)="pickAllDepartments()" [class.active]="departmentFilter === ''">All Departments</button>
-                <button
-                  type="button"
-                  *ngFor="let d of btechDepartments"
-                  (click)="pickDepartment(d)"
-                  [class.active]="departmentFilter === d"
-                >
-                  {{ d }}
-                </button>
-              </div>
+              <h4>BTECH Department</h4>
+              <select [ngModel]="departmentFilter" (ngModelChange)="onDepartmentSelectionChange($event)" name="departmentFilter">
+                <option value="">All Departments</option>
+                <option *ngFor="let d of btechDepartments" [ngValue]="d">{{ d }}</option>
+              </select>
             </div>
 
             <div class="btech-panel">
               <h4>Semester</h4>
-              <div class="chip-wrap">
-                <button type="button" (click)="pickAllSemesters()" [class.active]="semesterFilter === ''">All Semesters</button>
-                <button
-                  type="button"
-                  *ngFor="let s of semesters"
-                  (click)="pickSemester(s)"
-                  [class.active]="semesterFilter === s"
-                >
-                  Sem {{ s }}
-                </button>
-              </div>
+              <select [ngModel]="semesterFilter" (ngModelChange)="onSemesterSelectionChange($event)" name="semesterFilter">
+                <option value="">All Semesters</option>
+                <option *ngFor="let s of semesters" [ngValue]="s">Semester {{ s }}</option>
+              </select>
             </div>
           </div>
         </section>
@@ -308,21 +285,16 @@ interface CompetitiveYearGroup {
         margin: 0 0 0.6rem;
         font-size: 0.95rem;
       }
-      .panel button {
+      .panel select,
+      .btech-panel select {
         width: 100%;
-        margin-bottom: 0.45rem;
         border: 1px solid #d0dbe8;
         background: #ffffff;
         color: #1f2d3b;
         border-radius: 8px;
         padding: 0.58rem 0.65rem;
-        text-align: left;
         cursor: pointer;
-      }
-      .panel button.active {
-        background: #0f766e;
-        color: #ffffff;
-        border-color: #0f766e;
+        font: inherit;
       }
       .btech-controls {
         margin-top: 0.8rem;
@@ -338,24 +310,6 @@ interface CompetitiveYearGroup {
       }
       .btech-panel h4 {
         margin: 0 0 0.55rem;
-      }
-      .chip-wrap {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.45rem;
-      }
-      .chip-wrap button {
-        border: 1px solid #d1dbe8;
-        border-radius: 999px;
-        padding: 0.38rem 0.68rem;
-        background: #fff;
-        color: #1f2d3b;
-        cursor: pointer;
-      }
-      .chip-wrap button.active {
-        background: #0f766e;
-        color: #fff;
-        border-color: #0f766e;
       }
       .result-wrap {
         margin-top: 1rem;
@@ -541,9 +495,6 @@ interface CompetitiveYearGroup {
           flex-direction: column;
           align-items: flex-start;
         }
-        .panel button {
-          padding: 0.5rem 0.6rem;
-        }
         .semester-head,
         .year-head {
           flex-direction: column;
@@ -612,6 +563,36 @@ export class StudentPapersComponent implements OnInit {
 
   isBtechSelected(): boolean {
     return this.courseFilter.trim().toUpperCase() === 'BTECH';
+  }
+
+  onUniversitySelectionChange(universityName: string): void {
+    const selected = this.universityMenus.find((uni) => uni.name === universityName);
+    if (!selected) return;
+    this.pickUniversity(selected);
+  }
+
+  onCourseSelectionChange(course: string): void {
+    if (!course) {
+      this.pickAllCourses();
+      return;
+    }
+    this.pickCourse(course);
+  }
+
+  onDepartmentSelectionChange(department: string): void {
+    if (!department) {
+      this.pickAllDepartments();
+      return;
+    }
+    this.pickDepartment(department);
+  }
+
+  onSemesterSelectionChange(semester: string): void {
+    if (!semester) {
+      this.pickAllSemesters();
+      return;
+    }
+    this.pickSemester(semester);
   }
 
   pickUniversity(uni: UniversityMenu): void {

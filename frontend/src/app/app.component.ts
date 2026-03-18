@@ -1,10 +1,11 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <header class="site-header">
       <div class="nav-shell">
@@ -12,6 +13,19 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           <nav class="nav">
             <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
             <a routerLink="/" fragment="directory">Question Papers</a>
+            <div class="nav-dropdown">
+              <button type="button" class="dropdown-trigger">Dropdown</button>
+              <div class="dropdown-menu">
+                <div class="dropdown-group">
+                  <h4>Universities</h4>
+                  <a *ngFor="let university of universities" routerLink="/" fragment="directory">{{ university }}</a>
+                </div>
+                <div class="dropdown-group">
+                  <h4>Courses</h4>
+                  <a *ngFor="let course of courses" routerLink="/" fragment="directory">{{ course }}</a>
+                </div>
+              </div>
+            </div>
             <a routerLink="/upload" routerLinkActive="active">Upload</a>
             <a class="brand" routerLink="/">
               <span class="brand-logo-frame">
@@ -116,6 +130,55 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         transition: color 180ms ease, background 180ms ease;
         white-space: nowrap;
       }
+      .nav-dropdown {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .dropdown-trigger {
+        border: 0;
+        padding: 0.42rem 0.62rem;
+        border-radius: 6px;
+        color: #1f3650;
+        background: transparent;
+        font-weight: 600;
+        font: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: color 180ms ease, background 180ms ease;
+      }
+      .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 0.45rem);
+        right: 0;
+        min-width: 340px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        padding: 0.95rem;
+        border: 1px solid #d7e0ea;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+      }
+      .dropdown-group {
+        display: grid;
+        gap: 0.35rem;
+      }
+      .dropdown-group h4 {
+        margin: 0 0 0.15rem;
+        color: #0f2f53;
+        font-size: 0.92rem;
+      }
+      .dropdown-group a {
+        padding: 0.38rem 0.48rem;
+        border-radius: 8px;
+      }
       .brand {
         display: flex;
         align-items: center;
@@ -146,6 +209,18 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       .nav a:hover {
         color: #132b44;
         background: rgba(236, 242, 247, 0.95);
+      }
+      .nav-dropdown:hover .dropdown-trigger,
+      .nav-dropdown:focus-within .dropdown-trigger {
+        color: #132b44;
+        background: rgba(236, 242, 247, 0.95);
+      }
+      .nav-dropdown:hover .dropdown-menu,
+      .nav-dropdown:focus-within .dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
       }
       .nav a.active {
         background: rgba(228, 236, 243, 0.96);
@@ -237,6 +312,15 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           padding: 0.36rem 0.5rem;
           font-size: 0.95rem;
         }
+        .dropdown-trigger {
+          padding: 0.36rem 0.5rem;
+          font-size: 0.95rem;
+        }
+        .dropdown-menu {
+          right: -0.5rem;
+          min-width: min(92vw, 340px);
+          grid-template-columns: 1fr;
+        }
         .brand-logo-frame {
           width: 68px;
           height: 68px;
@@ -250,4 +334,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   readonly currentYear = new Date().getFullYear();
+  readonly universities = ['PTU', 'PU Chandigarh', 'GNDU', 'MDU', 'GTU', 'OTHER'];
+  readonly courses = ['BTECH', 'BCA', 'BBA', 'MBA', 'MCA', 'MTECH', 'BSC', 'B.COM', 'MSC-IT', 'BPHARM', 'OTHER'];
 }

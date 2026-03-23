@@ -46,7 +46,7 @@ export interface AdminLoginResponse {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = 'https://ut-downloader-pyq.onrender.com/api';
+  private readonly baseUrl = 'https://api.utpaper.in/api';
 
   constructor(
     private readonly http: HttpClient,

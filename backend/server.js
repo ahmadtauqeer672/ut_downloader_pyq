@@ -158,7 +158,12 @@ initDb().catch((err) => {
 });
 
 // ---- Middleware ----
-const allowedOrigins = new Set(['http://localhost:4200', 'https://ut-downloader-pyq.vercel.app']);
+const allowedOrigins = new Set([
+  'http://localhost:4200',
+  'https://ut-downloader-pyq.vercel.app',
+  'https://utpaper.in',
+  'https://www.utpaper.in'
+]);
 
 app.use(
   cors({

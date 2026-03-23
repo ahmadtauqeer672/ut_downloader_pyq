@@ -43,6 +43,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
             <a routerLink="/">Home</a>
             <a routerLink="/" fragment="directory">Question Papers</a>
             <a routerLink="/upload">Developer Upload</a>
+            <a routerLink="/watermark-tool">Add Watermark in PYQ</a>
           </div>
         </div>
         <div>

@@ -1,10 +1,12 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AdminSessionService } from './services/admin-session.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <header class="site-header">
       <div class="nav-shell">
@@ -12,7 +14,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           <nav class="nav">
             <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
             <a routerLink="/" fragment="directory">Question Papers</a>
-            <a routerLink="/upload" routerLinkActive="active">Upload</a>
+            <a routerLink="/admin" routerLinkActive="active">Admin Panel</a>
+            <a *ngIf="adminSession.isAuthenticated()" routerLink="/upload" routerLinkActive="active">Upload</a>
+            <a *ngIf="adminSession.isAuthenticated()" routerLink="/watermark-tool" routerLinkActive="active">Add Watermark</a>
             <a class="brand" routerLink="/">
               <span class="brand-logo-frame">
                 <img
@@ -42,8 +46,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           <div class="footer-links">
             <a routerLink="/">Home</a>
             <a routerLink="/" fragment="directory">Question Papers</a>
-            <a routerLink="/upload">Developer Upload</a>
-            <a routerLink="/watermark-tool">Add Watermark in PYQ</a>
+            <a routerLink="/admin">Admin Panel</a>
+            <a *ngIf="adminSession.isAuthenticated()" routerLink="/upload">Developer Upload</a>
+            <a *ngIf="adminSession.isAuthenticated()" routerLink="/watermark-tool">Add Watermark in PYQ</a>
           </div>
         </div>
         <div>
@@ -251,4 +256,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   readonly currentYear = new Date().getFullYear();
+
+  constructor(public readonly adminSession: AdminSessionService) {}
 }

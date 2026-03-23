@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
+import { AdminSessionService } from './admin-session.service';
 
 export interface PaperFilters {
   university?: string;
@@ -37,11 +38,24 @@ export interface CompetitiveSummaryResponse {
   totalCount: number;
 }
 
+export interface AdminLoginResponse {
+  token: string;
+  userId: string;
+  expiresAt: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly baseUrl = 'https://ut-downloader-pyq.onrender.com/api';
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly adminSession: AdminSessionService
+  ) {}
+
+  loginAdmin(userId: string, password: string): Observable<AdminLoginResponse> {
+    return this.http.post<AdminLoginResponse>(`${this.baseUrl}/admin/login`, { userId, password });
+  }
 
   listPapers(filters: PaperFilters): Observable<Paper[]>;
   listPapers(filters: PaperFilters, pagination: PaginationOptions): Observable<PaperListResponse>;
@@ -68,28 +82,20 @@ export class ApiService {
     return this.http.get<PaperListResponse | Paper[]>(`${this.baseUrl}/papers`, { params });
   }
 
-  uploadPaper(form: FormData, adminKey: string): Observable<unknown> {
+  uploadPaper(form: FormData): Observable<unknown> {
     return this.http.post(`${this.baseUrl}/papers`, form, {
-      headers: {
-        'x-admin-key': adminKey
-      }
+      headers: this.adminHeaders()
     });
   }
 
-  updatePaper(form: FormData, id: number, adminKey: string): Observable<Paper> {
+  updatePaper(form: FormData, id: number): Observable<Paper> {
     return this.http.put<Paper>(`${this.baseUrl}/papers/${id}`, form, {
-      headers: {
-        'x-admin-key': adminKey
-      }
+      headers: this.adminHeaders()
     });
   }
 
-  deletePaper(id: number, adminKey: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.baseUrl}/papers/${id}`, {
-      headers: {
-        'x-admin-key': adminKey
-      }
-    });
+  deletePaper(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/papers/${id}`, { headers: this.adminHeaders() });
   }
 
   listCompetitiveExams(): Observable<string[]> {
@@ -107,27 +113,21 @@ export class ApiService {
     return this.http.get<CompetitivePaper[]>(`${this.baseUrl}/competitive-papers`, { params });
   }
 
-  uploadCompetitivePaper(form: FormData, adminKey: string): Observable<unknown> {
+  uploadCompetitivePaper(form: FormData): Observable<unknown> {
     return this.http.post(`${this.baseUrl}/competitive-papers`, form, {
-      headers: {
-        'x-admin-key': adminKey
-      }
+      headers: this.adminHeaders()
     });
   }
 
-  updateCompetitivePaper(form: FormData, id: number, adminKey: string): Observable<CompetitivePaper> {
+  updateCompetitivePaper(form: FormData, id: number): Observable<CompetitivePaper> {
     return this.http.put<CompetitivePaper>(`${this.baseUrl}/competitive-papers/${id}`, form, {
-      headers: {
-        'x-admin-key': adminKey
-      }
+      headers: this.adminHeaders()
     });
   }
 
-  deleteCompetitivePaper(id: number, adminKey: string): Observable<{ message: string }> {
+  deleteCompetitivePaper(id: number): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/competitive-papers/${id}`, {
-      headers: {
-        'x-admin-key': adminKey
-      }
+      headers: this.adminHeaders()
     });
   }
 
@@ -145,5 +145,10 @@ export class ApiService {
 
   competitivePreviewUrl(id: number): string {
     return `${this.baseUrl}/competitive-papers/${id}/preview`;
+  }
+
+  private adminHeaders(): HttpHeaders {
+    const token = this.adminSession.authToken();
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 }

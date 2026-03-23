@@ -3,13 +3,16 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_UPLOAD_KEY = process.env.ADMIN_UPLOAD_KEY || 'admin123';
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'change-this-secret';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -171,12 +174,69 @@ app.use(express.json());
 
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
+function signAdminToken(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(body).digest('hex');
+  return `${body}.${signature}`;
+}
+
+function verifyAdminToken(token = '') {
+  if (!token || !token.includes('.')) return null;
+  const [body, signature] = token.split('.');
+  if (!body || !signature) return null;
+
+  const expected = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(body).digest('hex');
+  if (signature.length !== expected.length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    if (!payload?.userId || !payload?.exp) return null;
+    if (Date.now() >= Number(payload.exp)) return null;
+    return payload;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function readBearerToken(req) {
+  const authHeader = String(req.header('authorization') || '');
+  if (!authHeader.startsWith('Bearer ')) return '';
+  return authHeader.slice('Bearer '.length).trim();
+}
+
+function requireAdminAuth(req, res, next) {
+  const session = verifyAdminToken(readBearerToken(req));
+  if (!session) {
+    return res.status(401).json({ message: 'Admin login required' });
+  }
+
+  req.adminSession = session;
+  next();
+}
+
 // ---- Routes ----
 app.get(
   '/api/health',
   asyncHandler(async (_req, res) => {
     await pool.query('SELECT 1');
     res.json({ ok: true });
+  })
+);
+
+app.post(
+  '/api/admin/login',
+  asyncHandler(async (req, res) => {
+    const userId = String(req.body?.userId || '').trim();
+    const password = String(req.body?.password || '');
+
+    if (userId !== ADMIN_USER_ID || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ message: 'Invalid user ID or password' });
+    }
+
+    const expiresAt = Date.now() + 1000 * 60 * 60 * 12;
+    const token = signAdminToken({ userId: ADMIN_USER_ID, exp: expiresAt });
+    res.json({ token, userId: ADMIN_USER_ID, expiresAt });
   })
 );
 
@@ -267,14 +327,9 @@ app.get(
 
 app.post(
   '/api/papers',
+  requireAdminAuth,
   upload.single('file'),
   asyncHandler(async (req, res) => {
-    const providedKey = req.header('x-admin-key') || req.body.adminKey;
-    if (providedKey !== ADMIN_UPLOAD_KEY) {
-      if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(401).json({ message: 'Invalid admin key' });
-    }
-
     const { title, university, course, department = '', semester = '', subject, year, examType, driveUrl = '' } = req.body;
     const normalizedDriveUrl = String(driveUrl).trim();
     let driveUrlValue = normalizedDriveUrl;
@@ -366,18 +421,13 @@ app.post(
 
 app.put(
   '/api/papers/:id',
+  requireAdminAuth,
   upload.single('file'),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) {
       if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({ message: 'Invalid paper id' });
-    }
-
-    const providedKey = req.header('x-admin-key') || req.body.adminKey;
-    if (providedKey !== ADMIN_UPLOAD_KEY) {
-      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      return res.status(401).json({ message: 'Invalid admin key' });
     }
 
     const existingResp = await pool.query(
@@ -559,12 +609,10 @@ app.get(
 
 app.delete(
   '/api/papers/:id',
+  requireAdminAuth,
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
-
-    const providedKey = req.header('x-admin-key') || req.query.adminKey;
-    if (providedKey !== ADMIN_UPLOAD_KEY) return res.status(401).json({ message: 'Invalid admin key' });
 
     const { rows } = await pool.query(
       'SELECT id, title, university, course, department, semester, subject, year, examtype AS "examType", filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM papers WHERE id = $1',
@@ -643,14 +691,9 @@ app.get(
 
 app.post(
   '/api/competitive-papers',
+  requireAdminAuth,
   upload.single('file'),
   asyncHandler(async (req, res) => {
-    const providedKey = req.header('x-admin-key') || req.body.adminKey;
-    if (providedKey !== ADMIN_UPLOAD_KEY) {
-      if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(401).json({ message: 'Invalid admin key' });
-    }
-
     const { title, examName, year, driveUrl = '' } = req.body;
     const normalizedDriveUrl = String(driveUrl).trim();
     let driveUrlValue = normalizedDriveUrl;
@@ -720,18 +763,13 @@ app.post(
 
 app.put(
   '/api/competitive-papers/:id',
+  requireAdminAuth,
   upload.single('file'),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) {
       if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({ message: 'Invalid paper id' });
-    }
-
-    const providedKey = req.header('x-admin-key') || req.body.adminKey;
-    if (providedKey !== ADMIN_UPLOAD_KEY) {
-      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      return res.status(401).json({ message: 'Invalid admin key' });
     }
 
     const existingResp = await pool.query(
@@ -885,12 +923,10 @@ app.get(
 
 app.delete(
   '/api/competitive-papers/:id',
+  requireAdminAuth,
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ message: 'Invalid paper id' });
-
-    const providedKey = req.header('x-admin-key') || req.query.adminKey;
-    if (providedKey !== ADMIN_UPLOAD_KEY) return res.status(401).json({ message: 'Invalid admin key' });
 
     const { rows } = await pool.query(
       'SELECT id, title, examname AS "examName", year, filename AS "fileName", driveurl AS "driveUrl", fileurl AS "fileUrl", filepublicid AS "filePublicId", uploadedat AS "uploadedAt" FROM competitive_papers WHERE id = $1',

@@ -65,7 +65,6 @@ interface CompetitiveEditDraft {
         <input [(ngModel)]="uploadYear" name="uploadYear" placeholder="Year" required />
         <input [(ngModel)]="uploadExamType" name="uploadExamType" placeholder="Exam Type" required />
         <input [(ngModel)]="uploadDriveUrl" name="uploadDriveUrl" placeholder="Google Drive File Link (optional)" />
-        <input [(ngModel)]="adminKey" name="adminKey" type="password" placeholder="Admin Key" required />
         <input type="file" (change)="onFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
         <button type="submit">Upload Academic Paper</button>
       </form>
@@ -79,15 +78,7 @@ interface CompetitiveEditDraft {
         <button type="button" class="refresh-btn" (click)="loadUploadedPapers()">Refresh</button>
       </div>
 
-      <p class="hint">Enter Admin Key for edit and delete access.</p>
-      <div class="manage-auth">
-        <input
-          [(ngModel)]="manageAdminKey"
-          name="manageAdminKey"
-          type="password"
-          placeholder="Admin Key for Academic Edit/Delete"
-        />
-      </div>
+      <p class="hint">You are logged in as admin and can edit or delete papers below.</p>
       <p *ngIf="manageMessage" class="manage-message">{{ manageMessage }}</p>
 
       <div class="loading" *ngIf="loadingPapers">Loading papers...</div>
@@ -175,7 +166,6 @@ interface CompetitiveEditDraft {
         <input [(ngModel)]="competitiveTitle" name="competitiveTitle" placeholder="Paper Title" required />
         <input [(ngModel)]="competitiveYear" name="competitiveYear" placeholder="Year (YYYY)" required />
         <input [(ngModel)]="competitiveDriveUrl" name="competitiveDriveUrl" placeholder="Google Drive File Link (optional)" />
-        <input [(ngModel)]="competitiveAdminKey" name="competitiveAdminKey" type="password" placeholder="Admin Key" required />
         <input type="file" (change)="onCompetitiveFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
         <button type="submit">Upload Competitive Paper</button>
       </form>
@@ -191,12 +181,6 @@ interface CompetitiveEditDraft {
 
       <p class="hint">Select exam (optional) and edit or delete competitive papers.</p>
       <div class="manage-grid">
-        <input
-          [(ngModel)]="manageCompetitiveAdminKey"
-          name="manageCompetitiveAdminKey"
-          type="password"
-          placeholder="Admin Key for Competitive Edit/Delete"
-        />
         <select [(ngModel)]="manageCompetitiveExamFilter" name="manageCompetitiveExamFilter" (change)="loadCompetitivePapers()">
           <option value="">All Competitive Exams</option>
           <option *ngFor="let exam of competitiveExams" [value]="exam">{{ exam }}</option>
@@ -435,8 +419,6 @@ export class UploadPaperComponent implements OnInit {
   uploadYear = '';
   uploadExamType = '';
   uploadDriveUrl = '';
-  adminKey = '';
-  manageAdminKey = '';
   selectedFile: File | null = null;
   papers: Paper[] = [];
   loadingPapers = false;
@@ -452,11 +434,9 @@ export class UploadPaperComponent implements OnInit {
   competitiveTitle = '';
   competitiveYear = '';
   competitiveDriveUrl = '';
-  competitiveAdminKey = '';
   competitiveSelectedFile: File | null = null;
   competitivePapers: CompetitivePaper[] = [];
   competitiveExams: string[] = [];
-  manageCompetitiveAdminKey = '';
   manageCompetitiveExamFilter = '';
   loadingCompetitivePapers = false;
   competitiveDeleteInProgressId: number | null = null;
@@ -589,7 +569,7 @@ export class UploadPaperComponent implements OnInit {
       form.append('driveUrl', normalizedDriveUrl);
     }
 
-    this.api.uploadPaper(form, this.adminKey).subscribe({
+    this.api.uploadPaper(form).subscribe({
       next: () => {
         this.message = 'Academic paper uploaded successfully.';
         this.uploadTitle = '';
@@ -635,12 +615,6 @@ export class UploadPaperComponent implements OnInit {
   savePaperEdit(event: Event, paper: Paper): void {
     event.preventDefault();
 
-    const key = this.manageAdminKey.trim();
-    if (!key) {
-      this.manageMessage = 'Enter Admin Key in manage section before editing.';
-      return;
-    }
-
     if (!this.editPaperDraft) {
       return;
     }
@@ -679,7 +653,7 @@ export class UploadPaperComponent implements OnInit {
     }
 
     this.saveInProgressId = paper.id;
-    this.api.updatePaper(form, paper.id, key).subscribe({
+    this.api.updatePaper(form, paper.id).subscribe({
       next: () => {
         this.manageMessage = 'Paper updated successfully.';
         this.cancelPaperEdit();
@@ -728,7 +702,7 @@ export class UploadPaperComponent implements OnInit {
       form.append('file', this.competitiveSelectedFile);
     }
 
-    this.api.uploadCompetitivePaper(form, this.competitiveAdminKey).subscribe({
+    this.api.uploadCompetitivePaper(form).subscribe({
       next: () => {
         this.competitiveMessage = 'Competitive paper uploaded successfully.';
         this.competitiveExamName = '';
@@ -765,12 +739,6 @@ export class UploadPaperComponent implements OnInit {
   saveCompetitivePaperEdit(event: Event, paper: CompetitivePaper): void {
     event.preventDefault();
 
-    const key = this.manageCompetitiveAdminKey.trim();
-    if (!key) {
-      this.competitiveManageMessage = 'Enter Admin Key in competitive manage section before editing.';
-      return;
-    }
-
     if (!this.editCompetitiveDraft) {
       return;
     }
@@ -803,7 +771,7 @@ export class UploadPaperComponent implements OnInit {
     }
 
     this.competitiveSaveInProgressId = paper.id;
-    this.api.updateCompetitivePaper(form, paper.id, key).subscribe({
+    this.api.updateCompetitivePaper(form, paper.id).subscribe({
       next: () => {
         this.competitiveManageMessage = 'Competitive paper updated successfully.';
         this.cancelCompetitivePaperEdit();
@@ -871,17 +839,11 @@ export class UploadPaperComponent implements OnInit {
   }
 
   deletePaper(paper: Paper): void {
-    const key = this.manageAdminKey.trim();
-    if (!key) {
-      this.manageMessage = 'Enter Admin Key in manage section before deleting.';
-      return;
-    }
-
     const confirmed = window.confirm(`Delete "${paper.title}" permanently?`);
     if (!confirmed) return;
 
     this.deleteInProgressId = paper.id;
-    this.api.deletePaper(paper.id, key).subscribe({
+    this.api.deletePaper(paper.id).subscribe({
       next: (resp) => {
         this.manageMessage = resp.message || 'Paper deleted successfully.';
         this.papers = this.papers.filter((row) => row.id !== paper.id);
@@ -899,17 +861,11 @@ export class UploadPaperComponent implements OnInit {
   }
 
   deleteCompetitivePaper(paper: CompetitivePaper): void {
-    const key = this.manageCompetitiveAdminKey.trim();
-    if (!key) {
-      this.competitiveManageMessage = 'Enter Admin Key in competitive manage section before deleting.';
-      return;
-    }
-
     const confirmed = window.confirm(`Delete "${paper.title}" permanently?`);
     if (!confirmed) return;
 
     this.competitiveDeleteInProgressId = paper.id;
-    this.api.deleteCompetitivePaper(paper.id, key).subscribe({
+    this.api.deleteCompetitivePaper(paper.id).subscribe({
       next: (resp) => {
         this.competitiveManageMessage = resp.message || 'Competitive paper deleted successfully.';
         this.competitivePapers = this.competitivePapers.filter((row) => row.id !== paper.id);

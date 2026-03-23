@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
@@ -42,6 +42,14 @@ interface CompetitiveYearGroup {
           <span>{{ totalCompetitiveCount }}</span>
           <small>Competitive Papers</small>
         </div>
+      </div>
+    </section>
+
+    <section class="startup-notice" *ngIf="showWakeUpNotice && !hasInitialDataResolved()">
+      <div class="startup-spinner" aria-hidden="true"></div>
+      <div>
+        <strong>Server is waking up.</strong>
+        <p>Because the backend is on a free plan, the first load can take 20 to 60 seconds after inactivity.</p>
       </div>
     </section>
 
@@ -252,6 +260,34 @@ interface CompetitiveYearGroup {
         gap: 1rem;
         align-items: start;
       }
+      .startup-notice {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin: 0 0 1rem;
+        padding: 0.9rem 1rem;
+        border-radius: 14px;
+        border: 1px solid #cbdcf7;
+        background: linear-gradient(135deg, #f7fbff, #eef6ff);
+        color: #15314f;
+      }
+      .startup-notice strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .startup-notice p {
+        margin: 0;
+        color: #4d5d70;
+      }
+      .startup-spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 3px solid #bfd4ef;
+        border-top-color: #0f766e;
+        flex-shrink: 0;
+        animation: spin 0.9s linear infinite;
+      }
       .column {
         min-width: 0;
       }
@@ -449,6 +485,14 @@ interface CompetitiveYearGroup {
         opacity: 0.65;
         cursor: not-allowed;
       }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
       @media (max-width: 1080px) {
         .content-columns {
           grid-template-columns: 1fr;
@@ -511,7 +555,7 @@ interface CompetitiveYearGroup {
     `
   ]
 })
-export class StudentPapersComponent implements OnInit {
+export class StudentPapersComponent implements OnInit, OnDestroy {
   papers: Paper[] = [];
   semesterGroups: SemesterGroup[] = [];
   message = '';
@@ -524,6 +568,10 @@ export class StudentPapersComponent implements OnInit {
   competitiveMessage = '';
   isLoadingCompetitivePapers = false;
   private competitiveRequestId = 0;
+  showWakeUpNotice = false;
+  private initialAcademicResolved = false;
+  private initialCompetitiveResolved = false;
+  private wakeUpTimer: ReturnType<typeof setTimeout> | null = null;
 
   universityFilter = '';
   courseFilter = '';
@@ -547,8 +595,13 @@ export class StudentPapersComponent implements OnInit {
   constructor(public readonly api: ApiService) {}
 
   ngOnInit(): void {
+    this.startWakeUpTimer();
     this.pickUniversity(this.activeUniversity);
     this.loadCompetitiveExams();
+  }
+
+  ngOnDestroy(): void {
+    this.clearWakeUpTimer();
   }
 
   @HostListener('window:scroll', [])
@@ -670,6 +723,9 @@ export class StudentPapersComponent implements OnInit {
       .pipe(finalize(() => (this.isLoadingPapers = false)))
       .subscribe({
         next: (res) => {
+          if (!this.initialAcademicResolved && this.nextOffset === 0) {
+            this.markInitialAcademicResolved();
+          }
           const items = res.items || [];
           this.totalAcademicCount = res.total ?? items.length;
 
@@ -688,6 +744,9 @@ export class StudentPapersComponent implements OnInit {
           this.message = '';
         },
         error: () => {
+          if (!this.initialAcademicResolved && this.nextOffset === 0) {
+            this.markInitialAcademicResolved();
+          }
           if (!this.papers.length) {
             this.message = 'Failed to load papers.';
             this.semesterGroups = [];
@@ -716,6 +775,9 @@ export class StudentPapersComponent implements OnInit {
   loadCompetitiveExams(): void {
     this.api.getCompetitiveSummary().subscribe({
       next: (summary) => {
+        if (!this.initialCompetitiveResolved) {
+          this.markInitialCompetitiveResolved();
+        }
         const exams = summary.exams || [];
         this.competitiveExams = exams;
         this.totalCompetitiveCount = summary.totalCount ?? 0;
@@ -737,6 +799,9 @@ export class StudentPapersComponent implements OnInit {
         }
       },
       error: () => {
+        if (!this.initialCompetitiveResolved) {
+          this.markInitialCompetitiveResolved();
+        }
         this.competitiveExams = [];
         this.totalCompetitiveCount = 0;
         this.selectedCompetitiveExam = '';
@@ -901,6 +966,44 @@ export class StudentPapersComponent implements OnInit {
       return '';
     } catch (_error) {
       return '';
+    }
+  }
+
+  hasInitialDataResolved(): boolean {
+    return this.initialAcademicResolved && this.initialCompetitiveResolved;
+  }
+
+  private startWakeUpTimer(): void {
+    this.clearWakeUpTimer();
+    this.showWakeUpNotice = false;
+    this.wakeUpTimer = setTimeout(() => {
+      if (!this.hasInitialDataResolved()) {
+        this.showWakeUpNotice = true;
+      }
+    }, 1500);
+  }
+
+  private clearWakeUpTimer(): void {
+    if (this.wakeUpTimer) {
+      clearTimeout(this.wakeUpTimer);
+      this.wakeUpTimer = null;
+    }
+  }
+
+  private markInitialAcademicResolved(): void {
+    this.initialAcademicResolved = true;
+    this.finishWakeUpNoticeIfReady();
+  }
+
+  private markInitialCompetitiveResolved(): void {
+    this.initialCompetitiveResolved = true;
+    this.finishWakeUpNoticeIfReady();
+  }
+
+  private finishWakeUpNoticeIfReady(): void {
+    if (this.hasInitialDataResolved()) {
+      this.showWakeUpNotice = false;
+      this.clearWakeUpTimer();
     }
   }
 }

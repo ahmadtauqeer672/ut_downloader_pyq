@@ -655,6 +655,7 @@ export class StudentPapersComponent implements OnInit {
   private loadPapersPage(): void {
     if (this.isLoadingPapers || !this.hasMorePapers) return;
     this.isLoadingPapers = true;
+    const limit = this.nextOffset === 0 ? this.firstPageSize : this.pageSize;
 
     this.api
       .listPapers(
@@ -664,7 +665,7 @@ export class StudentPapersComponent implements OnInit {
           department: this.departmentFilter,
           semester: this.semesterFilter
         },
-        { limit: this.pageSize, offset: this.nextOffset }
+        { limit, offset: this.nextOffset }
       )
       .pipe(finalize(() => (this.isLoadingPapers = false)))
       .subscribe({
@@ -713,11 +714,13 @@ export class StudentPapersComponent implements OnInit {
   }
 
   loadCompetitiveExams(): void {
-    this.api.listCompetitiveExams().subscribe({
-      next: (rows) => {
-        this.competitiveExams = rows;
+    this.api.getCompetitiveSummary().subscribe({
+      next: (summary) => {
+        const exams = summary.exams || [];
+        this.competitiveExams = exams;
+        this.totalCompetitiveCount = summary.totalCount ?? 0;
         this.competitiveMessage = '';
-        if (!rows.length) {
+        if (!exams.length) {
           this.totalCompetitiveCount = 0;
           this.selectedCompetitiveExam = '';
           this.competitivePapers = [];
@@ -725,9 +728,7 @@ export class StudentPapersComponent implements OnInit {
           return;
         }
 
-        this.loadCompetitiveTotalCount();
-
-        if (this.selectedCompetitiveExam && rows.includes(this.selectedCompetitiveExam)) {
+        if (this.selectedCompetitiveExam && exams.includes(this.selectedCompetitiveExam)) {
           this.loadCompetitivePapers();
         } else {
           this.selectedCompetitiveExam = '';
@@ -793,17 +794,6 @@ export class StudentPapersComponent implements OnInit {
           this.isLoadingCompetitivePapers = false;
         }
       });
-  }
-
-  private loadCompetitiveTotalCount(): void {
-    this.api.listCompetitivePapers({}).subscribe({
-      next: (rows) => {
-        this.totalCompetitiveCount = rows.length;
-      },
-      error: () => {
-        this.totalCompetitiveCount = 0;
-      }
-    });
   }
 
   semesterTitle(semester: number): string {

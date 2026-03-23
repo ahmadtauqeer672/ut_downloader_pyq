@@ -596,6 +596,28 @@ app.get(
 );
 
 app.get(
+  '/api/competitive-summary',
+  asyncHandler(async (_req, res) => {
+    const { rows } = await pool.query(`
+      SELECT
+        COALESCE(array_agg(examname ORDER BY examname), ARRAY[]::TEXT[]) AS exams,
+        COALESCE(SUM(paper_count), 0)::INTEGER AS "totalCount"
+      FROM (
+        SELECT examname, COUNT(*)::INTEGER AS paper_count
+        FROM competitive_papers
+        GROUP BY examname
+      ) grouped
+    `);
+
+    const summary = rows[0] || { exams: [], totalCount: 0 };
+    res.json({
+      exams: Array.isArray(summary.exams) ? summary.exams : [],
+      totalCount: Number(summary.totalCount) || 0
+    });
+  })
+);
+
+app.get(
   '/api/competitive-papers',
   asyncHandler(async (req, res) => {
     const { examName = '', year = '' } = req.query;

@@ -32,6 +32,11 @@ export interface CompetitivePaperFilters {
   year?: string;
 }
 
+export interface CompetitiveSummaryResponse {
+  exams: string[];
+  totalCount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly baseUrl = 'https://ut-downloader-pyq.onrender.com/api';
@@ -89,6 +94,10 @@ export class ApiService {
 
   listCompetitiveExams(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/competitive-exams`);
+  }
+
+  getCompetitiveSummary(): Observable<CompetitiveSummaryResponse> {
+    return this.http.get<CompetitiveSummaryResponse>(`${this.baseUrl}/competitive-summary`);
   }
 
   listCompetitivePapers(filters: CompetitivePaperFilters): Observable<CompetitivePaper[]> {

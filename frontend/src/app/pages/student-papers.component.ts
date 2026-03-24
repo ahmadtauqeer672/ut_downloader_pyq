@@ -143,27 +143,6 @@ interface FaqItem {
       </aside>
     </section>
 
-    <section class="route-card" aria-labelledby="course-url-title">
-      <div class="route-head">
-        <div>
-          <p class="section-kicker section-kicker-soft">Course URLs</p>
-          <h2 id="course-url-title">Browse all course pages</h2>
-        </div>
-        <p>Each course has its own URL so Google can crawl and index separate pages for PTU, PU, GNDU, MDU, GTU and more.</p>
-      </div>
-
-      <div class="route-grid">
-        <article class="route-group" *ngFor="let university of universityMenus">
-          <a class="route-university" [routerLink]="academicRouteLink(university.name)">{{ university.name }} All Courses</a>
-          <div class="route-links">
-            <a class="route-link" *ngFor="let course of university.courses" [routerLink]="academicRouteLink(university.name, course)">
-              {{ university.name }} {{ course }}
-            </a>
-          </div>
-        </article>
-      </div>
-    </section>
-
     <section class="startup-notice" *ngIf="showWakeUpNotice && !hasInitialDataResolved()">
       <div class="startup-spinner" aria-hidden="true"></div>
       <div>
@@ -541,8 +520,7 @@ interface FaqItem {
         margin-bottom: 1rem;
       }
       .seo-card,
-      .faq-card,
-      .route-card {
+      .faq-card {
         position: relative;
         overflow: hidden;
         background: linear-gradient(180deg, #ffffff, #fbfdff);
@@ -553,7 +531,6 @@ interface FaqItem {
       }
       .seo-card::before,
       .faq-card::before,
-      .route-card::before,
       .directory-card::before,
       .competitive-card::before {
         content: '';
@@ -653,78 +630,6 @@ interface FaqItem {
       }
       .seo-list li + li {
         margin-top: 0.65rem;
-      }
-      .route-card {
-        margin-bottom: 1rem;
-        background:
-          radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 28%),
-          linear-gradient(180deg, #ffffff, #fbfdff);
-      }
-      .route-head {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        align-items: flex-start;
-        margin-bottom: 1rem;
-      }
-      .route-head h2 {
-        margin: 0.45rem 0 0;
-        color: var(--brand-ink);
-        font-family: var(--heading-font);
-        font-size: 1.55rem;
-        line-height: 1.2;
-      }
-      .route-head p:last-child {
-        margin: 0;
-        max-width: 540px;
-        color: var(--brand-muted);
-        line-height: 1.7;
-      }
-      .route-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.9rem;
-      }
-      .route-group {
-        border: 1px solid #dbe6f1;
-        border-radius: 20px;
-        padding: 1rem;
-        background: linear-gradient(180deg, #f8fbff, #ffffff);
-        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.04);
-      }
-      .route-university {
-        display: inline-flex;
-        align-items: center;
-        min-height: 44px;
-        padding: 0.7rem 0.95rem;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #0f766e, #0b5f59);
-        color: #ffffff;
-        text-decoration: none;
-        font-weight: 800;
-        box-shadow: 0 10px 20px rgba(15, 118, 110, 0.14);
-      }
-      .route-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
-        margin-top: 0.9rem;
-      }
-      .route-link {
-        display: inline-flex;
-        align-items: center;
-        min-height: 42px;
-        padding: 0.62rem 0.86rem;
-        border-radius: 999px;
-        border: 1px solid #d1dbe8;
-        background: #ffffff;
-        color: #17395f;
-        text-decoration: none;
-        font-weight: 700;
-      }
-      .route-link:hover,
-      .route-university:hover {
-        transform: translateY(-1px);
       }
       .hero-stat-wrap {
         display: flex;
@@ -1086,9 +991,6 @@ interface FaqItem {
         .hero-spotlight {
           width: 100%;
         }
-        .route-grid {
-          grid-template-columns: 1fr;
-        }
         .faq-grid {
           grid-template-columns: 1fr;
         }
@@ -1108,9 +1010,6 @@ interface FaqItem {
         }
         .preset-wrap {
           grid-template-columns: 1fr;
-        }
-        .route-head {
-          flex-direction: column;
         }
         .directory-grid,
         .btech-controls {
@@ -1151,7 +1050,6 @@ interface FaqItem {
         }
         .seo-card,
         .faq-card,
-        .route-card,
         .directory-card,
         .competitive-card {
           padding: 1rem 0.9rem;

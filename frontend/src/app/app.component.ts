@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map, startWith } from 'rxjs/operators';
 import { AdminSessionService } from './services/admin-session.service';
+import { SeoConfig, SeoService } from './services/seo.service';
 
 @Component({
   selector: 'app-root',
@@ -256,6 +259,32 @@ import { AdminSessionService } from './services/admin-session.service';
 })
 export class AppComponent {
   readonly currentYear = new Date().getFullYear();
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly seo = inject(SeoService);
 
-  constructor(public readonly adminSession: AdminSessionService) {}
+  constructor(public readonly adminSession: AdminSessionService) {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        startWith(null),
+        map(() => this.findDeepestRoute(this.activatedRoute)),
+        map((route) => route.snapshot.data['seo'] as SeoConfig | undefined),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((config) => {
+        if (config) {
+          this.seo.update(config);
+        }
+      });
+  }
+
+  private findDeepestRoute(route: ActivatedRoute): ActivatedRoute {
+    let activeRoute = route;
+    while (activeRoute.firstChild) {
+      activeRoute = activeRoute.firstChild;
+    }
+    return activeRoute;
+  }
 }

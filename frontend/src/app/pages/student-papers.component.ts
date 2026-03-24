@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
@@ -6,6 +6,7 @@ import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
 import { finalize } from 'rxjs/operators';
 import { ACADEMIC_UNIVERSITY_OPTIONS, BTECH_DEPARTMENTS, SEMESTERS } from '../data/academic-options';
+import { SeoService } from '../services/seo.service';
 
 interface UniversityMenu {
   name: string;
@@ -556,6 +557,8 @@ interface CompetitiveYearGroup {
   ]
 })
 export class StudentPapersComponent implements OnInit, OnDestroy {
+  private readonly seo = inject(SeoService);
+
   papers: Paper[] = [];
   semesterGroups: SemesterGroup[] = [];
   message = '';
@@ -654,6 +657,7 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
     this.courseFilter = '';
     this.departmentFilter = '';
     this.semesterFilter = '';
+    this.syncSeo();
     this.resetAndLoadPapers();
   }
 
@@ -661,6 +665,7 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
     this.courseFilter = '';
     this.departmentFilter = '';
     this.semesterFilter = '';
+    this.syncSeo();
     this.resetAndLoadPapers();
   }
 
@@ -668,26 +673,31 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
     this.courseFilter = course;
     this.departmentFilter = '';
     this.semesterFilter = '';
+    this.syncSeo();
     this.resetAndLoadPapers();
   }
 
   pickAllDepartments(): void {
     this.departmentFilter = '';
+    this.syncSeo();
     this.resetAndLoadPapers();
   }
 
   pickDepartment(department: string): void {
     this.departmentFilter = department;
+    this.syncSeo();
     this.resetAndLoadPapers();
   }
 
   pickAllSemesters(): void {
     this.semesterFilter = '';
+    this.syncSeo();
     this.resetAndLoadPapers();
   }
 
   pickSemester(semester: string): void {
     this.semesterFilter = semester;
+    this.syncSeo();
     this.resetAndLoadPapers();
   }
 
@@ -1005,5 +1015,41 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
       this.showWakeUpNotice = false;
       this.clearWakeUpTimer();
     }
+  }
+
+  private syncSeo(): void {
+    const focusParts = [
+      this.universityFilter || 'PTU',
+      this.courseFilter || 'All Courses',
+      this.departmentFilter,
+      this.semesterFilter ? `Semester ${this.semesterFilter}` : ''
+    ].filter(Boolean);
+    const focusText = focusParts.join(' ');
+    const title = `${focusText} Question Papers | UTpaper`;
+    const description = `Browse ${focusText} previous year question papers on UTpaper. Download university PYQs and competitive exam papers in one place.`;
+    const keywords = [...focusParts, 'question papers', 'previous year papers', 'PYQ', 'UTpaper'].join(', ');
+
+    this.seo.update({
+      title,
+      description,
+      keywords,
+      path: '/',
+      type: 'website',
+      structuredData: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'UTpaper',
+          url: 'https://utpaper.in/'
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: `${focusText} Question Papers`,
+          url: 'https://utpaper.in/',
+          description
+        }
+      ]
+    });
   }
 }

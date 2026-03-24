@@ -37,7 +37,7 @@ import { AdminSessionService } from './services/admin-session.service';
     <footer class="site-footer">
       <section class="footer-grid page">
         <div class="footer-brand">
-          <h3>PaperVault</h3>
+          <h3>UTpaper</h3>
           <p>Semester-wise previous year papers for multiple universities and courses.</p>
         </div>
         <div>
@@ -57,7 +57,7 @@ import { AdminSessionService } from './services/admin-session.service';
         </div>
       </section>
       <div class="copy-row">
-        <p class="copy page">&copy; {{ currentYear }} PaperVault. All rights reserved.</p>
+        <p class="copy page">&copy; {{ currentYear }} UTpaper. All rights reserved.</p>
       </div>
     </footer>
   `,

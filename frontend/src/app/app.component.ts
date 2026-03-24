@@ -14,7 +14,6 @@ import { AdminSessionService } from './services/admin-session.service';
           <nav class="nav">
             <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
             <a routerLink="/" fragment="directory">Question Papers</a>
-            <a routerLink="/admin" routerLinkActive="active">Admin Panel</a>
             <a *ngIf="adminSession.isAuthenticated()" routerLink="/upload" routerLinkActive="active">Upload</a>
             <a *ngIf="adminSession.isAuthenticated()" routerLink="/watermark-tool" routerLinkActive="active">Add Watermark</a>
             <a class="brand" routerLink="/">

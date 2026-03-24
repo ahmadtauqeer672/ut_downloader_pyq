@@ -23,16 +23,28 @@ interface CompetitiveYearGroup {
   papers: CompetitivePaper[];
 }
 
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 @Component({
   selector: 'app-student-papers',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <section class="hero">
-      <div>
+      <div class="hero-copy">
         <p class="eyebrow">Academic Resource Hub</p>
-        <h2>Browse Previous Year Papers</h2>
-        <p class="sub">Academic papers are semester-wise. Competitive exam papers are year-wise.</p>
+        <h1>PTU Question Papers, Previous Year Papers and Competitive Exam PYQs</h1>
+        <p class="sub">
+          Download PTU, PU Chandigarh, GNDU, MDU and GTU question papers in one place. Browse BTECH, BCA, BBA, MBA,
+          MCA and competitive exam papers semester-wise or year-wise on UTpaper.
+        </p>
+        <p class="hero-note">
+          This website helps students find previous year papers quickly, compare semesters, and prepare with real exam
+          patterns across multiple universities and courses.
+        </p>
       </div>
       <div class="hero-stat-wrap">
         <div class="hero-stat">
@@ -44,6 +56,42 @@ interface CompetitiveYearGroup {
           <small>Competitive Papers</small>
         </div>
       </div>
+    </section>
+
+    <section class="seo-intro" aria-label="Homepage introduction">
+      <article class="seo-card">
+        <h2>Find university question papers faster</h2>
+        <p>
+          UTpaper is built for students who want quick access to previous year question papers without browsing many
+          different websites. You can filter papers by university, course, department and semester, then open or
+          download the paper directly.
+        </p>
+        <p>
+          The main focus is PTU question papers, but the directory also includes PU Chandigarh, GNDU, MDU, GTU and
+          selected competitive exam papers. This makes the homepage stronger for searches like PTU BTECH papers, PTU
+          BCA papers, MBA previous year papers and semester-wise PYQs.
+        </p>
+
+        <div class="preset-wrap">
+          <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'BTECH')">PTU BTECH Papers</button>
+          <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'BCA')">PTU BCA Papers</button>
+          <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'MBA')">PTU MBA Papers</button>
+          <button type="button" class="preset-chip" (click)="applyPreset('PU Chandigarh', 'BTECH')">PU BTECH Papers</button>
+          <button type="button" class="preset-chip" (click)="applyPreset('GNDU', 'B.COM')">GNDU B.COM Papers</button>
+          <button type="button" class="preset-chip" (click)="applyPreset('GTU', 'BPHARM')">GTU BPHARM Papers</button>
+        </div>
+      </article>
+
+      <aside class="seo-card seo-side">
+        <h2>Popular Searches</h2>
+        <ul class="seo-list">
+          <li>PTU question papers all semesters</li>
+          <li>PTU BTECH previous year papers</li>
+          <li>PTU BCA and MBA question papers</li>
+          <li>Semester-wise university PYQ downloads</li>
+          <li>Competitive exam papers year-wise</li>
+        </ul>
+      </aside>
     </section>
 
     <section class="startup-notice" *ngIf="showWakeUpNotice && !hasInitialDataResolved()">
@@ -192,6 +240,20 @@ interface CompetitiveYearGroup {
       </div>
     </section>
 
+    <section class="faq-card" aria-labelledby="homepage-faq-title">
+      <div class="faq-head">
+        <h2 id="homepage-faq-title">Frequently Asked Questions</h2>
+        <p>Helpful details for students searching previous year papers on Google and on the website.</p>
+      </div>
+
+      <div class="faq-grid">
+        <article class="faq-item" *ngFor="let item of faqItems">
+          <h3>{{ item.question }}</h3>
+          <p>{{ item.answer }}</p>
+        </article>
+      </div>
+    </section>
+
   `,
   styles: [
     `
@@ -215,17 +277,82 @@ interface CompetitiveYearGroup {
         text-transform: uppercase;
         opacity: 0.85;
       }
-      .hero h2 {
+      .hero-copy {
+        min-width: 0;
+      }
+      .hero h1 {
         margin: 0.35rem 0;
-        font-size: 1.6rem;
+        font-size: 2rem;
+        line-height: 1.15;
       }
       .hero .sub {
         margin: 0;
         max-width: 780px;
         opacity: 0.9;
       }
-      .hero > div:first-child {
-        min-width: 0;
+      .hero-note {
+        margin: 0.85rem 0 0;
+        max-width: 760px;
+        color: rgba(233, 241, 255, 0.88);
+        line-height: 1.65;
+      }
+      .seo-intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .seo-card,
+      .faq-card {
+        background: #ffffff;
+        border: 1px solid #dbe4ef;
+        border-radius: 14px;
+        padding: 1rem;
+      }
+      .seo-card h2,
+      .faq-head h2 {
+        margin: 0 0 0.65rem;
+        color: #16324f;
+      }
+      .seo-card p,
+      .faq-head p,
+      .faq-item p {
+        margin: 0;
+        color: #4d5d70;
+        line-height: 1.7;
+      }
+      .seo-card p + p {
+        margin-top: 0.75rem;
+      }
+      .preset-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-top: 1rem;
+      }
+      .preset-chip {
+        border: 1px solid #cbdcf7;
+        border-radius: 999px;
+        padding: 0.52rem 0.82rem;
+        background: #f8fbff;
+        color: #0f2f7a;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .preset-chip:hover {
+        background: #edf5ff;
+      }
+      .seo-side {
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+      }
+      .seo-list {
+        margin: 0;
+        padding-left: 1.1rem;
+        color: #23415f;
+      }
+      .seo-list li + li {
+        margin-top: 0.6rem;
       }
       .hero-stat-wrap {
         display: flex;
@@ -486,6 +613,32 @@ interface CompetitiveYearGroup {
         opacity: 0.65;
         cursor: not-allowed;
       }
+      .faq-card {
+        margin-top: 1rem;
+      }
+      .faq-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: flex-start;
+        margin-bottom: 0.9rem;
+      }
+      .faq-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+      }
+      .faq-item {
+        border: 1px solid #dbe4ef;
+        border-radius: 12px;
+        padding: 0.95rem;
+        background: #fbfdff;
+      }
+      .faq-item h3 {
+        margin: 0 0 0.45rem;
+        color: #16324f;
+        font-size: 1rem;
+      }
       @keyframes spin {
         from {
           transform: rotate(0deg);
@@ -495,7 +648,11 @@ interface CompetitiveYearGroup {
         }
       }
       @media (max-width: 1080px) {
+        .seo-intro,
         .content-columns {
+          grid-template-columns: 1fr;
+        }
+        .faq-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -504,6 +661,9 @@ interface CompetitiveYearGroup {
           flex-direction: column;
           align-items: flex-start;
         }
+        .hero h1 {
+          font-size: 1.65rem;
+        }
         .hero-stat-wrap {
           width: 100%;
         }
@@ -511,6 +671,7 @@ interface CompetitiveYearGroup {
         .btech-controls {
           grid-template-columns: 1fr;
         }
+        .faq-head,
         .paper-row {
           flex-direction: column;
           align-items: flex-start;
@@ -525,13 +686,15 @@ interface CompetitiveYearGroup {
           padding: 0.9rem;
           gap: 0.55rem;
         }
-        .hero h2 {
+        .hero h1 {
           font-size: 1.35rem;
         }
         .hero-stat {
           flex: 1;
           min-width: 140px;
         }
+        .seo-card,
+        .faq-card,
         .directory-card,
         .competitive-card {
           padding: 0.9rem 0.85rem;
@@ -590,6 +753,28 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
 
   readonly btechDepartments = BTECH_DEPARTMENTS;
   readonly semesters = SEMESTERS;
+  readonly faqItems: FaqItem[] = [
+    {
+      question: 'What are PTU question papers?',
+      answer:
+        'PTU question papers are previous year exam papers from I. K. Gujral Punjab Technical University courses such as BTECH, BCA, BBA, MBA and MCA.'
+    },
+    {
+      question: 'Can I download papers semester-wise?',
+      answer:
+        'Yes. Academic papers on UTpaper are organized semester-wise, and BTECH papers can also be filtered by department and semester.'
+    },
+    {
+      question: 'Does the website only include PTU papers?',
+      answer:
+        'No. The directory also includes papers for PU Chandigarh, GNDU, MDU, GTU and competitive exams wherever papers have been uploaded.'
+    },
+    {
+      question: 'Why can the first load be slow sometimes?',
+      answer:
+        'The backend runs on a free hosting plan, so the server can take a short time to wake up after inactivity before papers begin loading.'
+    }
+  ];
 
   universityMenus: UniversityMenu[] = ACADEMIC_UNIVERSITY_OPTIONS;
 
@@ -699,6 +884,21 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
     this.semesterFilter = semester;
     this.syncSeo();
     this.resetAndLoadPapers();
+  }
+
+  applyPreset(universityName: string, course = '', department = '', semester = ''): void {
+    const selected = this.universityMenus.find((uni) => uni.name === universityName);
+    if (!selected) return;
+
+    this.activeUniversity = selected;
+    this.universityFilter = selected.name;
+    this.courseFilter = course;
+    this.departmentFilter = department;
+    this.semesterFilter = semester;
+    this.syncSeo();
+    this.resetAndLoadPapers();
+
+    document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   loadMorePapers(): void {
@@ -1035,21 +1235,43 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
       keywords,
       path: '/',
       type: 'website',
-      structuredData: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          name: 'UTpaper',
-          url: 'https://utpaper.in/'
-        },
-        {
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: `${focusText} Question Papers`,
-          url: 'https://utpaper.in/',
-          description
-        }
-      ]
+      structuredData: this.buildStructuredData(focusText, description)
     });
+  }
+
+  private buildStructuredData(focusText: string, description: string): Array<Record<string, unknown>> {
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'UTpaper',
+        url: 'https://utpaper.in/'
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'UTpaper',
+        url: 'https://utpaper.in/'
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: `${focusText} Question Papers`,
+        url: 'https://utpaper.in/',
+        description
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: this.faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer
+          }
+        }))
+      }
+    ];
   }
 }

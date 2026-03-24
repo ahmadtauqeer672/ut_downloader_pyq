@@ -199,7 +199,7 @@ export class WatermarkToolComponent {
   selectedFile: File | null = null;
   selectedFileName = '';
   outputName = '';
-  watermarkText = 'utpaper.com';
+  watermarkText = 'utpaper.in';
   isProcessing = false;
   message = '';
   errorMessage = '';

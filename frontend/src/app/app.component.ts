@@ -56,6 +56,28 @@ import { AdminSessionService } from './services/admin-session.service';
           <p>For wrong, duplicate, or outdated papers, contact admin for removal.</p>
         </div>
       </section>
+      <section class="footer-disclaimer page">
+        <h4>Disclaimer</h4>
+        <p>
+          The content available on utpaper.in is provided for educational and informational purposes only. All
+          Previous Year Question Papers (PYQs), study materials, and related content uploaded on this website are
+          collected from various publicly available sources on the internet.
+        </p>
+        <p>
+          We do not claim ownership of any such materials unless explicitly stated. If you are the rightful owner of
+          any content and believe that your copyrighted material has been used improperly, please contact us, and we
+          will take appropriate action, including removal of the content.
+        </p>
+        <p>
+          While we strive to ensure accuracy and authenticity, utpaper.in makes no guarantees regarding the
+          completeness, reliability, or accuracy of the content. Users are advised to verify information from official
+          sources.
+        </p>
+        <p>
+          By using this website, you agree that utpaper.in is not responsible for any loss, damage, or inconvenience
+          caused by the use of the content provided.
+        </p>
+      </section>
       <div class="copy-row">
         <p class="copy page">&copy; {{ currentYear }} UTpaper. All rights reserved.</p>
       </div>
@@ -195,6 +217,25 @@ import { AdminSessionService } from './services/admin-session.service';
       }
       .footer-links a:hover {
         text-decoration: underline;
+      }
+      .footer-disclaimer {
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+      .footer-disclaimer h4 {
+        margin: 0 0 0.7rem;
+        color: #f8fdff;
+        font-family: 'Cambria', 'Palatino Linotype', serif;
+      }
+      .footer-disclaimer p {
+        margin: 0 0 0.7rem;
+        color: #c8dff2;
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+      .footer-disclaimer p:last-child {
+        margin-bottom: 0;
       }
       .copy-row {
         border-top: 1px solid rgba(255, 255, 255, 0.16);

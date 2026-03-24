@@ -35,38 +35,43 @@ interface CompetitiveEditDraft {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <section class="card">
-      <h2>Developer Upload (Academic)</h2>
-      <p class="hint">For BTECH, department and semester are required. Upload file or paste Google Drive file link.</p>
+    <section class="card card-feature">
+      <div class="card-head">
+        <div>
+          <p class="eyebrow">Admin Workspace</p>
+          <h2>Developer Upload (Academic)</h2>
+          <p class="hint">For BTECH, department and semester are required. Upload file or paste Google Drive file link.</p>
+        </div>
+      </div>
 
-      <form (submit)="uploadAcademic($event)" class="grid">
-        <input [(ngModel)]="uploadTitle" name="uploadTitle" placeholder="Paper Title" required />
-        <select [(ngModel)]="uploadUniversity" name="uploadUniversity" (change)="onUniversityChange()" required>
+      <form (submit)="uploadAcademic($event)" class="grid upload-grid">
+        <input class="form-control" [(ngModel)]="uploadTitle" name="uploadTitle" placeholder="Paper Title" required />
+        <select class="form-control" [(ngModel)]="uploadUniversity" name="uploadUniversity" (change)="onUniversityChange()" required>
           <option value="" disabled>Select university</option>
           <option *ngFor="let u of universityOptions" [value]="u.name">{{ u.name }}</option>
         </select>
 
-        <select [(ngModel)]="uploadCourse" name="uploadCourse" (change)="onCourseChange()" required>
+        <select class="form-control" [(ngModel)]="uploadCourse" name="uploadCourse" (change)="onCourseChange()" required>
           <option value="" disabled>Select course</option>
           <option *ngFor="let c of courseOptions" [value]="c">{{ c }}</option>
         </select>
 
-        <select *ngIf="isBtechSelected()" [(ngModel)]="uploadDepartment" name="uploadDepartment" required>
+        <select class="form-control" *ngIf="isBtechSelected()" [(ngModel)]="uploadDepartment" name="uploadDepartment" required>
           <option value="" disabled>Select BTECH department</option>
           <option *ngFor="let d of btechDepartments" [value]="d">{{ d }}</option>
         </select>
 
-        <select *ngIf="isBtechSelected()" [(ngModel)]="uploadSemester" name="uploadSemester" required>
+        <select class="form-control" *ngIf="isBtechSelected()" [(ngModel)]="uploadSemester" name="uploadSemester" required>
           <option value="" disabled>Select semester</option>
           <option *ngFor="let s of semesters" [value]="s">Semester {{ s }}</option>
         </select>
 
-        <input [(ngModel)]="uploadSubject" name="uploadSubject" placeholder="Subject" required />
-        <input [(ngModel)]="uploadYear" name="uploadYear" placeholder="Year" required />
-        <input [(ngModel)]="uploadExamType" name="uploadExamType" placeholder="Exam Type" required />
-        <input [(ngModel)]="uploadDriveUrl" name="uploadDriveUrl" placeholder="Google Drive File Link (optional)" />
-        <input type="file" (change)="onFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
-        <button type="submit">Upload Academic Paper</button>
+        <input class="form-control" [(ngModel)]="uploadSubject" name="uploadSubject" placeholder="Subject" required />
+        <input class="form-control" [(ngModel)]="uploadYear" name="uploadYear" placeholder="Year" required />
+        <input class="form-control" [(ngModel)]="uploadExamType" name="uploadExamType" placeholder="Exam Type" required />
+        <input class="form-control" [(ngModel)]="uploadDriveUrl" name="uploadDriveUrl" placeholder="Google Drive File Link (optional)" />
+        <input class="form-control file-control" type="file" (change)="onFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+        <button type="submit" class="primary-btn">Upload Academic Paper</button>
       </form>
 
       <p *ngIf="message" class="message">{{ message }}</p>
@@ -74,11 +79,12 @@ interface CompetitiveEditDraft {
 
     <section class="card">
       <div class="manage-head">
-        <h3>Manage Academic Papers</h3>
+        <div>
+          <h3>Manage Academic Papers</h3>
+          <p class="hint">You are logged in as admin and can edit or delete papers below.</p>
+        </div>
         <button type="button" class="refresh-btn" (click)="loadUploadedPapers()">Refresh</button>
       </div>
-
-      <p class="hint">You are logged in as admin and can edit or delete papers below.</p>
       <p *ngIf="manageMessage" class="manage-message">{{ manageMessage }}</p>
 
       <div class="loading" *ngIf="loadingPapers">Loading papers...</div>
@@ -96,33 +102,33 @@ interface CompetitiveEditDraft {
             </div>
 
             <form *ngIf="editingPaperId === paper.id && editPaperDraft" class="edit-grid" (submit)="savePaperEdit($event, paper)">
-              <input [(ngModel)]="editPaperDraft.title" name="editTitle" placeholder="Paper Title" required />
+              <input class="form-control" [(ngModel)]="editPaperDraft.title" name="editTitle" placeholder="Paper Title" required />
 
-              <select [(ngModel)]="editPaperDraft.university" name="editUniversity" (change)="onEditUniversityChange()" required>
+              <select class="form-control" [(ngModel)]="editPaperDraft.university" name="editUniversity" (change)="onEditUniversityChange()" required>
                 <option value="" disabled>Select university</option>
                 <option *ngFor="let u of universityOptions" [value]="u.name">{{ u.name }}</option>
               </select>
 
-              <select [(ngModel)]="editPaperDraft.course" name="editCourse" (change)="onEditCourseChange()" required>
+              <select class="form-control" [(ngModel)]="editPaperDraft.course" name="editCourse" (change)="onEditCourseChange()" required>
                 <option value="" disabled>Select course</option>
                 <option *ngFor="let c of editCourseOptions" [value]="c">{{ c }}</option>
               </select>
 
-              <select *ngIf="isEditingBtechSelected()" [(ngModel)]="editPaperDraft.department" name="editDepartment" required>
+              <select class="form-control" *ngIf="isEditingBtechSelected()" [(ngModel)]="editPaperDraft.department" name="editDepartment" required>
                 <option value="" disabled>Select BTECH department</option>
                 <option *ngFor="let d of btechDepartments" [value]="d">{{ d }}</option>
               </select>
 
-              <select *ngIf="isEditingBtechSelected()" [(ngModel)]="editPaperDraft.semester" name="editSemester" required>
+              <select class="form-control" *ngIf="isEditingBtechSelected()" [(ngModel)]="editPaperDraft.semester" name="editSemester" required>
                 <option value="" disabled>Select semester</option>
                 <option *ngFor="let s of semesters" [value]="s">Semester {{ s }}</option>
               </select>
 
-              <input [(ngModel)]="editPaperDraft.subject" name="editSubject" placeholder="Subject" required />
-              <input [(ngModel)]="editPaperDraft.year" name="editYear" placeholder="Year" required />
-              <input [(ngModel)]="editPaperDraft.examType" name="editExamType" placeholder="Exam Type" required />
-              <input [(ngModel)]="editPaperDraft.driveUrl" name="editDriveUrl" placeholder="New Google Drive Link (optional)" />
-              <input type="file" (change)="onEditFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+              <input class="form-control" [(ngModel)]="editPaperDraft.subject" name="editSubject" placeholder="Subject" required />
+              <input class="form-control" [(ngModel)]="editPaperDraft.year" name="editYear" placeholder="Year" required />
+              <input class="form-control" [(ngModel)]="editPaperDraft.examType" name="editExamType" placeholder="Exam Type" required />
+              <input class="form-control" [(ngModel)]="editPaperDraft.driveUrl" name="editDriveUrl" placeholder="New Google Drive Link (optional)" />
+              <input class="form-control file-control" type="file" (change)="onEditFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
 
               <p class="edit-note">Leave replacement file and Drive link empty to keep the current file source.</p>
 
@@ -158,16 +164,21 @@ interface CompetitiveEditDraft {
     </section>
 
     <section class="card">
-      <h2>Competitive Exam Upload (Year-wise)</h2>
-      <p class="hint">Add exam papers like GATE, UPSC, CAT, SSC etc. Students will see papers grouped by year.</p>
+      <div class="card-head">
+        <div>
+          <p class="eyebrow">Exam Library</p>
+          <h2>Competitive Exam Upload (Year-wise)</h2>
+          <p class="hint">Add exam papers like GATE, UPSC, CAT, SSC etc. Students will see papers grouped by year.</p>
+        </div>
+      </div>
 
-      <form (submit)="uploadCompetitive($event)" class="grid">
-        <input [(ngModel)]="competitiveExamName" name="competitiveExamName" placeholder="Exam Name (e.g. GATE CSE)" required />
-        <input [(ngModel)]="competitiveTitle" name="competitiveTitle" placeholder="Paper Title" required />
-        <input [(ngModel)]="competitiveYear" name="competitiveYear" placeholder="Year (YYYY)" required />
-        <input [(ngModel)]="competitiveDriveUrl" name="competitiveDriveUrl" placeholder="Google Drive File Link (optional)" />
-        <input type="file" (change)="onCompetitiveFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
-        <button type="submit">Upload Competitive Paper</button>
+      <form (submit)="uploadCompetitive($event)" class="grid upload-grid">
+        <input class="form-control" [(ngModel)]="competitiveExamName" name="competitiveExamName" placeholder="Exam Name (e.g. GATE CSE)" required />
+        <input class="form-control" [(ngModel)]="competitiveTitle" name="competitiveTitle" placeholder="Paper Title" required />
+        <input class="form-control" [(ngModel)]="competitiveYear" name="competitiveYear" placeholder="Year (YYYY)" required />
+        <input class="form-control" [(ngModel)]="competitiveDriveUrl" name="competitiveDriveUrl" placeholder="Google Drive File Link (optional)" />
+        <input class="form-control file-control" type="file" (change)="onCompetitiveFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+        <button type="submit" class="primary-btn">Upload Competitive Paper</button>
       </form>
 
       <p *ngIf="competitiveMessage" class="message">{{ competitiveMessage }}</p>
@@ -175,13 +186,15 @@ interface CompetitiveEditDraft {
 
     <section class="card">
       <div class="manage-head">
-        <h3>Manage Competitive Papers</h3>
+        <div>
+          <h3>Manage Competitive Papers</h3>
+          <p class="hint">Select exam and manage uploaded competitive papers below.</p>
+        </div>
         <button type="button" class="refresh-btn" (click)="loadCompetitivePapers()">Refresh</button>
       </div>
 
-      <p class="hint">Select exam (optional) and edit or delete competitive papers.</p>
       <div class="manage-grid">
-        <select [(ngModel)]="manageCompetitiveExamFilter" name="manageCompetitiveExamFilter" (change)="loadCompetitivePapers()">
+        <select class="form-control" [(ngModel)]="manageCompetitiveExamFilter" name="manageCompetitiveExamFilter" (change)="loadCompetitivePapers()">
           <option value="">All Competitive Exams</option>
           <option *ngFor="let exam of competitiveExams" [value]="exam">{{ exam }}</option>
         </select>
@@ -204,11 +217,11 @@ interface CompetitiveEditDraft {
               class="edit-grid"
               (submit)="saveCompetitivePaperEdit($event, paper)"
             >
-              <input [(ngModel)]="editCompetitiveDraft.examName" name="editCompetitiveExamName" placeholder="Exam Name" required />
-              <input [(ngModel)]="editCompetitiveDraft.title" name="editCompetitiveTitle" placeholder="Paper Title" required />
-              <input [(ngModel)]="editCompetitiveDraft.year" name="editCompetitiveYear" placeholder="Year (YYYY)" required />
-              <input [(ngModel)]="editCompetitiveDraft.driveUrl" name="editCompetitiveDriveUrl" placeholder="New Google Drive Link (optional)" />
-              <input type="file" (change)="onCompetitiveEditFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+              <input class="form-control" [(ngModel)]="editCompetitiveDraft.examName" name="editCompetitiveExamName" placeholder="Exam Name" required />
+              <input class="form-control" [(ngModel)]="editCompetitiveDraft.title" name="editCompetitiveTitle" placeholder="Paper Title" required />
+              <input class="form-control" [(ngModel)]="editCompetitiveDraft.year" name="editCompetitiveYear" placeholder="Year (YYYY)" required />
+              <input class="form-control" [(ngModel)]="editCompetitiveDraft.driveUrl" name="editCompetitiveDriveUrl" placeholder="New Google Drive Link (optional)" />
+              <input class="form-control file-control" type="file" (change)="onCompetitiveEditFileChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
 
               <p class="edit-note">Leave replacement file and Drive link empty to keep the current file source.</p>
 
@@ -252,76 +265,151 @@ interface CompetitiveEditDraft {
   `,
   styles: [
     `
+      :host {
+        display: block;
+        color: #16324f;
+      }
       .card {
-        background: #ffffff;
-        border: 1px solid #d8dee6;
-        border-radius: 12px;
-        padding: 1.1rem;
+        background: linear-gradient(180deg, #ffffff, #fbfdff);
+        border: 1px solid #dbe5ef;
+        border-radius: 24px;
+        padding: 1.35rem 1.45rem;
+        margin-bottom: 1.1rem;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+      }
+      .card-feature {
+        background:
+          radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 28%),
+          linear-gradient(180deg, #ffffff, #fbfdff);
+      }
+      .card-head {
         margin-bottom: 1rem;
+      }
+      .eyebrow {
+        margin: 0 0 0.35rem;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #2563eb;
+      }
+      h2,
+      h3 {
+        margin: 0;
+        color: #0f2744;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: clamp(1.75rem, 2.8vw, 2.35rem);
+      }
+      h3 {
+        font-size: 1.6rem;
       }
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.9rem;
+      }
+      .upload-grid {
+        align-items: stretch;
       }
       .manage-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 0.75rem;
+        gap: 0.85rem;
+        margin-top: 0.9rem;
       }
-      input,
-      select,
+      .form-control,
       button {
-        padding: 0.65rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
+        min-height: 54px;
+        padding: 0.88rem 0.95rem;
+        border: 1px solid #c8d6e5;
+        border-radius: 14px;
         background: #fff;
+        box-sizing: border-box;
+        font: inherit;
+      }
+      .form-control {
+        width: 100%;
+        color: #18314a;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+      }
+      .form-control::placeholder {
+        color: #6b7d92;
+      }
+      .form-control:focus {
+        outline: none;
+        border-color: #7aa7f8;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+      }
+      .file-control {
+        padding-top: 0.72rem;
+        padding-bottom: 0.72rem;
       }
       button {
         border: none;
-        background: #1ea84a;
-        color: #fff;
+        font-weight: 700;
+        transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
         cursor: pointer;
       }
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+      .primary-btn {
+        background: linear-gradient(135deg, #1dad49, #14913c);
+        color: #fff;
+        box-shadow: 0 10px 24px rgba(29, 173, 73, 0.24);
+      }
       .hint {
-        color: #475569;
+        margin: 0.7rem 0 0;
+        color: #4d5d70;
+        font-size: 1rem;
+        line-height: 1.65;
       }
       .message {
-        color: #0f766e;
-        margin-top: 0.75rem;
+        color: #166534;
+        margin-top: 0.9rem;
+        padding: 0.78rem 0.9rem;
+        border-radius: 14px;
+        border: 1px solid #bbf7d0;
+        background: #ecfdf5;
       }
       .manage-head {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        gap: 0.7rem;
-      }
-      .manage-head h3 {
-        margin: 0;
+        align-items: flex-start;
+        gap: 1rem;
       }
       .refresh-btn {
-        background: #0f766e;
+        min-width: 116px;
+        background: linear-gradient(135deg, #0f766e, #0b5f59);
         color: #fff;
+        box-shadow: 0 10px 24px rgba(15, 118, 110, 0.18);
       }
       .manage-message {
-        color: #0f766e;
-        margin: 0.55rem 0;
+        color: #166534;
+        margin: 0.85rem 0 0;
+        padding: 0.78rem 0.9rem;
+        border-radius: 14px;
+        border: 1px solid #bbf7d0;
+        background: #ecfdf5;
       }
       .manage-auth {
         margin: 0.55rem 0 0;
       }
       .loading,
       .empty {
-        border: 1px dashed #cbd5e1;
-        border-radius: 10px;
-        padding: 0.65rem;
-        color: #475569;
-        background: #f8fafc;
+        border: 1px dashed #cdd9e7;
+        border-radius: 16px;
+        padding: 0.9rem 1rem;
+        color: #4d5d70;
+        background: #f8fbff;
       }
       .paper-list {
-        margin-top: 0.6rem;
+        margin-top: 0.9rem;
         display: grid;
-        gap: 0.55rem;
+        gap: 0.85rem;
       }
       .paper-main {
         flex: 1;
@@ -331,30 +419,30 @@ interface CompetitiveEditDraft {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 0.8rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        background: #fff;
-        padding: 0.65rem 0.75rem;
+        gap: 1rem;
+        border: 1px solid #dce6f0;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #ffffff, #fbfdff);
+        padding: 1rem 1.05rem;
       }
       .row-actions {
         display: flex;
-        gap: 0.55rem;
+        gap: 0.6rem;
         flex-wrap: wrap;
         flex-shrink: 0;
       }
       .edit-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 0.65rem;
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.95rem;
+        padding-top: 0.95rem;
         border-top: 1px dashed #d8e1ea;
       }
       .edit-note {
         margin: 0;
         color: #64748b;
-        font-size: 0.82rem;
+        font-size: 0.88rem;
         grid-column: 1 / -1;
       }
       .edit-actions {
@@ -362,30 +450,35 @@ interface CompetitiveEditDraft {
       }
       .paper-meta h4 {
         margin: 0;
-        font-size: 0.95rem;
+        font-size: 1.08rem;
+        color: #10263f;
       }
       .paper-meta p {
-        margin: 0.2rem 0 0;
-        color: #475569;
-        font-size: 0.84rem;
+        margin: 0.3rem 0 0;
+        color: #56667a;
+        font-size: 0.92rem;
+        line-height: 1.55;
       }
       .edit-btn {
-        background: #1d4ed8;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
         color: #fff;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
       }
       .save-btn {
-        background: #15803d;
+        background: linear-gradient(135deg, #15803d, #166534);
         color: #fff;
+        box-shadow: 0 10px 24px rgba(21, 128, 61, 0.18);
       }
       .cancel-btn {
-        background: #64748b;
+        background: linear-gradient(135deg, #64748b, #475569);
         color: #fff;
       }
       .delete-btn {
-        background: #b91c1c;
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
         color: #fff;
         border: none;
         white-space: nowrap;
+        box-shadow: 0 10px 24px rgba(185, 28, 28, 0.18);
       }
       .edit-btn:disabled,
       .save-btn:disabled,
@@ -395,9 +488,26 @@ interface CompetitiveEditDraft {
         cursor: not-allowed;
       }
       @media (max-width: 700px) {
+        .card {
+          padding: 1rem;
+          border-radius: 18px;
+        }
+        .manage-head {
+          flex-direction: column;
+        }
+        .refresh-btn {
+          width: 100%;
+        }
         .paper-row {
           flex-direction: column;
           align-items: flex-start;
+        }
+        .row-actions,
+        .edit-actions {
+          width: 100%;
+        }
+        .row-actions button {
+          flex: 1;
         }
       }
     `

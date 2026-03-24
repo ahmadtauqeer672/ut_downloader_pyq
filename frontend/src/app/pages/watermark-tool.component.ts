@@ -56,27 +56,7 @@ import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
       </div>
     </section>
 
-    <section class="info-grid">
-      <article class="info-card">
-        <h3>How It Works</h3>
-        <ul>
-          <li>Select a PDF from your device.</li>
-          <li>Choose the output name you want.</li>
-          <li>Click the process button.</li>
-          <li>The watermarked PDF downloads automatically.</li>
-        </ul>
-      </article>
-
-      <article class="info-card">
-        <h3>Watermark Style</h3>
-        <ul>
-          <li>Diagonal center watermark</li>
-          <li>Default text: <code>utpaper.com</code></li>
-          <li>Transparent black text</li>
-          <li>Works fully in the browser</li>
-        </ul>
-      </article>
-    </section>
+    
   `,
   styles: [
     `

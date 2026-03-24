@@ -21,7 +21,7 @@ import { AdminSessionService } from '../services/admin-session.service';
         <span class="mark-glow glow-right"></span>
         <span class="mark-swoosh swoosh-one"></span>
         <span class="mark-swoosh swoosh-two"></span>
-        <span class="mark-star">✦</span>
+        <span class="mark-star">&#10022;</span>
         <span class="mark-ut">UT</span>
         <span class="mark-rule"></span>
         <span class="mark-tagline">DOWNLOAD QUESTION PAPERS</span>
@@ -76,7 +76,12 @@ import { AdminSessionService } from '../services/admin-session.service';
       .hero-card {
         position: relative;
         overflow: hidden;
-        padding: 1.35rem 1.4rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
+        align-items: center;
+        gap: 1.5rem;
+        min-height: 192px;
+        padding: 1.45rem 1.7rem;
         background:
           radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 32%),
           radial-gradient(circle at 72% 25%, rgba(45, 212, 191, 0.12), transparent 24%),
@@ -111,8 +116,11 @@ import { AdminSessionService } from '../services/admin-session.service';
         line-height: 1.55;
       }
       .hero-mark {
-        position: absolute;
-        inset: 0;
+        position: relative;
+        justify-self: end;
+        width: 100%;
+        max-width: 340px;
+        min-height: 150px;
         pointer-events: none;
       }
       .mark-glow {
@@ -121,24 +129,24 @@ import { AdminSessionService } from '../services/admin-session.service';
         filter: blur(8px);
       }
       .glow-left {
-        width: 220px;
-        height: 220px;
-        left: 53%;
-        bottom: -86px;
-        background: radial-gradient(circle, rgba(34, 211, 238, 0.3), rgba(34, 211, 238, 0));
+        width: 180px;
+        height: 180px;
+        left: 8px;
+        bottom: -54px;
+        background: radial-gradient(circle, rgba(34, 211, 238, 0.24), rgba(34, 211, 238, 0));
       }
       .glow-right {
-        width: 260px;
-        height: 260px;
-        right: -40px;
-        top: -40px;
-        background: radial-gradient(circle, rgba(168, 85, 247, 0.22), rgba(168, 85, 247, 0));
+        width: 200px;
+        height: 200px;
+        right: -28px;
+        top: -34px;
+        background: radial-gradient(circle, rgba(168, 85, 247, 0.18), rgba(168, 85, 247, 0));
       }
       .mark-ut {
         position: absolute;
-        right: 70px;
-        top: 18px;
-        font-size: 7rem;
+        right: 18px;
+        top: 2px;
+        font-size: 6.7rem;
         line-height: 0.9;
         font-weight: 900;
         letter-spacing: -0.12em;
@@ -158,46 +166,46 @@ import { AdminSessionService } from '../services/admin-session.service';
         transform: rotate(-12deg);
       }
       .swoosh-one {
-        width: 250px;
-        height: 92px;
-        right: 48px;
-        top: 58px;
-        border-width: 0 0 11px 11px;
+        width: 210px;
+        height: 76px;
+        right: 12px;
+        top: 70px;
+        border-width: 0 0 10px 10px;
         border-color: transparent transparent rgba(45, 212, 191, 0.82) rgba(34, 211, 238, 0.92);
       }
       .swoosh-two {
-        width: 280px;
-        height: 112px;
-        right: 26px;
-        top: 40px;
-        border-width: 0 0 9px 9px;
+        width: 238px;
+        height: 90px;
+        right: -6px;
+        top: 50px;
+        border-width: 0 0 8px 8px;
         border-color: transparent transparent rgba(99, 102, 241, 0.82) rgba(168, 85, 247, 0.64);
       }
       .mark-star {
         position: absolute;
-        right: 102px;
-        top: 10px;
-        font-size: 1.8rem;
+        right: 56px;
+        top: -2px;
+        font-size: 1.5rem;
         line-height: 1;
         color: rgba(56, 189, 248, 0.9);
         text-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
       }
       .mark-rule {
         position: absolute;
-        right: 64px;
-        bottom: 52px;
-        width: 250px;
+        right: 12px;
+        bottom: 28px;
+        width: 248px;
         height: 2px;
         background: linear-gradient(90deg, rgba(34, 211, 238, 0.65), rgba(168, 85, 247, 0.35));
       }
       .mark-tagline {
         position: absolute;
-        right: 66px;
-        bottom: 20px;
+        right: 12px;
+        bottom: -2px;
         color: rgba(14, 165, 233, 0.78);
-        font-size: 0.74rem;
+        font-size: 0.72rem;
         font-weight: 800;
-        letter-spacing: 0.24em;
+        letter-spacing: 0.18em;
         white-space: nowrap;
       }
       .login-grid,
@@ -265,47 +273,51 @@ import { AdminSessionService } from '../services/admin-session.service';
       }
       @media (max-width: 720px) {
         .hero-card {
-          padding-bottom: 6.5rem;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+          min-height: unset;
+          padding: 1.25rem 1.15rem;
         }
         .hero-copy {
           max-width: none;
         }
+        .hero-mark {
+          justify-self: center;
+          max-width: 290px;
+          min-height: 118px;
+        }
         .mark-ut {
-          right: 24px;
-          top: auto;
-          bottom: 46px;
-          font-size: 4.9rem;
+          right: 12px;
+          top: 0;
+          font-size: 5rem;
         }
         .swoosh-one {
-          width: 172px;
-          height: 58px;
-          right: 24px;
-          top: auto;
-          bottom: 64px;
+          width: 164px;
+          height: 56px;
+          right: 8px;
+          top: 50px;
         }
         .swoosh-two {
-          width: 194px;
-          height: 72px;
-          right: 10px;
-          top: auto;
-          bottom: 54px;
+          width: 184px;
+          height: 66px;
+          right: -6px;
+          top: 42px;
         }
         .mark-star {
-          right: 48px;
-          top: auto;
-          bottom: 126px;
+          right: 36px;
+          top: -4px;
           font-size: 1.3rem;
         }
         .mark-rule {
-          right: 20px;
-          bottom: 30px;
-          width: 180px;
+          right: 8px;
+          bottom: 20px;
+          width: 200px;
         }
         .mark-tagline {
-          right: 22px;
-          bottom: 10px;
+          right: 8px;
+          bottom: -6px;
           font-size: 0.56rem;
-          letter-spacing: 0.18em;
+          letter-spacing: 0.14em;
         }
         .dashboard-head {
           flex-direction: column;

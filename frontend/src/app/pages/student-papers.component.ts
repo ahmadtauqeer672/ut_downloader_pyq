@@ -303,9 +303,17 @@ interface FaqItem {
       </div>
 
       <div class="faq-grid">
-        <article class="faq-item" *ngFor="let item of faqItems">
-          <h3>{{ item.question }}</h3>
-          <p>{{ item.answer }}</p>
+        <article class="faq-item" *ngFor="let item of faqItems; let i = index">
+          <button
+            type="button"
+            class="faq-question"
+            (click)="toggleFaq(i)"
+            [attr.aria-expanded]="expandedFaqIndex === i"
+          >
+            <span>{{ item.question }}</span>
+            <span class="faq-icon">{{ expandedFaqIndex === i ? '-' : '+' }}</span>
+          </button>
+          <p *ngIf="expandedFaqIndex === i" class="faq-answer">{{ item.answer }}</p>
         </article>
       </div>
     </section>
@@ -964,12 +972,37 @@ interface FaqItem {
         background: linear-gradient(180deg, #ffffff, #f8fbff);
         box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
       }
-      .faq-item h3 {
-        margin: 0 0 0.35rem;
+      .faq-question {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        text-align: left;
         color: var(--brand-ink);
-        font-family: var(--heading-font);
+        font: inherit;
+        font-weight: 700;
         font-size: 1rem;
         line-height: 1.35;
+        cursor: pointer;
+      }
+      .faq-icon {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-grid;
+        place-items: center;
+        background: #e8f2fb;
+        color: #1f5f92;
+        font-size: 1rem;
+        font-weight: 800;
+      }
+      .faq-answer {
+        margin-top: 0.65rem;
       }
       @keyframes spin {
         from {
@@ -1092,6 +1125,7 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
   totalCompetitiveCount = 0;
   competitiveMessage = '';
   isLoadingCompetitivePapers = false;
+  expandedFaqIndex: number | null = null;
   private competitiveRequestId = 0;
   showWakeUpNotice = false;
   private initialAcademicResolved = false;
@@ -1407,6 +1441,10 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
     }
     this.selectedCompetitiveExam = exam;
     this.loadCompetitivePapers();
+  }
+
+  toggleFaq(index: number): void {
+    this.expandedFaqIndex = this.expandedFaqIndex === index ? null : index;
   }
 
   loadCompetitivePapers(): void {

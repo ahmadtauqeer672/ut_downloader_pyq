@@ -13,7 +13,7 @@ import {
   paperDownloadHref,
   paperPreviewHref
 } from '@/lib/api';
-import { courseHref, universityHref } from '@/lib/slug';
+import { competitiveExamHref, courseHref, universityHref } from '@/lib/slug';
 import { CompetitivePaper, CompetitiveSummary, Paper, UniversityOption } from '@/lib/types';
 
 interface PapersViewProps {
@@ -272,7 +272,9 @@ export function PapersView({
             {competitiveSummary.exams.length > 0 ? (
               <ul className="competitive-list">
                 {competitiveSummary.exams.slice(0, 10).map((exam) => (
-                  <li key={exam}>{exam}</li>
+                  <li key={exam}>
+                    <Link href={competitiveExamHref(exam)}>{exam}</Link>
+                  </li>
                 ))}
               </ul>
             ) : (

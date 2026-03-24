@@ -25,3 +25,7 @@ export function universityHref(universityName: string): string {
 export function courseHref(universityName: string, courseName: string): string {
   return `${universityHref(universityName)}/${slugify(courseName)}`;
 }
+
+export function competitiveExamHref(examName: string): string {
+  return `/competitive-exams/${slugify(examName)}`;
+}

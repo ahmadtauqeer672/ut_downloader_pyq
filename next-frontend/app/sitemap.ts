@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
+import { listCompetitiveExams } from '@/lib/api';
 import { SITE_URL, UNIVERSITY_OPTIONS } from '@/lib/data';
 import { slugify } from '@/lib/slug';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
@@ -33,5 +34,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return [universityEntry, ...courseEntries];
   });
 
-  return [...staticRoutes, ...courseRoutes];
+  const competitiveExamRoutes = await listCompetitiveExams()
+    .then((exams) =>
+      exams.map<MetadataRoute.Sitemap[number]>((exam) => ({
+        url: `${SITE_URL}/competitive-exams/${slugify(exam)}`,
+        changeFrequency: 'weekly',
+        priority: 0.68
+      }))
+    )
+    .catch(() => []);
+
+  return [...staticRoutes, ...courseRoutes, ...competitiveExamRoutes];
 }

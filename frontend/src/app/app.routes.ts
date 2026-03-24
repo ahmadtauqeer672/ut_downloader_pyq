@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { StudentPapersComponent } from './pages/student-papers.component';
 import { UploadPaperComponent } from './pages/upload-paper.component';
 import { AdminPanelComponent } from './pages/admin-panel.component';
+import { DisclaimerPageComponent } from './pages/disclaimer-page.component';
 import { AdminSessionService } from './services/admin-session.service';
 
 const adminOnly = () => {
@@ -14,6 +15,7 @@ const adminOnly = () => {
 
 export const routes: Routes = [
   { path: '', component: StudentPapersComponent },
+  { path: 'disclaimer', component: DisclaimerPageComponent },
   { path: 'admin', component: AdminPanelComponent },
   { path: 'upload', component: UploadPaperComponent, canActivate: [adminOnly] },
   {

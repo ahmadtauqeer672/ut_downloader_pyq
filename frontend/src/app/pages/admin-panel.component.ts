@@ -11,10 +11,20 @@ import { AdminSessionService } from '../services/admin-session.service';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="hero-card">
-      <div>
+      <div class="hero-copy">
         <p class="eyebrow">Admin Access</p>
         <h2>Admin Panel</h2>
         <p class="sub">Login to manage uploads, edit papers, delete papers, and use the watermark tool.</p>
+      </div>
+      <div class="hero-mark" aria-hidden="true">
+        <span class="mark-glow glow-left"></span>
+        <span class="mark-glow glow-right"></span>
+        <span class="mark-swoosh swoosh-one"></span>
+        <span class="mark-swoosh swoosh-two"></span>
+        <span class="mark-star">✦</span>
+        <span class="mark-ut">UT</span>
+        <span class="mark-rule"></span>
+        <span class="mark-tagline">DOWNLOAD QUESTION PAPERS</span>
       </div>
     </section>
 
@@ -64,10 +74,18 @@ import { AdminSessionService } from '../services/admin-session.service';
         box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
       }
       .hero-card {
+        position: relative;
+        overflow: hidden;
         padding: 1.35rem 1.4rem;
         background:
-          radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 36%),
-          linear-gradient(135deg, #ffffff, #f6fbff);
+          radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 32%),
+          radial-gradient(circle at 72% 25%, rgba(45, 212, 191, 0.12), transparent 24%),
+          linear-gradient(135deg, #ffffff, #f6fbff 52%, #eef8ff);
+      }
+      .hero-copy {
+        position: relative;
+        z-index: 2;
+        max-width: 560px;
       }
       .panel-card {
         margin-top: 1rem;
@@ -91,6 +109,96 @@ import { AdminSessionService } from '../services/admin-session.service';
         margin: 0.55rem 0 0;
         color: #4d5d70;
         line-height: 1.55;
+      }
+      .hero-mark {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .mark-glow {
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(8px);
+      }
+      .glow-left {
+        width: 220px;
+        height: 220px;
+        left: 53%;
+        bottom: -86px;
+        background: radial-gradient(circle, rgba(34, 211, 238, 0.3), rgba(34, 211, 238, 0));
+      }
+      .glow-right {
+        width: 260px;
+        height: 260px;
+        right: -40px;
+        top: -40px;
+        background: radial-gradient(circle, rgba(168, 85, 247, 0.22), rgba(168, 85, 247, 0));
+      }
+      .mark-ut {
+        position: absolute;
+        right: 70px;
+        top: 18px;
+        font-size: 7rem;
+        line-height: 0.9;
+        font-weight: 900;
+        letter-spacing: -0.12em;
+        font-style: italic;
+        font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+        background: linear-gradient(180deg, rgba(31, 41, 55, 0.34), rgba(75, 85, 99, 0.14));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 10px 22px rgba(148, 163, 184, 0.15);
+        transform: skew(-8deg);
+      }
+      .mark-swoosh {
+        position: absolute;
+        border-radius: 999px;
+        border-style: solid;
+        transform: rotate(-12deg);
+      }
+      .swoosh-one {
+        width: 250px;
+        height: 92px;
+        right: 48px;
+        top: 58px;
+        border-width: 0 0 11px 11px;
+        border-color: transparent transparent rgba(45, 212, 191, 0.82) rgba(34, 211, 238, 0.92);
+      }
+      .swoosh-two {
+        width: 280px;
+        height: 112px;
+        right: 26px;
+        top: 40px;
+        border-width: 0 0 9px 9px;
+        border-color: transparent transparent rgba(99, 102, 241, 0.82) rgba(168, 85, 247, 0.64);
+      }
+      .mark-star {
+        position: absolute;
+        right: 102px;
+        top: 10px;
+        font-size: 1.8rem;
+        line-height: 1;
+        color: rgba(56, 189, 248, 0.9);
+        text-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+      }
+      .mark-rule {
+        position: absolute;
+        right: 64px;
+        bottom: 52px;
+        width: 250px;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(34, 211, 238, 0.65), rgba(168, 85, 247, 0.35));
+      }
+      .mark-tagline {
+        position: absolute;
+        right: 66px;
+        bottom: 20px;
+        color: rgba(14, 165, 233, 0.78);
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.24em;
+        white-space: nowrap;
       }
       .login-grid,
       .action-grid {
@@ -156,6 +264,49 @@ import { AdminSessionService } from '../services/admin-session.service';
         line-height: 1.5;
       }
       @media (max-width: 720px) {
+        .hero-card {
+          padding-bottom: 6.5rem;
+        }
+        .hero-copy {
+          max-width: none;
+        }
+        .mark-ut {
+          right: 24px;
+          top: auto;
+          bottom: 46px;
+          font-size: 4.9rem;
+        }
+        .swoosh-one {
+          width: 172px;
+          height: 58px;
+          right: 24px;
+          top: auto;
+          bottom: 64px;
+        }
+        .swoosh-two {
+          width: 194px;
+          height: 72px;
+          right: 10px;
+          top: auto;
+          bottom: 54px;
+        }
+        .mark-star {
+          right: 48px;
+          top: auto;
+          bottom: 126px;
+          font-size: 1.3rem;
+        }
+        .mark-rule {
+          right: 20px;
+          bottom: 30px;
+          width: 180px;
+        }
+        .mark-tagline {
+          right: 22px;
+          bottom: 10px;
+          font-size: 0.56rem;
+          letter-spacing: 0.18em;
+        }
         .dashboard-head {
           flex-direction: column;
         }

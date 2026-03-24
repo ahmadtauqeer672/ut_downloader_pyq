@@ -1,6 +1,8 @@
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../services/api.service';
 import { Paper } from '../models/paper';
 import { CompetitivePaper } from '../models/competitive-paper';
@@ -31,7 +33,7 @@ interface FaqItem {
 @Component({
   selector: 'app-student-papers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="hero">
       <div class="hero-copy">
@@ -47,7 +49,7 @@ interface FaqItem {
         </p>
         <div class="hero-actions">
           <a class="hero-primary" href="#directory">Browse Question Papers</a>
-          <button type="button" class="hero-secondary" (click)="applyPreset('PTU', 'BTECH')">Open PTU BTECH Papers</button>
+          <a class="hero-secondary" [routerLink]="academicRouteLink('PTU', 'BTECH')">Open PTU BTECH Papers</a>
         </div>
         <div class="hero-points">
           <article class="hero-point">
@@ -78,10 +80,10 @@ interface FaqItem {
           </div>
         </div>
         <div class="spotlight-list">
-          <button type="button" class="spotlight-link" (click)="applyPreset('PTU', 'BTECH')">PTU BTECH semester papers</button>
-          <button type="button" class="spotlight-link" (click)="applyPreset('PTU', 'BCA')">PTU BCA previous year papers</button>
-          <button type="button" class="spotlight-link" (click)="applyPreset('PTU', 'MBA')">PTU MBA exam papers</button>
-          <button type="button" class="spotlight-link" (click)="applyPreset('PU Chandigarh', 'BTECH')">PU Chandigarh BTECH papers</button>
+          <a class="spotlight-link" [routerLink]="academicRouteLink('PTU', 'BTECH')">PTU BTECH semester papers</a>
+          <a class="spotlight-link" [routerLink]="academicRouteLink('PTU', 'BCA')">PTU BCA previous year papers</a>
+          <a class="spotlight-link" [routerLink]="academicRouteLink('PTU', 'MBA')">PTU MBA exam papers</a>
+          <a class="spotlight-link" [routerLink]="academicRouteLink('PU Chandigarh', 'BTECH')">PU Chandigarh BTECH papers</a>
         </div>
       </div>
     </section>
@@ -124,12 +126,12 @@ interface FaqItem {
           below with a single click.
         </p>
         <div class="preset-wrap">
-          <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'BTECH')">PTU BTECH Papers</button>
-          <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'BCA')">PTU BCA Papers</button>
-          <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'MBA')">PTU MBA Papers</button>
-          <button type="button" class="preset-chip" (click)="applyPreset('PU Chandigarh', 'BTECH')">PU BTECH Papers</button>
-          <button type="button" class="preset-chip" (click)="applyPreset('GNDU', 'B.COM')">GNDU B.COM Papers</button>
-          <button type="button" class="preset-chip" (click)="applyPreset('GTU', 'BPHARM')">GTU BPHARM Papers</button>
+          <a class="preset-chip" [routerLink]="academicRouteLink('PTU', 'BTECH')">PTU BTECH Papers</a>
+          <a class="preset-chip" [routerLink]="academicRouteLink('PTU', 'BCA')">PTU BCA Papers</a>
+          <a class="preset-chip" [routerLink]="academicRouteLink('PTU', 'MBA')">PTU MBA Papers</a>
+          <a class="preset-chip" [routerLink]="academicRouteLink('PU Chandigarh', 'BTECH')">PU BTECH Papers</a>
+          <a class="preset-chip" [routerLink]="academicRouteLink('GNDU', 'B.COM')">GNDU B.COM Papers</a>
+          <a class="preset-chip" [routerLink]="academicRouteLink('GTU', 'BPHARM')">GTU BPHARM Papers</a>
         </div>
         <ul class="seo-list">
           <li>PTU question papers all semesters</li>
@@ -139,6 +141,27 @@ interface FaqItem {
           <li>Competitive exam papers year-wise</li>
         </ul>
       </aside>
+    </section>
+
+    <section class="route-card" aria-labelledby="course-url-title">
+      <div class="route-head">
+        <div>
+          <p class="section-kicker section-kicker-soft">Course URLs</p>
+          <h2 id="course-url-title">Browse all course pages</h2>
+        </div>
+        <p>Each course has its own URL so Google can crawl and index separate pages for PTU, PU, GNDU, MDU, GTU and more.</p>
+      </div>
+
+      <div class="route-grid">
+        <article class="route-group" *ngFor="let university of universityMenus">
+          <a class="route-university" [routerLink]="academicRouteLink(university.name)">{{ university.name }} All Courses</a>
+          <div class="route-links">
+            <a class="route-link" *ngFor="let course of university.courses" [routerLink]="academicRouteLink(university.name, course)">
+              {{ university.name }} {{ course }}
+            </a>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="startup-notice" *ngIf="showWakeUpNotice && !hasInitialDataResolved()">
@@ -518,7 +541,8 @@ interface FaqItem {
         margin-bottom: 1rem;
       }
       .seo-card,
-      .faq-card {
+      .faq-card,
+      .route-card {
         position: relative;
         overflow: hidden;
         background: linear-gradient(180deg, #ffffff, #fbfdff);
@@ -529,6 +553,7 @@ interface FaqItem {
       }
       .seo-card::before,
       .faq-card::before,
+      .route-card::before,
       .directory-card::before,
       .competitive-card::before {
         content: '';
@@ -604,6 +629,7 @@ interface FaqItem {
         font-weight: 700;
         cursor: pointer;
         text-align: left;
+        text-decoration: none;
         box-shadow: 0 10px 24px rgba(16, 38, 63, 0.05);
       }
       .preset-chip::after {
@@ -627,6 +653,78 @@ interface FaqItem {
       }
       .seo-list li + li {
         margin-top: 0.65rem;
+      }
+      .route-card {
+        margin-bottom: 1rem;
+        background:
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 28%),
+          linear-gradient(180deg, #ffffff, #fbfdff);
+      }
+      .route-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+      }
+      .route-head h2 {
+        margin: 0.45rem 0 0;
+        color: var(--brand-ink);
+        font-family: var(--heading-font);
+        font-size: 1.55rem;
+        line-height: 1.2;
+      }
+      .route-head p:last-child {
+        margin: 0;
+        max-width: 540px;
+        color: var(--brand-muted);
+        line-height: 1.7;
+      }
+      .route-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+      }
+      .route-group {
+        border: 1px solid #dbe6f1;
+        border-radius: 20px;
+        padding: 1rem;
+        background: linear-gradient(180deg, #f8fbff, #ffffff);
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.04);
+      }
+      .route-university {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0.7rem 0.95rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #0f766e, #0b5f59);
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 800;
+        box-shadow: 0 10px 20px rgba(15, 118, 110, 0.14);
+      }
+      .route-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 0.9rem;
+      }
+      .route-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 42px;
+        padding: 0.62rem 0.86rem;
+        border-radius: 999px;
+        border: 1px solid #d1dbe8;
+        background: #ffffff;
+        color: #17395f;
+        text-decoration: none;
+        font-weight: 700;
+      }
+      .route-link:hover,
+      .route-university:hover {
+        transform: translateY(-1px);
       }
       .hero-stat-wrap {
         display: flex;
@@ -658,6 +756,7 @@ interface FaqItem {
         margin-top: 1rem;
       }
       .spotlight-link {
+        display: block;
         border: 1px solid rgba(255, 255, 255, 0.16);
         border-radius: 16px;
         padding: 0.9rem 1rem;
@@ -667,6 +766,7 @@ interface FaqItem {
         font-weight: 700;
         text-align: left;
         cursor: pointer;
+        text-decoration: none;
       }
       .directory-card,
       .competitive-card {
@@ -986,6 +1086,9 @@ interface FaqItem {
         .hero-spotlight {
           width: 100%;
         }
+        .route-grid {
+          grid-template-columns: 1fr;
+        }
         .faq-grid {
           grid-template-columns: 1fr;
         }
@@ -1005,6 +1108,9 @@ interface FaqItem {
         }
         .preset-wrap {
           grid-template-columns: 1fr;
+        }
+        .route-head {
+          flex-direction: column;
         }
         .directory-grid,
         .btech-controls {
@@ -1045,6 +1151,7 @@ interface FaqItem {
         }
         .seo-card,
         .faq-card,
+        .route-card,
         .directory-card,
         .competitive-card {
           padding: 1rem 0.9rem;
@@ -1070,7 +1177,11 @@ interface FaqItem {
   ]
 })
 export class StudentPapersComponent implements OnInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
+  private currentSeoPath = '/';
 
   papers: Paper[] = [];
   semesterGroups: SemesterGroup[] = [];
@@ -1134,7 +1245,9 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.startWakeUpTimer();
-    this.pickUniversity(this.activeUniversity);
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.applySelectionFromRoute(params);
+    });
     this.loadCompetitiveExams();
   }
 
@@ -1186,28 +1299,43 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
     this.pickSemester(semester);
   }
 
-  pickUniversity(uni: UniversityMenu): void {
+  pickUniversity(uni: UniversityMenu, navigate = true, path = '/'): void {
+    if (navigate) {
+      this.navigateToAcademicRoute(uni.name);
+      return;
+    }
     this.activeUniversity = uni;
     this.universityFilter = uni.name;
     this.courseFilter = '';
     this.departmentFilter = '';
     this.semesterFilter = '';
+    this.currentSeoPath = path;
     this.syncSeo();
     this.resetAndLoadPapers();
   }
 
-  pickAllCourses(): void {
+  pickAllCourses(navigate = true, path = this.buildAcademicPath(this.activeUniversity.name)): void {
+    if (navigate) {
+      this.navigateToAcademicRoute(this.activeUniversity.name);
+      return;
+    }
     this.courseFilter = '';
     this.departmentFilter = '';
     this.semesterFilter = '';
+    this.currentSeoPath = path;
     this.syncSeo();
     this.resetAndLoadPapers();
   }
 
-  pickCourse(course: string): void {
+  pickCourse(course: string, navigate = true, path = this.buildAcademicPath(this.activeUniversity.name, course)): void {
+    if (navigate) {
+      this.navigateToAcademicRoute(this.activeUniversity.name, course);
+      return;
+    }
     this.courseFilter = course;
     this.departmentFilter = '';
     this.semesterFilter = '';
+    this.currentSeoPath = path;
     this.syncSeo();
     this.resetAndLoadPapers();
   }
@@ -1245,10 +1373,13 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
     this.courseFilter = course;
     this.departmentFilter = department;
     this.semesterFilter = semester;
-    this.syncSeo();
-    this.resetAndLoadPapers();
+    this.navigateToAcademicRoute(universityName, course, true);
+  }
 
-    document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  academicRouteLink(universityName: string, course = ''): string[] {
+    return course
+      ? ['/question-papers', this.slugify(universityName), this.slugify(course)]
+      : ['/question-papers', this.slugify(universityName)];
   }
 
   loadMorePapers(): void {
@@ -1575,21 +1706,27 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
       this.semesterFilter ? `Semester ${this.semesterFilter}` : ''
     ].filter(Boolean);
     const focusText = focusParts.join(' ');
-    const title = `${focusText} Question Papers | UTpaper`;
-    const description = `Browse ${focusText} previous year question papers on UTpaper. Download university PYQs and competitive exam papers in one place.`;
+    const isHomePage = this.currentSeoPath === '/';
+    const title = isHomePage
+      ? 'PTU Question Papers, Previous Year Papers and Competitive Exam PYQs | UTpaper'
+      : `${focusText} Question Papers | UTpaper`;
+    const description = isHomePage
+      ? 'Browse PTU and other university previous year question papers semester-wise. Download BTECH, BCA, BBA, MBA, MCA and competitive exam PYQs on UTpaper.'
+      : `Browse ${focusText} previous year question papers on UTpaper. Download university PYQs and competitive exam papers in one place.`;
     const keywords = [...focusParts, 'question papers', 'previous year papers', 'PYQ', 'UTpaper'].join(', ');
 
     this.seo.update({
       title,
       description,
       keywords,
-      path: '/',
+      path: this.currentSeoPath,
       type: 'website',
-      structuredData: this.buildStructuredData(focusText, description)
+      structuredData: this.buildStructuredData(focusText, description, this.currentSeoPath)
     });
   }
 
-  private buildStructuredData(focusText: string, description: string): Array<Record<string, unknown>> {
+  private buildStructuredData(focusText: string, description: string, path: string): Array<Record<string, unknown>> {
+    const pageUrl = `https://utpaper.in${path}`;
     return [
       {
         '@context': 'https://schema.org',
@@ -1607,7 +1744,7 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
         name: `${focusText} Question Papers`,
-        url: 'https://utpaper.in/',
+        url: pageUrl,
         description
       },
       {
@@ -1623,5 +1760,58 @@ export class StudentPapersComponent implements OnInit, OnDestroy {
         }))
       }
     ];
+  }
+
+  private applySelectionFromRoute(params: ParamMap): void {
+    const universitySlug = params.get('university');
+    const courseSlug = params.get('course');
+
+    if (!universitySlug) {
+      this.pickUniversity(this.universityMenus[0], false, '/');
+      return;
+    }
+
+    const selectedUniversity = this.findUniversityBySlug(universitySlug) ?? this.universityMenus[0];
+    const selectedCourse = courseSlug ? this.findCourseBySlug(selectedUniversity, courseSlug) : '';
+    const path = this.buildAcademicPath(selectedUniversity.name, selectedCourse);
+
+    this.activeUniversity = selectedUniversity;
+    this.universityFilter = selectedUniversity.name;
+
+    if (selectedCourse) {
+      this.pickCourse(selectedCourse, false, path);
+    } else {
+      this.pickAllCourses(false, path);
+    }
+  }
+
+  private navigateToAcademicRoute(universityName: string, course = '', shouldScroll = false): void {
+    this.router.navigate(this.academicRouteLink(universityName, course)).then(() => {
+      if (shouldScroll) {
+        document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+
+  private buildAcademicPath(universityName: string, course = ''): string {
+    const universitySlug = this.slugify(universityName);
+    return course ? `/question-papers/${universitySlug}/${this.slugify(course)}` : `/question-papers/${universitySlug}`;
+  }
+
+  private findUniversityBySlug(slug: string): UniversityMenu | undefined {
+    return this.universityMenus.find((university) => this.slugify(university.name) === slug);
+  }
+
+  private findCourseBySlug(university: UniversityMenu, slug: string): string {
+    return university.courses.find((course) => this.slugify(course) === slug) || '';
+  }
+
+  private slugify(value: string): string {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, ' and ')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 }

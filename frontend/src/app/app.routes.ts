@@ -44,6 +44,14 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'question-papers/:university',
+    component: StudentPapersComponent
+  },
+  {
+    path: 'question-papers/:university/:course',
+    component: StudentPapersComponent
+  },
+  {
     path: 'disclaimer',
     component: DisclaimerPageComponent,
     data: {

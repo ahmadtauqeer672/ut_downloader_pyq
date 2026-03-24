@@ -831,7 +831,7 @@ interface FaqItem {
         cursor: not-allowed;
       }
       .faq-card {
-        margin-top: 1rem;
+        margin-top: 0.7rem;
         background:
           radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 24%),
           linear-gradient(180deg, #ffffff, #fcfdff);
@@ -839,26 +839,26 @@ interface FaqItem {
       .faq-head {
         display: flex;
         justify-content: space-between;
-        gap: 1rem;
+        gap: 0.75rem;
         align-items: flex-start;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
       }
       .faq-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
+        gap: 0.75rem;
       }
       .faq-item {
         border: 1px solid #dbe4ef;
         border-radius: 18px;
-        padding: 1rem;
+        padding: 0.85rem 0.9rem;
         background: linear-gradient(180deg, #ffffff, #f8fbff);
         box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
       }
       .faq-item h3 {
-        margin: 0 0 0.5rem;
+        margin: 0 0 0.35rem;
         color: var(--brand-ink);
-        font-size: 1.05rem;
+        font-size: 1rem;
         line-height: 1.35;
       }
       @keyframes spin {

@@ -153,7 +153,10 @@ interface FaqItem {
       <div class="column academic-column">
         <section id="directory" class="directory-card">
           <header>
-            <h3>Academic Question Paper Directory</h3>
+            <div>
+              <p class="section-kicker section-kicker-soft">Academic Library</p>
+              <h3>Academic Question Paper Directory</h3>
+            </div>
             <p>{{ universityFilter || 'Choose university' }} / {{ courseFilter || 'All courses' }}</p>
           </header>
 
@@ -233,6 +236,7 @@ interface FaqItem {
         <section class="competitive-card">
           <header class="competitive-head">
             <div>
+              <p class="section-kicker section-kicker-soft">Exam Collection</p>
               <h3>Competitive Exams (Year-wise)</h3>
               <p>Select an exam to view all uploaded papers year-wise.</p>
             </div>
@@ -289,7 +293,10 @@ interface FaqItem {
 
     <section class="faq-card" aria-labelledby="homepage-faq-title">
       <div class="faq-head">
-        <h2 id="homepage-faq-title">Frequently Asked Questions</h2>
+        <div>
+          <p class="section-kicker section-kicker-soft">Quick Help</p>
+          <h2 id="homepage-faq-title">Frequently Asked Questions</h2>
+        </div>
         <p>Helpful details for students searching previous year papers on Google and on the website.</p>
       </div>
 
@@ -305,21 +312,30 @@ interface FaqItem {
   styles: [
     `
       :host {
+        display: block;
+        font-family: 'Trebuchet MS', 'Gill Sans', 'Segoe UI', sans-serif;
         --brand-deep: #0f2f53;
         --brand-mid: #1f5f92;
         --brand-soft: #eef6ff;
         --brand-border: #dbe4ef;
         --brand-ink: #16324f;
         --brand-muted: #4d5d70;
+        --brand-card: #f8fbff;
+        --brand-line: #d7e4f1;
         --accent: #f59e0b;
+        --heading-font: 'Trebuchet MS', 'Gill Sans', 'Segoe UI', sans-serif;
       }
       .hero {
+        position: relative;
+        overflow: hidden;
         background:
           radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%),
-          linear-gradient(135deg, #0f2f53, #1b4d7b 58%, #236391);
+          radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.18), transparent 30%),
+          linear-gradient(135deg, #0f2f53, #174875 58%, #236391);
         color: #e9f1ff;
-        border-radius: 24px;
-        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 28px;
+        padding: 1.8rem;
         width: 100%;
         box-sizing: border-box;
         display: flex;
@@ -327,70 +343,92 @@ interface FaqItem {
         align-items: stretch;
         gap: 1.25rem;
         margin-bottom: 1rem;
-        box-shadow: 0 22px 55px rgba(15, 47, 83, 0.18);
+        box-shadow: 0 28px 70px rgba(15, 47, 83, 0.2);
+      }
+      .hero::after {
+        content: '';
+        position: absolute;
+        inset: auto -10% -45% auto;
+        width: 340px;
+        height: 340px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.14), transparent 65%);
+        pointer-events: none;
       }
       .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
         margin: 0;
-        font-size: 0.78rem;
+        padding: 0.42rem 0.78rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 0.76rem;
         letter-spacing: 0.16em;
         text-transform: uppercase;
         color: #9fd0ff;
         font-weight: 800;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
       }
       .hero-copy {
+        position: relative;
+        z-index: 1;
         min-width: 0;
-        max-width: 760px;
+        max-width: 800px;
         display: flex;
         flex-direction: column;
       }
       .hero h1 {
         margin: 0.45rem 0 0;
+        font-family: var(--heading-font);
         font-size: clamp(2rem, 4vw, 3rem);
-        line-height: 1.04;
+        line-height: 1.02;
         letter-spacing: -0.03em;
-        max-width: 14ch;
+        max-width: 13ch;
+        text-wrap: balance;
       }
       .hero .sub {
         margin: 1rem 0 0;
         max-width: 60ch;
-        font-size: 1.04rem;
+        font-size: 1.06rem;
         color: rgba(233, 241, 255, 0.96);
-        line-height: 1.75;
+        line-height: 1.8;
       }
       .hero-note {
         margin: 0.95rem 0 0;
-        max-width: 60ch;
+        max-width: 58ch;
         color: rgba(223, 239, 255, 0.86);
-        line-height: 1.7;
+        line-height: 1.75;
       }
       .hero-actions {
         display: flex;
         gap: 0.8rem;
         flex-wrap: wrap;
-        margin-top: 1.15rem;
+        margin-top: 1.3rem;
       }
       .hero-primary,
       .hero-secondary {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 46px;
+        min-height: 50px;
         border-radius: 999px;
-        padding: 0.72rem 1.1rem;
+        padding: 0.78rem 1.18rem;
         font: inherit;
         font-weight: 800;
         text-decoration: none;
         cursor: pointer;
-        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
       }
       .hero-primary {
-        background: linear-gradient(135deg, #ffffff, #e7f3ff);
+        background: linear-gradient(135deg, #ffffff, #f8fcff 55%, #dcefff);
         color: var(--brand-deep);
-        box-shadow: 0 12px 30px rgba(10, 31, 52, 0.22);
+        box-shadow: 0 14px 32px rgba(10, 31, 52, 0.22);
       }
       .hero-secondary {
         border: 1px solid rgba(255, 255, 255, 0.24);
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.1);
         color: #f7fbff;
       }
       .hero-primary:hover,
@@ -398,23 +436,35 @@ interface FaqItem {
       .spotlight-link:hover,
       .preset-chip:hover {
         transform: translateY(-1px);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
       }
       .hero-points {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.8rem;
-        margin-top: 1.25rem;
+        margin-top: 1.35rem;
       }
       .hero-point {
-        padding: 0.9rem 1rem;
-        border-radius: 18px;
+        position: relative;
+        padding: 1rem 1rem 0.95rem;
+        border-radius: 20px;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.14);
         backdrop-filter: blur(8px);
       }
+      .hero-point::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 1rem;
+        right: 1rem;
+        height: 3px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.2));
+      }
       .hero-point strong {
         display: block;
-        font-size: 0.98rem;
+        font-size: 1rem;
         color: #ffffff;
       }
       .hero-point span {
@@ -425,12 +475,14 @@ interface FaqItem {
         font-size: 0.92rem;
       }
       .hero-spotlight {
+        position: relative;
+        z-index: 1;
         width: min(360px, 100%);
-        padding: 1.15rem;
-        border-radius: 20px;
+        padding: 1.25rem;
+        border-radius: 24px;
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
         border: 1px solid rgba(255, 255, 255, 0.16);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 22px 48px rgba(7, 24, 40, 0.18);
       }
       .section-kicker {
         margin: 0;
@@ -445,9 +497,19 @@ interface FaqItem {
       }
       .hero-spotlight h2 {
         margin: 0.5rem 0 0;
+        font-family: var(--heading-font);
         font-size: 1.35rem;
         line-height: 1.2;
         color: #ffffff;
+      }
+      .section-kicker-soft {
+        color: #6d86a5;
+      }
+      .directory-card .section-kicker,
+      .competitive-head .section-kicker,
+      .faq-head .section-kicker {
+        margin: 0;
+        color: #6d86a5;
       }
       .seo-intro {
         display: grid;
@@ -457,17 +519,33 @@ interface FaqItem {
       }
       .seo-card,
       .faq-card {
+        position: relative;
+        overflow: hidden;
         background: linear-gradient(180deg, #ffffff, #fbfdff);
         border: 1px solid var(--brand-border);
-        border-radius: 20px;
-        padding: 1.2rem;
+        border-radius: 24px;
+        padding: 1.35rem;
         box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+      }
+      .seo-card::before,
+      .faq-card::before,
+      .directory-card::before,
+      .competitive-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 1.25rem;
+        right: 1.25rem;
+        height: 3px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(31, 95, 146, 0.9), rgba(245, 158, 11, 0.55));
       }
       .seo-card h2,
       .faq-head h2 {
         margin: 0.45rem 0 0.75rem;
         color: var(--brand-ink);
-        font-size: 1.45rem;
+        font-family: var(--heading-font);
+        font-size: 1.55rem;
         line-height: 1.2;
       }
       .seo-card p,
@@ -483,19 +561,20 @@ interface FaqItem {
       .benefit-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.8rem;
+        gap: 0.9rem;
         margin-top: 1rem;
       }
       .benefit-item {
-        padding: 0.9rem 0.95rem;
-        border-radius: 16px;
+        padding: 1rem;
+        border-radius: 18px;
         background: linear-gradient(180deg, #f8fbff, #ffffff);
         border: 1px solid #d6e4f3;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
       }
       .benefit-item strong {
         display: block;
         color: var(--brand-ink);
-        font-size: 0.98rem;
+        font-size: 1rem;
       }
       .benefit-item span {
         display: block;
@@ -507,7 +586,7 @@ interface FaqItem {
       .preset-wrap {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.7rem;
+        gap: 0.8rem;
         margin-top: 1rem;
       }
       .preset-chip {
@@ -515,10 +594,10 @@ interface FaqItem {
         align-items: center;
         justify-content: space-between;
         gap: 0.7rem;
-        min-height: 52px;
+        min-height: 56px;
         border: 1px solid #c9dcf1;
-        border-radius: 16px;
-        padding: 0.85rem 0.95rem;
+        border-radius: 18px;
+        padding: 0.95rem 1rem;
         background: #ffffff;
         color: #123a68;
         font: inherit;
@@ -538,7 +617,7 @@ interface FaqItem {
           linear-gradient(180deg, #ffffff, #f7fbff);
       }
       .seo-side-copy {
-        font-size: 0.97rem;
+        font-size: 0.98rem;
       }
       .seo-list {
         margin: 1rem 0 0;
@@ -559,8 +638,8 @@ interface FaqItem {
         flex: 1;
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 16px;
-        padding: 0.85rem 0.95rem;
+        border-radius: 18px;
+        padding: 0.95rem 1rem;
         text-align: center;
         min-width: 128px;
       }
@@ -580,8 +659,8 @@ interface FaqItem {
       }
       .spotlight-link {
         border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 14px;
-        padding: 0.85rem 0.95rem;
+        border-radius: 16px;
+        padding: 0.9rem 1rem;
         background: rgba(255, 255, 255, 0.08);
         color: #eef7ff;
         font: inherit;
@@ -591,10 +670,15 @@ interface FaqItem {
       }
       .directory-card,
       .competitive-card {
-        background: #ffffff;
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at top right, rgba(31, 95, 146, 0.05), transparent 28%),
+          linear-gradient(180deg, #ffffff, #fbfdff);
         border: 1px solid #dbe4ef;
-        border-radius: 14px;
-        padding: 1rem;
+        border-radius: 24px;
+        padding: 1.25rem;
+        box-shadow: 0 18px 36px rgba(15, 23, 42, 0.05);
       }
       .competitive-card {
         margin-top: 0;
@@ -641,11 +725,15 @@ interface FaqItem {
         justify-content: space-between;
         align-items: center;
         gap: 0.8rem;
-        margin-bottom: 0.8rem;
+        margin-bottom: 1rem;
       }
       .directory-card h3,
       .competitive-head h3 {
-        margin: 0;
+        margin: 0.45rem 0 0;
+        color: var(--brand-ink);
+        font-family: var(--heading-font);
+        font-size: 1.6rem;
+        line-height: 1.15;
       }
       .directory-card p {
         margin: 0;
@@ -657,25 +745,30 @@ interface FaqItem {
         gap: 0.9rem;
       }
       .panel {
-        border: 1px solid #e3eaf3;
-        border-radius: 12px;
-        padding: 0.7rem;
-        background: #fbfdff;
+        border: 1px solid #dbe6f1;
+        border-radius: 18px;
+        padding: 0.85rem;
+        background: linear-gradient(180deg, #fafdff, #f5f9ff);
       }
       .panel h4 {
-        margin: 0 0 0.6rem;
-        font-size: 0.95rem;
+        margin: 0 0 0.55rem;
+        font-size: 0.92rem;
+        color: #45627f;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
       }
       .panel select,
       .btech-panel select {
         width: 100%;
-        border: 1px solid #d0dbe8;
+        min-height: 48px;
+        border: 1px solid #cfdae6;
         background: #ffffff;
         color: #1f2d3b;
-        border-radius: 8px;
-        padding: 0.58rem 0.65rem;
+        border-radius: 14px;
+        padding: 0.7rem 0.8rem;
         cursor: pointer;
         font: inherit;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
       }
       .btech-controls {
         margin-top: 0.8rem;
@@ -684,13 +777,17 @@ interface FaqItem {
         gap: 0.8rem;
       }
       .btech-panel {
-        border: 1px solid #e3eaf3;
-        border-radius: 12px;
-        padding: 0.75rem;
-        background: #f8fbff;
+        border: 1px solid #dbe6f1;
+        border-radius: 18px;
+        padding: 0.85rem;
+        background: linear-gradient(180deg, #f7fbff, #f2f8ff);
       }
       .btech-panel h4 {
         margin: 0 0 0.55rem;
+        font-size: 0.92rem;
+        color: #45627f;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
       }
       .result-wrap {
         margin-top: 1rem;
@@ -703,9 +800,10 @@ interface FaqItem {
       .semester-block,
       .year-block {
         border: 1px solid #dbe4ef;
-        border-radius: 12px;
-        background: #ffffff;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #ffffff, #fbfdff);
         overflow: hidden;
+        box-shadow: 0 14px 28px rgba(15, 23, 42, 0.04);
       }
       .semester-head,
       .year-head {
@@ -713,14 +811,16 @@ interface FaqItem {
         justify-content: space-between;
         gap: 0.7rem;
         align-items: center;
-        background: #f8fbff;
+        background: linear-gradient(180deg, #f8fbff, #f4f9ff);
         border-bottom: 1px solid #e3eaf3;
-        padding: 0.7rem 0.85rem;
+        padding: 0.9rem 1rem;
       }
       .semester-head h4,
       .year-head h4 {
         margin: 0;
-        color: #c15f00;
+        color: #bd650d;
+        font-family: var(--heading-font);
+        font-size: 1.08rem;
       }
       .semester-head small,
       .year-head small {
@@ -728,7 +828,7 @@ interface FaqItem {
       }
       .semester-list,
       .year-list {
-        padding: 0.2rem 0.85rem 0.65rem;
+        padding: 0.3rem 1rem 0.8rem;
       }
       .paper-row {
         display: flex;
@@ -736,7 +836,7 @@ interface FaqItem {
         gap: 0.7rem;
         align-items: center;
         border-bottom: 1px dashed #e2e8f0;
-        padding: 0.65rem 0;
+        padding: 0.85rem 0;
       }
       .paper-row:last-child {
         border-bottom: 0;
@@ -744,7 +844,8 @@ interface FaqItem {
       .paper-link {
         color: #0f2f7a;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
+        line-height: 1.55;
         overflow-wrap: anywhere;
       }
       .paper-link:hover {
@@ -757,22 +858,23 @@ interface FaqItem {
         flex-shrink: 0;
       }
       .row-actions a {
-        border-radius: 8px;
+        border-radius: 999px;
         border: 1px solid #0f766e;
-        padding: 0.52rem 0.8rem;
+        padding: 0.62rem 0.9rem;
         text-decoration: none;
         font-size: 0.9rem;
         font-weight: 700;
         cursor: pointer;
-        background: #0f766e;
+        background: linear-gradient(135deg, #0f766e, #0b5f59);
         color: #ffffff;
+        box-shadow: 0 10px 20px rgba(15, 118, 110, 0.14);
       }
       .competitive-head {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 0.8rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.9rem;
       }
       .competitive-head p {
         margin: 0.2rem 0 0;
@@ -781,19 +883,20 @@ interface FaqItem {
       .exam-chip-wrap {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.45rem;
-        margin-bottom: 0.8rem;
+        gap: 0.55rem;
+        margin-bottom: 0.9rem;
       }
       .exam-chip-wrap button {
         border: 1px solid #d1dbe8;
         border-radius: 999px;
-        padding: 0.4rem 0.75rem;
+        padding: 0.5rem 0.85rem;
         background: #fff;
         color: #1f2d3b;
         cursor: pointer;
+        font-weight: 700;
       }
       .exam-chip-wrap button.active {
-        background: #0f766e;
+        background: linear-gradient(135deg, #0f766e, #0b5f59);
         color: #fff;
         border-color: #0f766e;
       }
@@ -801,11 +904,11 @@ interface FaqItem {
         color: #b91c1c;
       }
       .empty {
-        padding: 0.95rem;
+        padding: 1rem 1.05rem;
         border: 1px dashed #c2cfde;
-        border-radius: 10px;
+        border-radius: 16px;
         color: #4d5d70;
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff, #fbfdff);
       }
       .loading {
         margin: 0.4rem 0;
@@ -818,13 +921,14 @@ interface FaqItem {
         margin: 0.6rem 0 0.2rem;
       }
       .load-more button {
-        border-radius: 10px;
+        border-radius: 999px;
         border: 1px solid #0f766e;
-        padding: 0.55rem 1rem;
-        background: #0f766e;
+        padding: 0.7rem 1.1rem;
+        background: linear-gradient(135deg, #0f766e, #0b5f59);
         color: #fff;
         font-weight: 700;
         cursor: pointer;
+        box-shadow: 0 10px 20px rgba(15, 118, 110, 0.14);
       }
       .load-more button[disabled] {
         opacity: 0.65;
@@ -850,7 +954,7 @@ interface FaqItem {
       }
       .faq-item {
         border: 1px solid #dbe4ef;
-        border-radius: 18px;
+        border-radius: 20px;
         padding: 0.85rem 0.9rem;
         background: linear-gradient(180deg, #ffffff, #f8fbff);
         box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
@@ -858,6 +962,7 @@ interface FaqItem {
       .faq-item h3 {
         margin: 0 0 0.35rem;
         color: var(--brand-ink);
+        font-family: var(--heading-font);
         font-size: 1rem;
         line-height: 1.35;
       }
@@ -889,7 +994,7 @@ interface FaqItem {
         .hero {
           flex-direction: column;
           align-items: flex-start;
-          padding: 1.15rem;
+          padding: 1.3rem;
         }
         .hero h1 {
           max-width: none;
@@ -942,7 +1047,7 @@ interface FaqItem {
         .faq-card,
         .directory-card,
         .competitive-card {
-          padding: 0.9rem 0.85rem;
+          padding: 1rem 0.9rem;
         }
         .directory-card header {
           flex-direction: column;

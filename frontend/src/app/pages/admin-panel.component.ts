@@ -11,20 +11,10 @@ import { AdminSessionService } from '../services/admin-session.service';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="hero-card">
-      <div class="hero-copy">
+      <div>
         <p class="eyebrow">Admin Access</p>
         <h2>Admin Panel</h2>
         <p class="sub">Login to manage uploads, edit papers, delete papers, and use the watermark tool.</p>
-      </div>
-      <div class="hero-mark" aria-hidden="true">
-        <span class="mark-glow glow-left"></span>
-        <span class="mark-glow glow-right"></span>
-        <span class="mark-swoosh swoosh-one"></span>
-        <span class="mark-swoosh swoosh-two"></span>
-        <span class="mark-star">&#10022;</span>
-        <span class="mark-ut">UT</span>
-        <span class="mark-rule"></span>
-        <span class="mark-tagline">DOWNLOAD QUESTION PAPERS</span>
       </div>
     </section>
 
@@ -74,23 +64,10 @@ import { AdminSessionService } from '../services/admin-session.service';
         box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
       }
       .hero-card {
-        position: relative;
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
-        align-items: center;
-        gap: 1.5rem;
-        min-height: 192px;
-        padding: 1.45rem 1.7rem;
+        padding: 1.35rem 1.4rem;
         background:
-          radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 32%),
-          radial-gradient(circle at 72% 25%, rgba(45, 212, 191, 0.12), transparent 24%),
-          linear-gradient(135deg, #ffffff, #f6fbff 52%, #eef8ff);
-      }
-      .hero-copy {
-        position: relative;
-        z-index: 2;
-        max-width: 560px;
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 36%),
+          linear-gradient(135deg, #ffffff, #f6fbff);
       }
       .panel-card {
         margin-top: 1rem;
@@ -114,99 +91,6 @@ import { AdminSessionService } from '../services/admin-session.service';
         margin: 0.55rem 0 0;
         color: #4d5d70;
         line-height: 1.55;
-      }
-      .hero-mark {
-        position: relative;
-        justify-self: end;
-        width: 100%;
-        max-width: 340px;
-        min-height: 150px;
-        pointer-events: none;
-      }
-      .mark-glow {
-        position: absolute;
-        border-radius: 999px;
-        filter: blur(8px);
-      }
-      .glow-left {
-        width: 180px;
-        height: 180px;
-        left: 8px;
-        bottom: -54px;
-        background: radial-gradient(circle, rgba(34, 211, 238, 0.24), rgba(34, 211, 238, 0));
-      }
-      .glow-right {
-        width: 200px;
-        height: 200px;
-        right: -28px;
-        top: -34px;
-        background: radial-gradient(circle, rgba(168, 85, 247, 0.18), rgba(168, 85, 247, 0));
-      }
-      .mark-ut {
-        position: absolute;
-        right: 36px;
-        top: 2px;
-        font-size: 6.7rem;
-        line-height: 0.9;
-        font-weight: 900;
-        letter-spacing: -0.12em;
-        font-style: italic;
-        font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
-        background: linear-gradient(180deg, rgba(31, 41, 55, 0.34), rgba(75, 85, 99, 0.14));
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        text-shadow: 0 10px 22px rgba(148, 163, 184, 0.15);
-        transform: skew(-8deg);
-      }
-      .mark-swoosh {
-        position: absolute;
-        border-radius: 999px;
-        border-style: solid;
-        transform: rotate(-12deg);
-      }
-      .swoosh-one {
-        width: 210px;
-        height: 76px;
-        right: 12px;
-        top: 70px;
-        border-width: 0 0 10px 10px;
-        border-color: transparent transparent rgba(45, 212, 191, 0.82) rgba(34, 211, 238, 0.92);
-      }
-      .swoosh-two {
-        width: 238px;
-        height: 90px;
-        right: -6px;
-        top: 50px;
-        border-width: 0 0 8px 8px;
-        border-color: transparent transparent rgba(99, 102, 241, 0.82) rgba(168, 85, 247, 0.64);
-      }
-      .mark-star {
-        position: absolute;
-        right: 74px;
-        top: -2px;
-        font-size: 1.5rem;
-        line-height: 1;
-        color: rgba(56, 189, 248, 0.9);
-        text-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
-      }
-      .mark-rule {
-        position: absolute;
-        right: 12px;
-        bottom: 28px;
-        width: 248px;
-        height: 2px;
-        background: linear-gradient(90deg, rgba(34, 211, 238, 0.65), rgba(168, 85, 247, 0.35));
-      }
-      .mark-tagline {
-        position: absolute;
-        right: 12px;
-        bottom: -2px;
-        color: rgba(14, 165, 233, 0.78);
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.18em;
-        white-space: nowrap;
       }
       .login-grid,
       .action-grid {
@@ -272,53 +156,6 @@ import { AdminSessionService } from '../services/admin-session.service';
         line-height: 1.5;
       }
       @media (max-width: 720px) {
-        .hero-card {
-          grid-template-columns: 1fr;
-          gap: 1rem;
-          min-height: unset;
-          padding: 1.25rem 1.15rem;
-        }
-        .hero-copy {
-          max-width: none;
-        }
-        .hero-mark {
-          justify-self: center;
-          max-width: 290px;
-          min-height: 118px;
-        }
-        .mark-ut {
-          right: 24px;
-          top: 0;
-          font-size: 5rem;
-        }
-        .swoosh-one {
-          width: 164px;
-          height: 56px;
-          right: 8px;
-          top: 50px;
-        }
-        .swoosh-two {
-          width: 184px;
-          height: 66px;
-          right: -6px;
-          top: 42px;
-        }
-        .mark-star {
-          right: 48px;
-          top: -4px;
-          font-size: 1.3rem;
-        }
-        .mark-rule {
-          right: 8px;
-          bottom: 20px;
-          width: 200px;
-        }
-        .mark-tagline {
-          right: 8px;
-          bottom: -6px;
-          font-size: 0.56rem;
-          letter-spacing: 0.14em;
-        }
         .dashboard-head {
           flex-direction: column;
         }

@@ -45,21 +45,50 @@ interface FaqItem {
           This website helps students find previous year papers quickly, compare semesters, and prepare with real exam
           patterns across multiple universities and courses.
         </p>
-      </div>
-      <div class="hero-stat-wrap">
-        <div class="hero-stat">
-          <span>{{ totalAcademicCount }}</span>
-          <small>Academic Papers</small>
+        <div class="hero-actions">
+          <a class="hero-primary" href="#directory">Browse Question Papers</a>
+          <button type="button" class="hero-secondary" (click)="applyPreset('PTU', 'BTECH')">Open PTU BTECH Papers</button>
         </div>
-        <div class="hero-stat">
-          <span>{{ totalCompetitiveCount }}</span>
-          <small>Competitive Papers</small>
+        <div class="hero-points">
+          <article class="hero-point">
+            <strong>Semester-wise browsing</strong>
+            <span>Academic papers are organized by semester, department and course.</span>
+          </article>
+          <article class="hero-point">
+            <strong>Multiple universities</strong>
+            <span>PTU, PU Chandigarh, GNDU, MDU and GTU papers are available in one place.</span>
+          </article>
+          <article class="hero-point">
+            <strong>Quick exam preparation</strong>
+            <span>Use previous year papers to understand pattern, subject focus and recurring questions.</span>
+          </article>
+        </div>
+      </div>
+      <div class="hero-spotlight">
+        <p class="section-kicker">Trending on UTpaper</p>
+        <h2>Start with popular paper categories</h2>
+        <div class="hero-stat-wrap">
+          <div class="hero-stat">
+            <span>{{ totalAcademicCount }}</span>
+            <small>Academic Papers</small>
+          </div>
+          <div class="hero-stat">
+            <span>{{ totalCompetitiveCount }}</span>
+            <small>Competitive Papers</small>
+          </div>
+        </div>
+        <div class="spotlight-list">
+          <button type="button" class="spotlight-link" (click)="applyPreset('PTU', 'BTECH')">PTU BTECH semester papers</button>
+          <button type="button" class="spotlight-link" (click)="applyPreset('PTU', 'BCA')">PTU BCA previous year papers</button>
+          <button type="button" class="spotlight-link" (click)="applyPreset('PTU', 'MBA')">PTU MBA exam papers</button>
+          <button type="button" class="spotlight-link" (click)="applyPreset('PU Chandigarh', 'BTECH')">PU Chandigarh BTECH papers</button>
         </div>
       </div>
     </section>
 
     <section class="seo-intro" aria-label="Homepage introduction">
-      <article class="seo-card">
+      <article class="seo-card seo-story">
+        <p class="section-kicker">Why students use UTpaper</p>
         <h2>Find university question papers faster</h2>
         <p>
           UTpaper is built for students who want quick access to previous year question papers without browsing many
@@ -71,7 +100,29 @@ interface FaqItem {
           selected competitive exam papers. This makes the homepage stronger for searches like PTU BTECH papers, PTU
           BCA papers, MBA previous year papers and semester-wise PYQs.
         </p>
+        <div class="benefit-grid">
+          <article class="benefit-item">
+            <strong>Clear filtering</strong>
+            <span>Choose university, course, semester and department without digging through long menus.</span>
+          </article>
+          <article class="benefit-item">
+            <strong>Useful for revision</strong>
+            <span>Compare paper titles, subjects and years to spot the latest exam patterns before your test.</span>
+          </article>
+          <article class="benefit-item">
+            <strong>Direct downloads</strong>
+            <span>Open the paper quickly and move straight into preparation instead of wasting time searching.</span>
+          </article>
+        </div>
+      </article>
 
+      <aside class="seo-card seo-side">
+        <p class="section-kicker">Popular searches</p>
+        <h2>Jump into the most-used paper routes</h2>
+        <p class="seo-side-copy">
+          These shortcuts help students open the most searched combinations quickly. Choose one to update the directory
+          below with a single click.
+        </p>
         <div class="preset-wrap">
           <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'BTECH')">PTU BTECH Papers</button>
           <button type="button" class="preset-chip" (click)="applyPreset('PTU', 'BCA')">PTU BCA Papers</button>
@@ -80,10 +131,6 @@ interface FaqItem {
           <button type="button" class="preset-chip" (click)="applyPreset('GNDU', 'B.COM')">GNDU B.COM Papers</button>
           <button type="button" class="preset-chip" (click)="applyPreset('GTU', 'BPHARM')">GTU BPHARM Papers</button>
         </div>
-      </article>
-
-      <aside class="seo-card seo-side">
-        <h2>Popular Searches</h2>
         <ul class="seo-list">
           <li>PTU question papers all semesters</li>
           <li>PTU BTECH previous year papers</li>
@@ -257,44 +304,150 @@ interface FaqItem {
   `,
   styles: [
     `
+      :host {
+        --brand-deep: #0f2f53;
+        --brand-mid: #1f5f92;
+        --brand-soft: #eef6ff;
+        --brand-border: #dbe4ef;
+        --brand-ink: #16324f;
+        --brand-muted: #4d5d70;
+        --accent: #f59e0b;
+      }
       .hero {
-        background: linear-gradient(135deg, #0f2f53, #174c7f);
+        background:
+          radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%),
+          linear-gradient(135deg, #0f2f53, #1b4d7b 58%, #236391);
         color: #e9f1ff;
-        border-radius: 16px;
-        padding: 1.2rem;
+        border-radius: 24px;
+        padding: 1.5rem;
         width: 100%;
         box-sizing: border-box;
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
+        align-items: stretch;
+        gap: 1.25rem;
         margin-bottom: 1rem;
+        box-shadow: 0 22px 55px rgba(15, 47, 83, 0.18);
       }
       .eyebrow {
         margin: 0;
-        font-size: 0.76rem;
-        letter-spacing: 0.11em;
+        font-size: 0.78rem;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        opacity: 0.85;
+        color: #9fd0ff;
+        font-weight: 800;
       }
       .hero-copy {
         min-width: 0;
+        max-width: 760px;
+        display: flex;
+        flex-direction: column;
       }
       .hero h1 {
-        margin: 0.35rem 0;
-        font-size: 2rem;
-        line-height: 1.15;
+        margin: 0.45rem 0 0;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.04;
+        letter-spacing: -0.03em;
+        max-width: 14ch;
       }
       .hero .sub {
-        margin: 0;
-        max-width: 780px;
-        opacity: 0.9;
+        margin: 1rem 0 0;
+        max-width: 60ch;
+        font-size: 1.04rem;
+        color: rgba(233, 241, 255, 0.96);
+        line-height: 1.75;
       }
       .hero-note {
-        margin: 0.85rem 0 0;
-        max-width: 760px;
-        color: rgba(233, 241, 255, 0.88);
-        line-height: 1.65;
+        margin: 0.95rem 0 0;
+        max-width: 60ch;
+        color: rgba(223, 239, 255, 0.86);
+        line-height: 1.7;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+        margin-top: 1.15rem;
+      }
+      .hero-primary,
+      .hero-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        border-radius: 999px;
+        padding: 0.72rem 1.1rem;
+        font: inherit;
+        font-weight: 800;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      }
+      .hero-primary {
+        background: linear-gradient(135deg, #ffffff, #e7f3ff);
+        color: var(--brand-deep);
+        box-shadow: 0 12px 30px rgba(10, 31, 52, 0.22);
+      }
+      .hero-secondary {
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        background: rgba(255, 255, 255, 0.08);
+        color: #f7fbff;
+      }
+      .hero-primary:hover,
+      .hero-secondary:hover,
+      .spotlight-link:hover,
+      .preset-chip:hover {
+        transform: translateY(-1px);
+      }
+      .hero-points {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.8rem;
+        margin-top: 1.25rem;
+      }
+      .hero-point {
+        padding: 0.9rem 1rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(8px);
+      }
+      .hero-point strong {
+        display: block;
+        font-size: 0.98rem;
+        color: #ffffff;
+      }
+      .hero-point span {
+        display: block;
+        margin-top: 0.35rem;
+        color: rgba(226, 239, 250, 0.84);
+        line-height: 1.55;
+        font-size: 0.92rem;
+      }
+      .hero-spotlight {
+        width: min(360px, 100%);
+        padding: 1.15rem;
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      }
+      .section-kicker {
+        margin: 0;
+        font-size: 0.76rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: #6c8fb0;
+      }
+      .hero-spotlight .section-kicker {
+        color: #b9ddff;
+      }
+      .hero-spotlight h2 {
+        margin: 0.5rem 0 0;
+        font-size: 1.35rem;
+        line-height: 1.2;
+        color: #ffffff;
       }
       .seo-intro {
         display: grid;
@@ -304,73 +457,137 @@ interface FaqItem {
       }
       .seo-card,
       .faq-card {
-        background: #ffffff;
-        border: 1px solid #dbe4ef;
-        border-radius: 14px;
-        padding: 1rem;
+        background: linear-gradient(180deg, #ffffff, #fbfdff);
+        border: 1px solid var(--brand-border);
+        border-radius: 20px;
+        padding: 1.2rem;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
       }
       .seo-card h2,
       .faq-head h2 {
-        margin: 0 0 0.65rem;
-        color: #16324f;
+        margin: 0.45rem 0 0.75rem;
+        color: var(--brand-ink);
+        font-size: 1.45rem;
+        line-height: 1.2;
       }
       .seo-card p,
       .faq-head p,
       .faq-item p {
         margin: 0;
-        color: #4d5d70;
-        line-height: 1.7;
+        color: var(--brand-muted);
+        line-height: 1.72;
       }
       .seo-card p + p {
         margin-top: 0.75rem;
       }
+      .benefit-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.8rem;
+        margin-top: 1rem;
+      }
+      .benefit-item {
+        padding: 0.9rem 0.95rem;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #f8fbff, #ffffff);
+        border: 1px solid #d6e4f3;
+      }
+      .benefit-item strong {
+        display: block;
+        color: var(--brand-ink);
+        font-size: 0.98rem;
+      }
+      .benefit-item span {
+        display: block;
+        margin-top: 0.35rem;
+        color: var(--brand-muted);
+        font-size: 0.93rem;
+        line-height: 1.6;
+      }
       .preset-wrap {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.55rem;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
         margin-top: 1rem;
       }
       .preset-chip {
-        border: 1px solid #cbdcf7;
-        border-radius: 999px;
-        padding: 0.52rem 0.82rem;
-        background: #f8fbff;
-        color: #0f2f7a;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.7rem;
+        min-height: 52px;
+        border: 1px solid #c9dcf1;
+        border-radius: 16px;
+        padding: 0.85rem 0.95rem;
+        background: #ffffff;
+        color: #123a68;
         font: inherit;
         font-weight: 700;
         cursor: pointer;
+        text-align: left;
+        box-shadow: 0 10px 24px rgba(16, 38, 63, 0.05);
       }
-      .preset-chip:hover {
-        background: #edf5ff;
+      .preset-chip::after {
+        content: '>';
+        color: #6b88aa;
+        font-weight: 800;
       }
       .seo-side {
-        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        background:
+          radial-gradient(circle at top right, rgba(31, 95, 146, 0.08), transparent 32%),
+          linear-gradient(180deg, #ffffff, #f7fbff);
+      }
+      .seo-side-copy {
+        font-size: 0.97rem;
       }
       .seo-list {
-        margin: 0;
+        margin: 1rem 0 0;
         padding-left: 1.1rem;
         color: #23415f;
+        line-height: 1.65;
       }
       .seo-list li + li {
-        margin-top: 0.6rem;
+        margin-top: 0.65rem;
       }
       .hero-stat-wrap {
         display: flex;
         gap: 0.6rem;
         flex-wrap: wrap;
+        margin-top: 1rem;
       }
       .hero-stat {
+        flex: 1;
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 0.7rem 0.9rem;
+        border-radius: 16px;
+        padding: 0.85rem 0.95rem;
         text-align: center;
-        min-width: 120px;
+        min-width: 128px;
       }
       .hero-stat span {
         display: block;
-        font-size: 1.4rem;
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: #ffffff;
+      }
+      .hero-stat small {
+        color: rgba(232, 244, 255, 0.82);
+      }
+      .spotlight-list {
+        display: grid;
+        gap: 0.65rem;
+        margin-top: 1rem;
+      }
+      .spotlight-link {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        padding: 0.85rem 0.95rem;
+        background: rgba(255, 255, 255, 0.08);
+        color: #eef7ff;
+        font: inherit;
         font-weight: 700;
+        text-align: left;
+        cursor: pointer;
       }
       .directory-card,
       .competitive-card {
@@ -615,29 +832,34 @@ interface FaqItem {
       }
       .faq-card {
         margin-top: 1rem;
+        background:
+          radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 24%),
+          linear-gradient(180deg, #ffffff, #fcfdff);
       }
       .faq-head {
         display: flex;
         justify-content: space-between;
         gap: 1rem;
         align-items: flex-start;
-        margin-bottom: 0.9rem;
+        margin-bottom: 1rem;
       }
       .faq-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.9rem;
+        gap: 1rem;
       }
       .faq-item {
         border: 1px solid #dbe4ef;
-        border-radius: 12px;
-        padding: 0.95rem;
-        background: #fbfdff;
+        border-radius: 18px;
+        padding: 1rem;
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
       }
       .faq-item h3 {
-        margin: 0 0 0.45rem;
-        color: #16324f;
-        font-size: 1rem;
+        margin: 0 0 0.5rem;
+        color: var(--brand-ink);
+        font-size: 1.05rem;
+        line-height: 1.35;
       }
       @keyframes spin {
         from {
@@ -652,6 +874,13 @@ interface FaqItem {
         .content-columns {
           grid-template-columns: 1fr;
         }
+        .benefit-grid,
+        .hero-points {
+          grid-template-columns: 1fr;
+        }
+        .hero-spotlight {
+          width: 100%;
+        }
         .faq-grid {
           grid-template-columns: 1fr;
         }
@@ -660,12 +889,17 @@ interface FaqItem {
         .hero {
           flex-direction: column;
           align-items: flex-start;
+          padding: 1.15rem;
         }
         .hero h1 {
-          font-size: 1.65rem;
+          max-width: none;
+          font-size: 1.9rem;
         }
         .hero-stat-wrap {
           width: 100%;
+        }
+        .preset-wrap {
+          grid-template-columns: 1fr;
         }
         .directory-grid,
         .btech-controls {
@@ -683,11 +917,22 @@ interface FaqItem {
       }
       @media (max-width: 640px) {
         .hero {
-          padding: 0.9rem;
-          gap: 0.55rem;
+          padding: 1rem;
+          gap: 0.8rem;
         }
         .hero h1 {
-          font-size: 1.35rem;
+          font-size: 1.55rem;
+        }
+        .hero .sub,
+        .hero-note {
+          font-size: 0.95rem;
+        }
+        .hero-actions {
+          width: 100%;
+        }
+        .hero-primary,
+        .hero-secondary {
+          width: 100%;
         }
         .hero-stat {
           flex: 1;

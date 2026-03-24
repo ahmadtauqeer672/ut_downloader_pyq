@@ -144,7 +144,7 @@ import { AdminSessionService } from '../services/admin-session.service';
       }
       .mark-ut {
         position: absolute;
-        right: 18px;
+        right: 36px;
         top: 2px;
         font-size: 6.7rem;
         line-height: 0.9;
@@ -183,7 +183,7 @@ import { AdminSessionService } from '../services/admin-session.service';
       }
       .mark-star {
         position: absolute;
-        right: 56px;
+        right: 74px;
         top: -2px;
         font-size: 1.5rem;
         line-height: 1;
@@ -287,7 +287,7 @@ import { AdminSessionService } from '../services/admin-session.service';
           min-height: 118px;
         }
         .mark-ut {
-          right: 12px;
+          right: 24px;
           top: 0;
           font-size: 5rem;
         }
@@ -304,7 +304,7 @@ import { AdminSessionService } from '../services/admin-session.service';
           top: 42px;
         }
         .mark-star {
-          right: 36px;
+          right: 48px;
           top: -4px;
           font-size: 1.3rem;
         }

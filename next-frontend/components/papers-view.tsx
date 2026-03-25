@@ -270,13 +270,13 @@ export function PapersView({
             </div>
 
             {competitiveSummary.exams.length > 0 ? (
-              <ul className="competitive-list">
-                {competitiveSummary.exams.slice(0, 10).map((exam) => (
-                  <li key={exam}>
-                    <Link href={competitiveExamHref(exam)}>{exam}</Link>
-                  </li>
+              <div className="chip-row">
+                {competitiveSummary.exams.map((exam) => (
+                  <Link className="chip" href={competitiveExamHref(exam)} key={exam}>
+                    {exam}
+                  </Link>
                 ))}
-              </ul>
+              </div>
             ) : (
               <p className="empty-state">Competitive exam data will appear here when papers are uploaded.</p>
             )}

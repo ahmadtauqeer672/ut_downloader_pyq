@@ -216,7 +216,6 @@ img {
 .paper-meta,
 .empty-state,
 .disclaimer-copy p,
-.competitive-list li,
 .route-list a,
 .faq-item p {
   color: var(--muted);
@@ -426,22 +425,6 @@ img {
   background: rgba(15, 118, 110, 0.08);
   color: var(--primary-strong);
   font-size: 0.94rem;
-}
-
-.competitive-list {
-  margin: 0;
-  padding-left: 1.1rem;
-}
-
-.competitive-list a {
-  color: var(--primary-strong);
-  font-weight: 700;
-}
-
-.competitive-list a:hover,
-.competitive-list a:focus-visible {
-  text-decoration: underline;
-  outline: none;
 }
 
 .faq-grid {

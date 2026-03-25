@@ -623,8 +623,8 @@ img {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 0;
+  gap: 0.75rem;
+  padding: 0.78rem 0;
   border-top: 1px solid rgba(217, 229, 243, 0.9);
 }
 
@@ -648,8 +648,29 @@ img {
 
 .paper-actions {
   display: inline-flex;
-  gap: 0.7rem;
+  gap: 0.45rem;
   white-space: nowrap;
+}
+
+.paper-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.42rem 0.82rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(15, 118, 110, 0.07);
+  color: var(--primary-strong);
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.paper-actions a:hover,
+.paper-actions a:focus-visible {
+  background: linear-gradient(135deg, var(--primary), #15803d);
+  color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .paper-actions a,
@@ -708,27 +729,35 @@ img {
 
 .admin-stack {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .admin-hero,
 .admin-card {
-  padding: 1.45rem;
+  padding: 1.2rem;
 }
 
 .admin-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
 }
 
 .admin-upload-grid {
-  align-items: end;
+  align-items: flex-end;
+  gap: 0.75rem;
 }
 
 .admin-submit {
   border: none;
   cursor: pointer;
+  min-width: 12rem;
+}
+
+.admin-form-actions {
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 0.15rem;
 }
 
 .admin-action-grid {
@@ -757,8 +786,8 @@ img {
 }
 
 .status-message {
-  margin: 1rem 0 0;
-  padding: 0.85rem 1rem;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.95rem;
   border-radius: 16px;
   font-weight: 600;
 }
@@ -777,17 +806,17 @@ img {
 
 .admin-list {
   display: grid;
-  gap: 0.9rem;
-  margin-top: 1rem;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
 }
 
 .admin-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem 1.05rem;
-  border-radius: 20px;
+  gap: 0.85rem;
+  padding: 0.9rem 0.95rem;
+  border-radius: 18px;
   border: 1px solid var(--border);
   background: linear-gradient(180deg, #ffffff, #fbfdff);
 }
@@ -800,7 +829,7 @@ img {
 .admin-row__meta p {
   margin: 0.3rem 0 0;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .admin-row__actions {
@@ -821,8 +850,70 @@ img {
   margin-top: 0.2rem;
 }
 
+.admin-filter-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .admin-filter-field {
   max-width: 320px;
+  flex: 1 1 280px;
+}
+
+.admin-filter-submit {
+  min-width: 10rem;
+}
+
+.admin-result-card {
+  margin-top: 0.75rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: linear-gradient(180deg, #f8fdfb, #f3fbf7);
+}
+
+.admin-result-head {
+  display: grid;
+  gap: 0.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-result-head strong {
+  color: #166534;
+}
+
+.admin-result-head span,
+.admin-result-item span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.admin-result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-result-item {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 118, 110, 0.1);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.admin-result-item strong {
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.admin-route-link {
+  color: var(--primary-strong);
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .admin-danger {
@@ -954,6 +1045,18 @@ img {
   .admin-row,
   .paper-item {
     flex-direction: column;
+  }
+
+  .admin-form-actions,
+  .admin-row__actions,
+  .admin-filter-bar {
+    width: 100%;
+  }
+
+  .admin-submit,
+  .admin-filter-submit,
+  .paper-actions a {
+    width: 100%;
   }
 
   .competitive-paper-item {

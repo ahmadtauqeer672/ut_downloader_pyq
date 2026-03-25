@@ -9,8 +9,7 @@ import {
   competitiveDownloadHref,
   groupCompetitiveByYear,
   groupPapersBySemester,
-  paperDownloadHref,
-  paperPreviewHref
+  paperDownloadHref
 } from '@/lib/api';
 import { competitiveExamHref, courseHref, universityHref } from '@/lib/slug';
 import { CompetitivePaper, CompetitiveSummary, Paper, UniversityOption } from '@/lib/types';
@@ -236,9 +235,6 @@ export function PapersView({
                       </div>
 
                       <div className="paper-actions">
-                        <a href={paperPreviewHref(paper.id)} target="_blank" rel="noreferrer">
-                          Preview
-                        </a>
                         <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
                           Download
                         </a>

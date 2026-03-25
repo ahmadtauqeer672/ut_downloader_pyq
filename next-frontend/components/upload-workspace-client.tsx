@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -13,8 +14,9 @@ import {
   uploadCompetitivePaper,
   uploadPaper
 } from '@/lib/admin-api-client';
-import { competitiveDownloadHref, paperDownloadHref, paperPreviewHref } from '@/lib/api';
+import { competitiveDownloadHref, paperDownloadHref } from '@/lib/api';
 import { BTECH_DEPARTMENTS, SEMESTERS, UNIVERSITY_OPTIONS } from '@/lib/data';
+import { competitiveExamHref, courseHref, universityHref } from '@/lib/slug';
 import { CompetitivePaper, Paper } from '@/lib/types';
 import { useAdminSession } from '@/lib/use-admin-session';
 
@@ -35,6 +37,19 @@ interface CompetitiveFormState {
   title: string;
   year: string;
   driveUrl: string;
+}
+
+interface UploadResultRoute {
+  label: string;
+  href: string;
+  text: string;
+}
+
+interface UploadResultState {
+  message: string;
+  title: string;
+  source: string;
+  routes: UploadResultRoute[];
 }
 
 const initialAcademicForm = (): AcademicFormState => ({
@@ -87,6 +102,73 @@ function normalizeCompetitiveDraftForPaper(paper: CompetitivePaper): Competitive
   };
 }
 
+function buildAcademicUploadResult(form: AcademicFormState, hasLocalFile: boolean): UploadResultState {
+  return {
+    message: 'Academic paper uploaded successfully.',
+    title: form.title.trim(),
+    source: hasLocalFile ? 'Local file upload' : 'Google Drive file link',
+    routes: [
+      {
+        label: 'University route',
+        href: universityHref(form.university),
+        text: form.university
+      },
+      {
+        label: 'Course route',
+        href: courseHref(form.university, form.course),
+        text: `${form.university} ${form.course}`
+      }
+    ]
+  };
+}
+
+function buildCompetitiveUploadResult(form: CompetitiveFormState, hasLocalFile: boolean): UploadResultState {
+  return {
+    message: 'Competitive paper uploaded successfully.',
+    title: form.title.trim(),
+    source: hasLocalFile ? 'Local file upload' : 'Google Drive file link',
+    routes: [
+      {
+        label: 'Exam route',
+        href: competitiveExamHref(form.examName.trim()),
+        text: form.examName.trim()
+      }
+    ]
+  };
+}
+
+function UploadResultCard({ message, title, source, routes }: UploadResultState) {
+  return (
+    <div className="admin-result-card">
+      <div className="admin-result-head">
+        <strong>{message}</strong>
+        <span>Result and route links are ready.</span>
+      </div>
+
+      <div className="admin-result-grid">
+        <div className="admin-result-item">
+          <span>Title</span>
+          <strong>{title}</strong>
+        </div>
+
+        <div className="admin-result-item">
+          <span>Source</span>
+          <strong>{source}</strong>
+        </div>
+
+        {routes.map((route) => (
+          <div className="admin-result-item" key={route.href}>
+            <span>{route.label}</span>
+            <Link className="admin-route-link" href={route.href}>
+              {route.text}
+            </Link>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function UploadWorkspaceClient() {
   const router = useRouter();
   const { ready, isAuthenticated, token } = useAdminSession();
@@ -96,6 +178,7 @@ export function UploadWorkspaceClient() {
   const [academicFileKey, setAcademicFileKey] = useState(0);
   const [academicMessage, setAcademicMessage] = useState('');
   const [academicError, setAcademicError] = useState('');
+  const [academicResult, setAcademicResult] = useState<UploadResultState | null>(null);
   const [isUploadingAcademic, setIsUploadingAcademic] = useState(false);
 
   const [papers, setPapers] = useState<Paper[]>([]);
@@ -114,6 +197,7 @@ export function UploadWorkspaceClient() {
   const [competitiveFileKey, setCompetitiveFileKey] = useState(0);
   const [competitiveMessage, setCompetitiveMessage] = useState('');
   const [competitiveError, setCompetitiveError] = useState('');
+  const [competitiveResult, setCompetitiveResult] = useState<UploadResultState | null>(null);
   const [isUploadingCompetitive, setIsUploadingCompetitive] = useState(false);
 
   const [competitiveExams, setCompetitiveExams] = useState<string[]>([]);
@@ -271,6 +355,7 @@ export function UploadWorkspaceClient() {
     event.preventDefault();
     setAcademicMessage('');
     setAcademicError('');
+    setAcademicResult(null);
 
     if (!selectedAcademicFile && !academicForm.driveUrl.trim()) {
       setAcademicError('Select a file or provide Google Drive file link.');
@@ -295,6 +380,7 @@ export function UploadWorkspaceClient() {
     setIsUploadingAcademic(true);
 
     try {
+      const submission = { ...academicForm };
       const form = new FormData();
       form.append('title', academicForm.title);
       form.append('university', academicForm.university);
@@ -309,6 +395,7 @@ export function UploadWorkspaceClient() {
 
       await uploadPaper(form, token);
       setAcademicMessage('Academic paper uploaded successfully.');
+      setAcademicResult(buildAcademicUploadResult(submission, Boolean(selectedAcademicFile)));
       resetAcademicUpload();
       await refreshAcademicPapers();
     } catch (error) {
@@ -396,6 +483,7 @@ export function UploadWorkspaceClient() {
     event.preventDefault();
     setCompetitiveMessage('');
     setCompetitiveError('');
+    setCompetitiveResult(null);
 
     if (!competitiveForm.examName.trim() || !competitiveForm.title.trim() || !competitiveForm.year.trim()) {
       setCompetitiveError('Exam name, title and year are required.');
@@ -415,6 +503,7 @@ export function UploadWorkspaceClient() {
     setIsUploadingCompetitive(true);
 
     try {
+      const submission = { ...competitiveForm };
       const form = new FormData();
       form.append('examName', competitiveForm.examName.trim());
       form.append('title', competitiveForm.title.trim());
@@ -424,6 +513,7 @@ export function UploadWorkspaceClient() {
 
       await uploadCompetitivePaper(form, token);
       setCompetitiveMessage('Competitive paper uploaded successfully.');
+      setCompetitiveResult(buildCompetitiveUploadResult(submission, Boolean(selectedCompetitiveFile)));
       resetCompetitiveUpload();
       await Promise.all([refreshCompetitiveExams(), refreshCompetitivePapers()]);
     } catch (error) {
@@ -660,13 +750,24 @@ export function UploadWorkspaceClient() {
             />
           </label>
 
-          <button className="button button--primary admin-submit" type="submit" disabled={isUploadingAcademic}>
-            {isUploadingAcademic ? 'Uploading...' : 'Upload Academic Paper'}
-          </button>
+          <div className="button-row admin-form-actions admin-full-width">
+            <button className="button button--primary admin-submit" type="submit" disabled={isUploadingAcademic}>
+              {isUploadingAcademic ? 'Uploading...' : 'Submit Academic Paper'}
+            </button>
+            <button
+              className="button button--secondary"
+              type="button"
+              onClick={resetAcademicUpload}
+              disabled={isUploadingAcademic}
+            >
+              Clear
+            </button>
+          </div>
         </form>
 
         {academicMessage ? <p className="status-message status-success">{academicMessage}</p> : null}
         {academicError ? <p className="status-message status-error">{academicError}</p> : null}
+        {academicResult ? <UploadResultCard {...academicResult} /> : null}
       </section>
 
       <section className="card admin-card">
@@ -700,9 +801,6 @@ export function UploadWorkspaceClient() {
                       {paper.semester ? ` / Sem ${paper.semester}` : ''} / {paper.subject} / {paper.year}
                     </p>
                     <div className="paper-actions">
-                      <a href={paperPreviewHref(paper.id)} target="_blank" rel="noreferrer">
-                        Preview
-                      </a>
                       <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
                         Download
                       </a>
@@ -975,13 +1073,24 @@ export function UploadWorkspaceClient() {
             />
           </label>
 
-          <button className="button button--primary admin-submit" type="submit" disabled={isUploadingCompetitive}>
-            {isUploadingCompetitive ? 'Uploading...' : 'Upload Competitive Paper'}
-          </button>
+          <div className="button-row admin-form-actions admin-full-width">
+            <button className="button button--primary admin-submit" type="submit" disabled={isUploadingCompetitive}>
+              {isUploadingCompetitive ? 'Uploading...' : 'Submit Competitive Paper'}
+            </button>
+            <button
+              className="button button--secondary"
+              type="button"
+              onClick={resetCompetitiveUpload}
+              disabled={isUploadingCompetitive}
+            >
+              Clear
+            </button>
+          </div>
         </form>
 
         {competitiveMessage ? <p className="status-message status-success">{competitiveMessage}</p> : null}
         {competitiveError ? <p className="status-message status-error">{competitiveError}</p> : null}
+        {competitiveResult ? <UploadResultCard {...competitiveResult} /> : null}
       </section>
 
       <section className="card admin-card">
@@ -996,16 +1105,18 @@ export function UploadWorkspaceClient() {
           </button>
         </div>
 
-        <div className="admin-filter-row">
+        <form
+          className="admin-filter-row admin-filter-bar"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void refreshCompetitivePapers(manageCompetitiveExamFilter);
+          }}
+        >
           <label className="filter-field admin-filter-field">
             <span>Exam filter</span>
             <select
               value={manageCompetitiveExamFilter}
-              onChange={(event) => {
-                const value = event.target.value;
-                setManageCompetitiveExamFilter(value);
-                void refreshCompetitivePapers(value);
-              }}
+              onChange={(event) => setManageCompetitiveExamFilter(event.target.value)}
             >
               <option value="">All Competitive Exams</option>
               {competitiveExams.map((exam) => (
@@ -1015,7 +1126,10 @@ export function UploadWorkspaceClient() {
               ))}
             </select>
           </label>
-        </div>
+          <button className="button button--secondary admin-filter-submit" type="submit" disabled={loadingCompetitivePapers}>
+            {loadingCompetitivePapers ? 'Loading...' : 'Show Results'}
+          </button>
+        </form>
 
         {competitiveManageMessage ? <p className="status-message status-success">{competitiveManageMessage}</p> : null}
         {competitiveManageError ? <p className="status-message status-error">{competitiveManageError}</p> : null}

@@ -45,6 +45,7 @@ export function PapersView({
   competitiveSummary,
   competitivePapers = []
 }: PapersViewProps) {
+  const activeUniversity = university ?? UNIVERSITY_OPTIONS[0] ?? null;
   const semesterGroups = groupPapersBySemester(papers);
   const competitiveGroups = groupCompetitiveByYear(competitivePapers);
 
@@ -165,7 +166,7 @@ export function PapersView({
             <div className="filter-card__grid">
               <label className="filter-field">
                 <span>University route</span>
-                <select defaultValue={university?.name ?? ''}>
+                <select defaultValue={activeUniversity?.name ?? ''}>
                   {UNIVERSITY_OPTIONS.map((option) => (
                     <option key={option.name} value={option.name}>
                       {option.name}
@@ -178,7 +179,7 @@ export function PapersView({
                 <span>Course route</span>
                 <select defaultValue={course ?? ''}>
                   <option value="">All courses</option>
-                  {(university?.courses ?? []).map((option) => (
+                  {(activeUniversity?.courses ?? []).map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>

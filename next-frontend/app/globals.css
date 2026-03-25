@@ -367,6 +367,100 @@ img {
   margin-top: 0.9rem;
 }
 
+.competitive-archive {
+  padding: 1.2rem;
+}
+
+.competitive-archive .section-head {
+  margin-bottom: 0.85rem;
+}
+
+.competitive-year-card {
+  padding: 1rem 1.05rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, #f9fcff);
+}
+
+.competitive-year-card + .competitive-year-card {
+  margin-top: 0.85rem;
+}
+
+.competitive-year-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.competitive-year-head h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 1.65rem);
+  line-height: 1.1;
+}
+
+.competitive-paper-list {
+  display: grid;
+  gap: 0;
+}
+
+.competitive-paper-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-top: 1px solid rgba(217, 229, 243, 0.9);
+}
+
+.competitive-paper-item:first-child {
+  border-top: none;
+}
+
+.competitive-paper-copy {
+  min-width: 0;
+}
+
+.competitive-paper-title {
+  display: block;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.competitive-paper-meta {
+  margin: 0.24rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.competitive-paper-actions {
+  align-self: center;
+}
+
+.competitive-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.55rem;
+  padding: 0.62rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--primary-strong);
+  font-weight: 800;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.competitive-download:hover,
+.competitive-download:focus-visible {
+  background: linear-gradient(135deg, var(--primary), #15803d);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(15, 118, 110, 0.18);
+  outline: none;
+  transform: translateY(-1px);
+}
+
 .paper-group__head {
   margin-bottom: 0.8rem;
 }
@@ -623,7 +717,8 @@ img {
   .site-header__inner,
   .site-footer__inner,
   .section-head,
-  .paper-group__head {
+  .paper-group__head,
+  .competitive-year-head {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -648,6 +743,15 @@ img {
     padding: 1.15rem;
   }
 
+  .competitive-archive {
+    padding: 1rem;
+  }
+
+  .competitive-year-card {
+    padding: 0.85rem 0.9rem;
+    border-radius: 18px;
+  }
+
   .filter-card__grid,
   .hero-stat-grid {
     grid-template-columns: 1fr;
@@ -656,5 +760,20 @@ img {
   .admin-row,
   .paper-item {
     flex-direction: column;
+  }
+
+  .competitive-paper-item {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    align-items: flex-start;
+    padding: 0.78rem 0;
+  }
+
+  .competitive-paper-actions {
+    width: 100%;
+  }
+
+  .competitive-download {
+    width: 100%;
   }
 }

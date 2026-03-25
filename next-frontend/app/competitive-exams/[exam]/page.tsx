@@ -89,7 +89,7 @@ export default async function CompetitiveExamPage({ params }: CompetitiveExamPag
         </aside>
       </section>
 
-      <section id="competitive-papers" className="section card section-card">
+      <section id="competitive-papers" className="section card section-card competitive-archive">
         <div className="section-head">
           <div>
             <p className="eyebrow">Year-wise collection</p>
@@ -99,23 +99,33 @@ export default async function CompetitiveExamPage({ params }: CompetitiveExamPag
 
         {yearGroups.length > 0 ? (
           yearGroups.map((group) => (
-            <article className="paper-group" key={group.year}>
-              <div className="paper-group__head">
+            <article className="competitive-year-card" key={group.year}>
+              <div className="competitive-year-head">
                 <h3>{group.year}</h3>
                 <span className="chip">{group.papers.length} papers</span>
               </div>
 
-              <div className="paper-list">
+              <div className="competitive-paper-list">
                 {group.papers.map((paper) => (
-                  <div className="paper-item" key={paper.id}>
-                    <div>
-                      <a className="paper-link" href={competitiveDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                  <div className="competitive-paper-item" key={paper.id}>
+                    <div className="competitive-paper-copy">
+                      <a
+                        className="paper-link competitive-paper-title"
+                        href={competitiveDownloadHref(paper.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         {paper.title}
                       </a>
-                      <p className="paper-meta">{paper.examName}</p>
+                      <p className="paper-meta competitive-paper-meta">{paper.examName}</p>
                     </div>
-                    <div className="paper-actions">
-                      <a href={competitiveDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                    <div className="paper-actions competitive-paper-actions">
+                      <a
+                        className="competitive-download"
+                        href={competitiveDownloadHref(paper.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Download
                       </a>
                     </div>

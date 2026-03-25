@@ -4,45 +4,51 @@ import { SITE_URL, UNIVERSITY_OPTIONS } from '@/lib/data';
 import { slugify } from '@/lib/slug';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const lastModified = new Date();
+  const createEntry = (
+    path: string,
+    changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'],
+    priority: number
+  ): MetadataRoute.Sitemap[number] => ({
+    url: path.startsWith('http') ? path : `${SITE_URL}${path}`,
+    lastModified,
+    changeFrequency,
+    priority
+  });
+
   const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: SITE_URL,
-      changeFrequency: 'daily',
-      priority: 1
-    },
-    {
-      url: `${SITE_URL}/disclaimer`,
-      changeFrequency: 'monthly',
-      priority: 0.3
-    }
+    createEntry('/', 'daily', 1),
+    createEntry('/about', 'monthly', 0.55),
+    createEntry('/disclaimer', 'monthly', 0.3)
   ];
 
   const courseRoutes = UNIVERSITY_OPTIONS.flatMap((option) => {
     const universitySlug = slugify(option.name);
-    const universityEntry: MetadataRoute.Sitemap[number] = {
-      url: `${SITE_URL}/question-papers/${universitySlug}`,
-      changeFrequency: option.name === 'PTU' ? 'daily' : 'weekly',
-      priority: option.name === 'PTU' ? 0.9 : 0.76
-    };
+    const isPrimaryUniversity = option.name === 'PTU';
+    const universityEntry = createEntry(
+      `/question-papers/${universitySlug}`,
+      isPrimaryUniversity ? 'daily' : 'weekly',
+      isPrimaryUniversity ? 0.9 : 0.76
+    );
 
-    const courseEntries = option.courses.map<MetadataRoute.Sitemap[number]>((course) => ({
-      url: `${SITE_URL}/question-papers/${universitySlug}/${slugify(course)}`,
-      changeFrequency: option.name === 'PTU' ? 'daily' : 'weekly',
-      priority: option.name === 'PTU' ? 0.82 : 0.72
-    }));
+    const courseEntries = option.courses.map<MetadataRoute.Sitemap[number]>((course) =>
+      createEntry(
+        `/question-papers/${universitySlug}/${slugify(course)}`,
+        isPrimaryUniversity ? 'daily' : 'weekly',
+        isPrimaryUniversity ? 0.82 : 0.72
+      )
+    );
 
     return [universityEntry, ...courseEntries];
   });
 
   const competitiveExamRoutes = await listCompetitiveExams()
     .then((exams) =>
-      exams.map<MetadataRoute.Sitemap[number]>((exam) => ({
-        url: `${SITE_URL}/competitive-exams/${slugify(exam)}`,
-        changeFrequency: 'weekly',
-        priority: 0.68
-      }))
+      exams.map<MetadataRoute.Sitemap[number]>((exam) =>
+        createEntry(`/competitive-exams/${slugify(exam)}`, 'weekly', 0.68)
+      )
     )
     .catch(() => []);
 
-  return [...staticRoutes, ...courseRoutes, ...competitiveExamRoutes];
+  return [...staticRoutes, ...courseRoutes, ...competitiveExamRoutes].sort((a, b) => a.url.localeCompare(b.url));
 }

@@ -6,6 +6,11 @@ import { findCourseBySlug, findUniversityBySlug } from '@/lib/slug';
 
 interface CoursePageProps {
   params: Promise<{ university: string; course: string }>;
+  searchParams?: Promise<{ department?: string | string[]; semester?: string | string[] }>;
+}
+
+function readSearchValue(value?: string | string[]): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 export async function generateMetadata({ params }: CoursePageProps) {
@@ -32,9 +37,12 @@ export async function generateMetadata({ params }: CoursePageProps) {
   });
 }
 
-export default async function CoursePage({ params }: CoursePageProps) {
+export default async function CoursePage({ params, searchParams }: CoursePageProps) {
   const { university: universitySlug, course: courseSlug } = await params;
+  const filters = searchParams ? await searchParams : {};
   const university = findUniversityBySlug(universitySlug);
+  const department = readSearchValue(filters.department);
+  const semester = readSearchValue(filters.semester);
 
   if (!university) {
     notFound();
@@ -46,7 +54,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
   }
 
   const [papers, competitiveSummary, competitivePapers] = await Promise.all([
-    listPapers({ university: university.name, course, limit: 80 }),
+    listPapers({ university: university.name, course, department, semester, limit: 80 }),
     getCompetitiveSummary(),
     listCompetitivePapers('UPSC').catch(() => [])
   ]);
@@ -57,6 +65,8 @@ export default async function CoursePage({ params }: CoursePageProps) {
       description={`Browse ${university.name} ${course} previous year papers and open semester-wise downloads faster on UTpaper.`}
       university={university}
       course={course}
+      department={department}
+      semester={semester}
       papers={papers}
       competitiveSummary={competitiveSummary}
       competitivePapers={competitivePapers}

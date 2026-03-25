@@ -373,6 +373,14 @@ img {
   gap: 1rem;
 }
 
+.paper-group__head {
+  align-items: center;
+}
+
+.paper-group__head .chip {
+  margin-left: auto;
+}
+
 .section-head {
   margin-bottom: 1rem;
 }
@@ -404,6 +412,12 @@ img {
 
 .filter-card__grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.filter-card__actions {
+  display: flex;
+  justify-content: flex-start;
+  margin: 1rem 0 0.85rem;
 }
 
 .filter-field {
@@ -956,7 +970,6 @@ img {
 @media (max-width: 760px) {
   .site-header__inner,
   .section-head,
-  .paper-group__head,
   .competitive-year-head {
     flex-direction: column;
     align-items: flex-start;
@@ -1021,6 +1034,10 @@ img {
 
   .filter-card__grid {
     grid-template-columns: 1fr;
+  }
+
+  .filter-card__actions .button {
+    width: 100%;
   }
 
   .hero-stat-grid {

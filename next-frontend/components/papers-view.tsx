@@ -1,8 +1,7 @@
 import Link from 'next/link';
+import { PapersFilterForm } from '@/components/papers-filter-form';
 import {
-  BTECH_DEPARTMENTS,
   FEATURE_ITEMS,
-  SEMESTERS,
   UNIVERSITY_OPTIONS
 } from '@/lib/data';
 import {
@@ -19,6 +18,8 @@ interface PapersViewProps {
   description: string;
   university?: UniversityOption | null;
   course?: string | null;
+  department?: string | null;
+  semester?: string | null;
   papers: Paper[];
   competitiveSummary: CompetitiveSummary;
   competitivePapers?: CompetitivePaper[];
@@ -39,6 +40,8 @@ export function PapersView({
   description,
   university,
   course,
+  department,
+  semester,
   papers,
   competitiveSummary,
   competitivePapers = []
@@ -158,60 +161,13 @@ export function PapersView({
             </div>
           </div>
 
-          <div className="filter-card">
-            <div className="filter-card__grid">
-              <label className="filter-field">
-                <span>University route</span>
-                <select defaultValue={activeUniversity?.name ?? ''}>
-                  {UNIVERSITY_OPTIONS.map((option) => (
-                    <option key={option.name} value={option.name}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="filter-field">
-                <span>Course route</span>
-                <select defaultValue={course ?? ''}>
-                  <option value="">All courses</option>
-                  {(activeUniversity?.courses ?? []).map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="filter-field">
-                <span>BTECH departments</span>
-                <select defaultValue="">
-                  <option value="">All departments</option>
-                  {BTECH_DEPARTMENTS.map((department) => (
-                    <option key={department} value={department}>
-                      {department}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="filter-field">
-                <span>Semesters</span>
-                <select defaultValue="">
-                  <option value="">All semesters</option>
-                  {SEMESTERS.map((semester) => (
-                    <option key={semester} value={semester}>
-                      Semester {semester}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <p className="muted-copy">
-              These filter controls are included as part of the migration layout. The current route already preloads the
-              matching university and course papers below.
-            </p>
-          </div>
+          <PapersFilterForm
+            universities={UNIVERSITY_OPTIONS}
+            initialUniversity={activeUniversity?.name ?? 'PTU'}
+            initialCourse={course ?? ''}
+            initialDepartment={department ?? ''}
+            initialSemester={semester ?? ''}
+          />
 
           {semesterGroups.length > 0 ? (
             semesterGroups.map((group) => (

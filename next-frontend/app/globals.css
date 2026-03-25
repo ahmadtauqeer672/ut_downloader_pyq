@@ -350,8 +350,15 @@ img {
 
 .stat-card strong {
   display: block;
-  font-size: 1.8rem;
+  font-size: 1.55rem;
+  line-height: 1;
   color: var(--text);
+}
+
+.stat-card p {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
 }
 
 .section {
@@ -887,9 +894,27 @@ img {
     align-items: flex-start;
   }
 
-  .filter-card__grid,
-  .hero-stat-grid {
+  .filter-card__grid {
     grid-template-columns: 1fr;
+  }
+
+  .hero-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .stat-card {
+    padding: 0.9rem 0.85rem;
+    border-radius: 18px;
+  }
+
+  .stat-card strong {
+    font-size: 1.35rem;
+  }
+
+  .stat-card p {
+    font-size: 0.76rem;
+    line-height: 1.3;
   }
 
   .admin-row,

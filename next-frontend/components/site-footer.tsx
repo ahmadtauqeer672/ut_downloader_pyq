@@ -6,7 +6,7 @@ export function SiteFooter() {
       <div className="site-footer__inner">
         <div className="site-footer__brand">
           <Link className="brand" href="/">
-            <span className="brand__badge">UT</span>
+            <span className="brand__badge brand__badge--logo">UT</span>
             <span>
               <p className="brand__name">UTpaper</p>
               <p className="brand__tag">Question papers, previous year papers and PYQ downloads</p>

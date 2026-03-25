@@ -93,9 +93,7 @@ export function PapersView({
             <Link className="chip" href={courseHref('PTU', 'MBA')}>
               PTU MBA
             </Link>
-            <Link className="chip" href={courseHref('PU Chandigarh', 'BTECH')}>
-              PU Chandigarh BTECH
-            </Link>
+            
           </div>
         </aside>
       </section>

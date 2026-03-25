@@ -27,7 +27,7 @@ export default async function HomePage() {
     <>
       <JsonLdScript payload={organizationJsonLd()} />
       <PapersView
-        heading="PTU Question Papers, Previous Year Papers and Competitive Exam PYQs"
+        heading="Previous Year Papers and Competitive Exam PYQs"
         description="Download PTU, PU Chandigarh, GNDU, MDU and GTU question papers in one place. Browse BTECH, BCA, BBA, MBA, MCA and competitive exam papers semester-wise or year-wise on UTpaper."
         papers={papers}
         competitiveSummary={competitiveSummary}

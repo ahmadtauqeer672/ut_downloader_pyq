@@ -527,6 +527,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Paper title</span>
             <input
+              placeholder="e.g. Computer Science (Shift 1)"
               value={academicForm.title}
               onChange={(event) => setAcademicForm((current) => ({ ...current, title: event.target.value }))}
               required
@@ -611,6 +612,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Subject</span>
             <input
+              placeholder="e.g. STET"
               value={academicForm.subject}
               onChange={(event) => setAcademicForm((current) => ({ ...current, subject: event.target.value }))}
               required
@@ -620,6 +622,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Year</span>
             <input
+              placeholder="e.g. 2024"
               value={academicForm.year}
               onChange={(event) => setAcademicForm((current) => ({ ...current, year: event.target.value }))}
               required
@@ -629,6 +632,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Exam type</span>
             <input
+              placeholder="e.g. Final / Mid Sem"
               value={academicForm.examType}
               onChange={(event) => setAcademicForm((current) => ({ ...current, examType: event.target.value }))}
               required
@@ -638,6 +642,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Google Drive file link</span>
             <input
+              placeholder="https://drive.google.com/file/..."
               value={academicForm.driveUrl}
               onChange={(event) => setAcademicForm((current) => ({ ...current, driveUrl: event.target.value }))}
             />
@@ -709,6 +714,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>Paper title</span>
                         <input
+                          placeholder="e.g. Computer Science (Shift 1)"
                           value={editPaperDraft.title}
                           onChange={(event) =>
                             setEditPaperDraft((current) => (current ? { ...current, title: event.target.value } : current))
@@ -801,6 +807,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>Subject</span>
                         <input
+                          placeholder="e.g. STET"
                           value={editPaperDraft.subject}
                           onChange={(event) =>
                             setEditPaperDraft((current) => (current ? { ...current, subject: event.target.value } : current))
@@ -812,6 +819,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>Year</span>
                         <input
+                          placeholder="e.g. 2024"
                           value={editPaperDraft.year}
                           onChange={(event) =>
                             setEditPaperDraft((current) => (current ? { ...current, year: event.target.value } : current))
@@ -823,6 +831,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>Exam type</span>
                         <input
+                          placeholder="e.g. Final / Mid Sem"
                           value={editPaperDraft.examType}
                           onChange={(event) =>
                             setEditPaperDraft((current) =>
@@ -836,6 +845,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>New Google Drive link</span>
                         <input
+                          placeholder="https://drive.google.com/file/..."
                           value={editPaperDraft.driveUrl}
                           onChange={(event) =>
                             setEditPaperDraft((current) => (current ? { ...current, driveUrl: event.target.value } : current))
@@ -917,6 +927,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Exam name</span>
             <input
+              placeholder="e.g. STET"
               value={competitiveForm.examName}
               onChange={(event) => setCompetitiveForm((current) => ({ ...current, examName: event.target.value }))}
               required
@@ -926,6 +937,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Paper title</span>
             <input
+              placeholder="e.g. Computer Science (Shift 1)"
               value={competitiveForm.title}
               onChange={(event) => setCompetitiveForm((current) => ({ ...current, title: event.target.value }))}
               required
@@ -935,6 +947,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Year</span>
             <input
+              placeholder="e.g. 2024"
               value={competitiveForm.year}
               onChange={(event) => setCompetitiveForm((current) => ({ ...current, year: event.target.value }))}
               required
@@ -944,6 +957,7 @@ export function UploadWorkspaceClient() {
           <label className="filter-field">
             <span>Google Drive file link</span>
             <input
+              placeholder="https://drive.google.com/file/..."
               value={competitiveForm.driveUrl}
               onChange={(event) => setCompetitiveForm((current) => ({ ...current, driveUrl: event.target.value }))}
             />
@@ -1036,6 +1050,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>Exam name</span>
                         <input
+                          placeholder="e.g. STET"
                           value={editCompetitiveDraft.examName}
                           onChange={(event) =>
                             setEditCompetitiveDraft((current) =>
@@ -1049,6 +1064,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>Paper title</span>
                         <input
+                          placeholder="e.g. Computer Science (Shift 1)"
                           value={editCompetitiveDraft.title}
                           onChange={(event) =>
                             setEditCompetitiveDraft((current) =>
@@ -1062,6 +1078,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>Year</span>
                         <input
+                          placeholder="e.g. 2024"
                           value={editCompetitiveDraft.year}
                           onChange={(event) =>
                             setEditCompetitiveDraft((current) =>
@@ -1075,6 +1092,7 @@ export function UploadWorkspaceClient() {
                       <label className="filter-field">
                         <span>New Google Drive link</span>
                         <input
+                          placeholder="https://drive.google.com/file/..."
                           value={editCompetitiveDraft.driveUrl}
                           onChange={(event) =>
                             setEditCompetitiveDraft((current) =>

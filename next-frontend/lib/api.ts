@@ -11,9 +11,16 @@ interface PaperFilterOptions {
   limit?: number;
 }
 
-async function fetchJson<T>(path: string): Promise<T> {
+interface FetchJsonOptions {
+  tags?: string[];
+}
+
+async function fetchJson<T>(path: string, options?: FetchJsonOptions): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    next: { revalidate: 1800 }
+    next: {
+      revalidate: 1800,
+      tags: options?.tags ?? []
+    }
   });
 
   if (!response.ok) {
@@ -36,22 +43,30 @@ export async function listPapers(filters: PaperFilterOptions): Promise<Paper[]> 
   if (filters.year) params.set('year', filters.year);
 
   const query = params.toString();
-  const payload = await fetchJson<{ items: Paper[] }>(`/papers?${query}`);
+  const payload = await fetchJson<{ items: Paper[] }>(`/papers?${query}`, {
+    tags: ['papers']
+  });
   return payload.items ?? [];
 }
 
 export async function getCompetitiveSummary(): Promise<CompetitiveSummary> {
-  return fetchJson<CompetitiveSummary>('/competitive-summary');
+  return fetchJson<CompetitiveSummary>('/competitive-summary', {
+    tags: ['competitive-summary']
+  });
 }
 
 export async function listCompetitiveExams(): Promise<string[]> {
-  return fetchJson<string[]>('/competitive-exams');
+  return fetchJson<string[]>('/competitive-exams', {
+    tags: ['competitive-summary']
+  });
 }
 
 export async function listCompetitivePapers(examName: string): Promise<CompetitivePaper[]> {
   const params = new URLSearchParams();
   params.set('examName', examName);
-  return fetchJson<CompetitivePaper[]>(`/competitive-papers?${params.toString()}`);
+  return fetchJson<CompetitivePaper[]>(`/competitive-papers?${params.toString()}`, {
+    tags: ['competitive-papers']
+  });
 }
 
 export function groupPapersBySemester(papers: Paper[]): SemesterGroup[] {

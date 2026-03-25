@@ -45,55 +45,36 @@ export default async function CompetitiveExamPage({ params }: CompetitiveExamPag
 
   return (
     <>
-      <section className="hero">
-        <div className="card hero__main">
+      <section className="card section-card competitive-page-head">
+        <div className="competitive-page-head__copy">
           <p className="eyebrow">Competitive Exam Papers</p>
           <h1>{examName} Previous Year Papers</h1>
-          <p className="hero__lede">
+          <p className="competitive-page-head__lede">
             Browse {examName} papers year-wise and download them directly from UTpaper.
           </p>
-          <p className="hero__note">
-            These dedicated exam routes make the paper collection easier to open, share, and crawl from Google.
-          </p>
-          <div className="button-row">
-            <a className="button button--primary" href="#competitive-papers">
-              Browse year-wise papers
-            </a>
-            <Link className="button button--secondary" href="/">
-              Back to home
-            </Link>
-          </div>
         </div>
-
-        <aside className="card hero__side">
-          <p className="eyebrow">Exam overview</p>
-          <h2 className="section-title">Quick stats</h2>
-          <div className="hero-stat-grid">
-            <article className="stat-card">
-              <strong>{papers.length}</strong>
-              <p>Total papers</p>
-            </article>
-            <article className="stat-card">
-              <strong>{yearGroups.length}</strong>
-              <p>Years covered</p>
-            </article>
-          </div>
-          <div className="shortcut-grid">
-            <Link className="chip" href={competitiveExamHref(examName)}>
-              {examName}
-            </Link>
-            <Link className="chip" href="/">
-              All exam categories
-            </Link>
-          </div>
-        </aside>
+        <div className="chip-row competitive-page-head__actions">
+          <Link className="chip" href="/">
+            All exam categories
+          </Link>
+          <a className="chip" href="#competitive-papers">
+            Year-wise papers
+          </a>
+          <Link className="chip" href={competitiveExamHref(examName)}>
+            {examName}
+          </Link>
+        </div>
       </section>
 
       <section id="competitive-papers" className="section card section-card competitive-archive">
-        <div className="section-head">
+        <div className="section-head competitive-archive__head">
           <div>
             <p className="eyebrow">Year-wise collection</p>
             <h2 className="section-title">{examName} paper archive</h2>
+          </div>
+          <div className="competitive-archive__summary">
+            <span className="chip">{yearGroups.length} years</span>
+            <span className="chip">{papers.length} papers</span>
           </div>
         </div>
 

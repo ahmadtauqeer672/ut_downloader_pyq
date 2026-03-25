@@ -232,9 +232,9 @@ img {
 
 .about-showcase__intro {
   display: grid;
-  align-content: center;
+  align-content: start;
   gap: 1.2rem;
-  padding: clamp(1rem, 2vw, 2rem) 0;
+  padding: clamp(2rem, 5vw, 4.5rem) 0 0;
 }
 
 .about-showcase__line {
@@ -289,6 +289,7 @@ img {
   align-items: end;
   justify-items: center;
   min-height: 100%;
+  padding-top: clamp(2rem, 5vw, 4rem);
 }
 
 .about-showcase__glow {
@@ -303,8 +304,8 @@ img {
 .about-showcase__photo-frame {
   position: relative;
   z-index: 1;
-  width: min(100%, 470px);
-  aspect-ratio: 0.88;
+  width: min(100%, 390px);
+  aspect-ratio: 0.62;
   overflow: hidden;
   border-radius: 36px;
   background:
@@ -318,6 +319,7 @@ img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center top;
   display: block;
 }
 
@@ -1197,11 +1199,12 @@ img {
   .about-showcase__visual {
     order: -1;
     min-height: 0;
+    padding-top: 0;
   }
 
   .about-showcase__photo-frame {
     width: min(100%, 360px);
-    aspect-ratio: 1;
+    aspect-ratio: 0.72;
     border-radius: 28px;
   }
 

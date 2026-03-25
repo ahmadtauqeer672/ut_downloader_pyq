@@ -83,7 +83,6 @@ export default async function CompetitiveExamPage({ params }: CompetitiveExamPag
             <article className="competitive-year-card" key={group.year}>
               <div className="competitive-year-head">
                 <h3>{group.year}</h3>
-                <span className="chip">{group.papers.length} papers</span>
               </div>
 
               <div className="competitive-paper-list">

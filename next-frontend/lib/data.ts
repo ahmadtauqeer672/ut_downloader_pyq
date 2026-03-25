@@ -4,12 +4,7 @@ export const SITE_URL = 'https://utpaper.in';
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.utpaper.in/api';
 
 export const UNIVERSITY_OPTIONS: UniversityOption[] = [
-  { name: 'PTU', courses: ['BTECH', 'BCA', 'BBA', 'MBA', 'MCA'] },
-  { name: 'PU Chandigarh', courses: ['BTECH', 'BSC', 'BCA', 'MTECH'] },
-  { name: 'GNDU', courses: ['BTECH', 'B.COM', 'MCA', 'MSC-IT'] },
-  { name: 'MDU', courses: ['BTECH', 'BBA', 'MTECH', 'MBA'] },
-  { name: 'GTU', courses: ['BTECH', 'BPHARM', 'MBA', 'MCA'] },
-  { name: 'OTHER', courses: ['OTHER'] }
+  { name: 'PTU', courses: ['BTECH', 'BCA', 'BBA', 'MBA', 'MCA'] }
 ];
 
 export const BTECH_DEPARTMENTS = ['CSE', 'CIVIL', 'ELECTRONICS', 'ELECTRICAL', 'MECHANICAL'];

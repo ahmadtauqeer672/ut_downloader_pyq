@@ -66,23 +66,9 @@ export default function AboutPage() {
           </Link>
         </article>
 
-        <article className="about-panel">
-          <p className="about-panel__title">My Work</p>
-          <p>{profile.focus}</p>
-          <Link className="about-panel__link" href="/question-papers/ptu">
-            Browse portfolio
-          </Link>
-        </article>
+        
 
-        <article className="about-panel">
-          <p className="about-panel__title">Focus Areas</p>
-          <div className="about-showcase__tags">
-            <span>Frontend</span>
-            <span>Student Tools</span>
-            <span>UI Systems</span>
-            <span>Fast UX</span>
-          </div>
-        </article>
+        
       </aside>
     </section>
   );

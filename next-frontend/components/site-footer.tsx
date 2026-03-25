@@ -28,6 +28,7 @@ export function SiteFooter() {
 
           <div className="site-footer__group">
             <p className="site-footer__title">Important</p>
+            <Link href="/about">About Us</Link>
             <Link href="/disclaimer">Disclaimer</Link>
             <Link href="/admin">Admin</Link>
           </div>

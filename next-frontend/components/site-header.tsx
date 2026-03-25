@@ -14,11 +14,6 @@ export function SiteHeader() {
 
         <nav className="site-nav" aria-label="Primary">
           <Link href="/">Home</Link>
-          <Link href="/question-papers/ptu">PTU Papers</Link>
-          <Link href="/question-papers/ptu/btech">PTU BTECH</Link>
-          <Link className="site-nav__cta" href="/question-papers/ptu/btech">
-            Open PTU BTECH
-          </Link>
         </nav>
       </div>
     </header>

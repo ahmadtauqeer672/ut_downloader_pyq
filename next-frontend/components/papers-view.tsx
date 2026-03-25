@@ -23,6 +23,7 @@ interface PapersViewProps {
   papers: Paper[];
   competitiveSummary: CompetitiveSummary;
   competitivePapers?: CompetitivePaper[];
+  showAcademicPapers?: boolean;
 }
 
 function semesterLabel(semester: number): string {
@@ -44,7 +45,8 @@ export function PapersView({
   semester,
   papers,
   competitiveSummary,
-  competitivePapers = []
+  competitivePapers = [],
+  showAcademicPapers = true
 }: PapersViewProps) {
   const activeUniversity = university ?? UNIVERSITY_OPTIONS[0] ?? null;
   const semesterGroups = groupPapersBySemester(papers);
@@ -169,7 +171,8 @@ export function PapersView({
             initialSemester={semester ?? ''}
           />
 
-          {semesterGroups.length > 0 ? (
+          {showAcademicPapers ? (
+            semesterGroups.length > 0 ? (
             semesterGroups.map((group) => (
               <article className="paper-group" key={group.semester}>
                 <div className="paper-group__head">
@@ -206,6 +209,12 @@ export function PapersView({
               <p className="empty-state">
                 Try a broader university page or another course route while more papers are being uploaded.
               </p>
+            </div>
+            )
+          ) : (
+            <div className="notice-card">
+              <strong>Select your route and click Apply Filters.</strong>
+              <p className="empty-state">Question papers will appear here after you apply the current selection.</p>
             </div>
           )}
         </div>

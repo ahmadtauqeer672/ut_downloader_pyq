@@ -45,6 +45,7 @@ export function PapersFilterForm({
         event.preventDefault();
 
         const params = new URLSearchParams();
+        params.set('applied', '1');
         if (showBtechFilters && selectedDepartment) params.set('department', selectedDepartment);
         if (showBtechFilters && selectedSemester) params.set('semester', selectedSemester);
 
@@ -52,7 +53,7 @@ export function PapersFilterForm({
         const href = params.toString() ? `${route}?${params.toString()}` : route;
 
         startTransition(() => {
-          router.push(href);
+          router.push(href, { scroll: false });
         });
       }}
     >

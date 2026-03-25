@@ -57,7 +57,7 @@ export default function AboutPage() {
           </div>
 
           <div className="about-profile__copy">
-            <p className="eyebrow">Profile Card</p>
+            
             <h2>{profile.name}</h2>
             <p className="about-profile__role">{profile.role}</p>
             <p className="about-profile__intro">{profile.intro}</p>
@@ -70,20 +70,7 @@ export default function AboutPage() {
           </div>
         </article>
 
-        <article className="card about-story">
-          <p className="eyebrow">About Me</p>
-          <h2>Building useful tools with a simple goal</h2>
-          <p>{profile.about}</p>
-          <p>{profile.focus}</p>
-
-          <div className="about-story__panel">
-            <strong>What drives this work</strong>
-            <p>
-              Better access, faster discovery, and a smoother experience for students who just want the right paper
-              without wasting time.
-            </p>
-          </div>
-        </article>
+        
       </div>
     </section>
   );

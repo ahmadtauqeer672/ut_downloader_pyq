@@ -87,10 +87,10 @@ img {
 }
 
 .brand__badge--logo {
-  background-image: url('/utpaper-logo.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: url('/utpaper-logo.png') center / cover no-repeat;
+  color: transparent;
+  font-size: 0;
+  box-shadow: none;
 }
 
 .brand__name {

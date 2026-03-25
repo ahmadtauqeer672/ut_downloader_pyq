@@ -12,7 +12,7 @@ export const metadata: Metadata = buildMetadata({
 
 const profile = {
   name: 'Tauqeer Ahmad',
-  role: 'Software Engineer',
+  role: 'Web Developer',
   intro:
     'I build practical web tools that help students find resources faster, with a focus on clean design, smooth user experience, and reliable performance.',
   about:

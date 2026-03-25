@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { FAQ_ITEMS, SITE_URL } from '@/lib/data';
+import { SITE_URL } from '@/lib/data';
 
 export function absoluteUrl(path = '/'): string {
   return new URL(path, SITE_URL).toString();
@@ -33,21 +33,6 @@ export function buildMetadata(input: {
       title: input.title,
       description: input.description
     }
-  };
-}
-
-export function faqJsonLd() {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: FAQ_ITEMS.map((item) => ({
-      '@type': 'Question',
-      name: item.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.answer
-      }
-    }))
   };
 }
 

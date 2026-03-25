@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   BTECH_DEPARTMENTS,
-  FAQ_ITEMS,
   FEATURE_ITEMS,
   SEMESTERS,
   UNIVERSITY_OPTIONS
@@ -342,23 +341,6 @@ export function PapersView({
         </div>
       </section>
 
-      <section className="section card section-card">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">Quick help</p>
-            <h2 className="section-title">Frequently asked questions</h2>
-          </div>
-        </div>
-
-        <div className="faq-grid">
-          {FAQ_ITEMS.map((item) => (
-            <article className="faq-item" key={item.question}>
-              <strong>{item.question}</strong>
-              <p>{item.answer}</p>
-            </article>
-          ))}
-        </div>
-      </section>
     </>
   );
 }

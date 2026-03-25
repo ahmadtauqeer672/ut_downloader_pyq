@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
-import { JsonLdScript } from '@/components/json-ld-script';
 import { PapersView } from '@/components/papers-view';
 import { getCompetitiveSummary, listCompetitivePapers, listPapers } from '@/lib/api';
-import { faqJsonLd, buildMetadata } from '@/lib/seo';
+import { buildMetadata } from '@/lib/seo';
 import { findUniversityBySlug } from '@/lib/slug';
 
 interface UniversityPageProps {
@@ -43,16 +42,13 @@ export default async function UniversityPage({ params }: UniversityPageProps) {
   ]);
 
   return (
-    <>
-      <JsonLdScript payload={faqJsonLd()} />
-      <PapersView
-        heading={`${university.name} Question Papers All Courses`}
-        description={`Browse ${university.name} previous year papers across all available courses. Use the clean route to open semester-wise and course-wise paper collections faster.`}
-        university={university}
-        papers={papers}
-        competitiveSummary={competitiveSummary}
-        competitivePapers={competitivePapers}
-      />
-    </>
+    <PapersView
+      heading={`${university.name} Question Papers All Courses`}
+      description={`Browse ${university.name} previous year papers across all available courses. Use the clean route to open semester-wise and course-wise paper collections faster.`}
+      university={university}
+      papers={papers}
+      competitiveSummary={competitiveSummary}
+      competitivePapers={competitivePapers}
+    />
   );
 }

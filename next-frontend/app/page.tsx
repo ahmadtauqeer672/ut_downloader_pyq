@@ -1,7 +1,7 @@
 import { JsonLdScript } from '@/components/json-ld-script';
 import { PapersView } from '@/components/papers-view';
 import { getCompetitiveSummary, listCompetitivePapers, listPapers } from '@/lib/api';
-import { buildMetadata, faqJsonLd, organizationJsonLd } from '@/lib/seo';
+import { buildMetadata, organizationJsonLd } from '@/lib/seo';
 
 export const metadata = buildMetadata({
   title: 'PTU Question Papers, Previous Year Papers and Competitive Exam PYQs | UTpaper',
@@ -25,7 +25,6 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLdScript payload={faqJsonLd()} />
       <JsonLdScript payload={organizationJsonLd()} />
       <PapersView
         heading="PTU Question Papers, Previous Year Papers and Competitive Exam PYQs"

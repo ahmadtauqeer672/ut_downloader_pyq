@@ -23,17 +23,17 @@ const profile = {
 
 export default function AboutPage() {
   return (
-    <section className="about-page">
-      <div className="card about-hero">
-        <div>
-          <p className="eyebrow">About Us</p>
-          <h1>Meet the person building UTpaper</h1>
-          <p className="hero__lede">
-            A focused profile page with background, mission, and the story behind this student-first platform.
-          </p>
-        </div>
+    <section className="about-showcase">
+      <div className="about-showcase__intro">
+        <span className="about-showcase__line" />
+        <p className="about-showcase__eyebrow">About Me</p>
+        <h1>
+          I&apos;m {profile.name}, a <br />
+          {profile.role}
+        </h1>
+        <p className="about-showcase__lede">{profile.intro}</p>
 
-        <div className="button-row">
+        <div className="about-showcase__actions">
           <Link className="button button--primary" href="/">
             Back to Home
           </Link>
@@ -43,35 +43,47 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <div className="about-grid">
-        <article className="card about-profile">
-          <div className="about-profile__media">
-            <Image
-              src="/about-founder.jpg"
-              alt={`${profile.name} portrait`}
-              width={720}
-              height={720}
-              priority
-              className="about-profile__image"
-            />
-          </div>
+      <div className="about-showcase__visual">
+        <div className="about-showcase__glow" />
+        <div className="about-showcase__photo-frame">
+          <Image
+            src="/about-founder.jpg"
+            alt={`${profile.name} portrait`}
+            width={900}
+            height={900}
+            priority
+            className="about-showcase__photo"
+          />
+        </div>
+      </div>
 
-          <div className="about-profile__copy">
-            
-            <h2>{profile.name}</h2>
-            <p className="about-profile__role">{profile.role}</p>
-            <p className="about-profile__intro">{profile.intro}</p>
-
-            <div className="about-badges">
-              <span>Frontend Development</span>
-              <span>Student Tools</span>
-              <span>Product Design</span>
-            </div>
-          </div>
+      <aside className="about-showcase__side">
+        <article className="about-panel">
+          <p className="about-panel__title">About Me</p>
+          <p>{profile.about}</p>
+          <Link className="about-panel__link" href="/about">
+            Learn more
+          </Link>
         </article>
 
-        
-      </div>
+        <article className="about-panel">
+          <p className="about-panel__title">My Work</p>
+          <p>{profile.focus}</p>
+          <Link className="about-panel__link" href="/question-papers/ptu">
+            Browse portfolio
+          </Link>
+        </article>
+
+        <article className="about-panel">
+          <p className="about-panel__title">Focus Areas</p>
+          <div className="about-showcase__tags">
+            <span>Frontend</span>
+            <span>Student Tools</span>
+            <span>UI Systems</span>
+            <span>Fast UX</span>
+          </div>
+        </article>
+      </aside>
     </section>
   );
 }

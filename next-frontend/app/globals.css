@@ -209,6 +209,7 @@ img {
 
 .about-page {
   display: grid;
+  justify-items: center;
   gap: 1rem;
 }
 
@@ -220,6 +221,9 @@ img {
 
 .about-hero {
   display: grid;
+  width: min(100%, 540px);
+  min-height: 320px;
+  align-content: space-between;
   gap: 1rem;
   background:
     radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 30%),

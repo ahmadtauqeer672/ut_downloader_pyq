@@ -19,6 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     createEntry('/', 'daily', 1),
     createEntry('/about', 'monthly', 0.55),
+    createEntry('/contact', 'monthly', 0.5),
+    createEntry('/privacy-policy', 'monthly', 0.45),
     createEntry('/disclaimer', 'monthly', 0.3)
   ];
 

@@ -30,9 +30,26 @@ function semesterLabel(semester: number): string {
   return semester > 0 ? `Semester ${semester}` : 'General papers';
 }
 
-function paperLine(paper: Paper): string {
-  const detailBits = [paper.subject || paper.title, paper.examType, String(paper.year)];
-  return detailBits.join(' | ');
+function groupPapersByYear(papers: Paper[]): Array<{ year: number; papers: Paper[] }> {
+  const yearMap = new Map<number, Paper[]>();
+
+  for (const paper of papers) {
+    const year = Number(paper.year) || 0;
+    const bucket = yearMap.get(year) ?? [];
+    bucket.push(paper);
+    yearMap.set(year, bucket);
+  }
+
+  return [...yearMap.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([year, yearPapers]) => ({
+      year,
+      papers: yearPapers.sort((a, b) => (a.subject || a.title).localeCompare(b.subject || b.title))
+    }));
+}
+
+function paperLabel(paper: Paper): string {
+  return paper.subject || paper.title;
 }
 
 export function PapersView({
@@ -179,23 +196,29 @@ export function PapersView({
                   <span className="chip">{group.papers.length} papers</span>
                 </div>
 
-                <div className="paper-list">
-                  {group.papers.map((paper) => (
-                    <div className="paper-item" key={paper.id}>
-                      <div>
-                        <a className="paper-link" href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
-                          {paperLine(paper)}
-                        </a>
-                      </div>
+                {groupPapersByYear(group.papers).map((yearGroup) => (
+                  <div className="paper-year-group" key={`${group.semester}-${yearGroup.year}`}>
+                    <h4 className="paper-year-heading">{yearGroup.year}</h4>
 
-                      <div className="paper-actions">
-                        <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
-                          Download
-                        </a>
-                      </div>
+                    <div className="paper-list">
+                      {yearGroup.papers.map((paper) => (
+                        <div className="paper-item" key={paper.id}>
+                          <div>
+                            <a className="paper-link" href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                              {paperLabel(paper)}
+                            </a>
+                          </div>
+
+                          <div className="paper-actions">
+                            <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </article>
             ))
           ) : (

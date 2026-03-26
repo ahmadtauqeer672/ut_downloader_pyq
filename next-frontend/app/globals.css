@@ -800,6 +800,17 @@ img {
   margin-bottom: 0.8rem;
 }
 
+.paper-year-group + .paper-year-group {
+  margin-top: 1rem;
+}
+
+.paper-year-heading {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary-strong);
+}
+
 .paper-list,
 .route-list {
   display: grid;

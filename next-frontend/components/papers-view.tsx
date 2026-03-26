@@ -31,9 +31,8 @@ function semesterLabel(semester: number): string {
 }
 
 function paperLine(paper: Paper): string {
-  const detailBits = [paper.subject, paper.examType, String(paper.year)];
-  if (paper.department) detailBits.unshift(paper.department);
-  return `${paper.title} | ${detailBits.join(' | ')}`;
+  const detailBits = [paper.subject || paper.title, paper.examType, String(paper.year)];
+  return detailBits.join(' | ');
 }
 
 export function PapersView({
@@ -187,10 +186,6 @@ export function PapersView({
                         <a className="paper-link" href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
                           {paperLine(paper)}
                         </a>
-                        <p className="paper-meta">
-                          {paper.university} / {paper.course}
-                          {paper.department ? ` / ${paper.department}` : ''} / {paper.subject}
-                        </p>
                       </div>
 
                       <div className="paper-actions">

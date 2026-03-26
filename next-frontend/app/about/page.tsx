@@ -5,7 +5,7 @@ import { buildMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = buildMetadata({
   title: 'About Us | UTpaper',
-  description: 'Meet the software engineer behind UTpaper and learn more about the mission behind the platform.',
+  description: 'Meet the software engineer behind UTpaper',
   path: '/about',
   keywords: ['About UTpaper', 'Ahmad Tauqeer', 'Software Engineer', 'UTpaper founder']
 });

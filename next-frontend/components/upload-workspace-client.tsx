@@ -15,7 +15,7 @@ import {
   uploadPaper
 } from '@/lib/admin-api-client';
 import { competitiveDownloadHref, paperDownloadHref } from '@/lib/api';
-import { BTECH_DEPARTMENTS, SEMESTERS, UNIVERSITY_OPTIONS } from '@/lib/data';
+import { BSEB_10TH_SUBJECTS, BTECH_DEPARTMENTS, SEMESTERS, UNIVERSITY_OPTIONS } from '@/lib/data';
 import { competitiveExamHref, courseHref, universityHref } from '@/lib/slug';
 import { CompetitivePaper, Paper } from '@/lib/types';
 import { useAdminSession } from '@/lib/use-admin-session';
@@ -77,6 +77,10 @@ function getCourses(universityName: string): string[] {
 
 function isBtech(course: string): boolean {
   return course.trim().toUpperCase() === 'BTECH';
+}
+
+function isBsebClass(university: string, course: string): boolean {
+  return university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' && course.trim().toUpperCase() === '10TH';
 }
 
 function normalizeAcademicDraftForPaper(paper: Paper): AcademicFormState {
@@ -215,6 +219,9 @@ export function UploadWorkspaceClient() {
 
   const courseOptions = getCourses(academicForm.university);
   const editCourseOptions = getCourses(editPaperDraft?.university ?? '');
+  const academicCourseLabel = academicForm.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'Class' : 'Course';
+  const editCourseLabel =
+    editPaperDraft?.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'Class' : 'Course';
 
   useEffect(() => {
     if (ready && !isAuthenticated) {
@@ -284,7 +291,13 @@ export function UploadWorkspaceClient() {
         university,
         course: nextCourse,
         department: nextCourse && isBtech(nextCourse) ? current.department : '',
-        semester: nextCourse && isBtech(nextCourse) ? current.semester : ''
+        semester: nextCourse && isBtech(nextCourse) ? current.semester : '',
+        subject:
+          university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
+            ? isBsebClass(university, nextCourse)
+              ? current.subject
+              : ''
+            : current.subject
       };
     });
   }
@@ -294,7 +307,13 @@ export function UploadWorkspaceClient() {
       ...current,
       course,
       department: isBtech(course) ? current.department : '',
-      semester: isBtech(course) ? current.semester : ''
+      semester: isBtech(course) ? current.semester : '',
+      subject:
+        current.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
+          ? isBsebClass(current.university, course)
+            ? current.subject
+            : ''
+          : current.subject
     }));
   }
 
@@ -308,7 +327,13 @@ export function UploadWorkspaceClient() {
         university,
         course: nextCourse,
         department: nextCourse && isBtech(nextCourse) ? current.department : '',
-        semester: nextCourse && isBtech(nextCourse) ? current.semester : ''
+        semester: nextCourse && isBtech(nextCourse) ? current.semester : '',
+        subject:
+          university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
+            ? isBsebClass(university, nextCourse)
+              ? current.subject
+              : ''
+            : current.subject
       };
     });
   }
@@ -320,7 +345,13 @@ export function UploadWorkspaceClient() {
         ...current,
         course,
         department: isBtech(course) ? current.department : '',
-        semester: isBtech(course) ? current.semester : ''
+        semester: isBtech(course) ? current.semester : '',
+        subject:
+          current.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
+            ? isBsebClass(current.university, course)
+              ? current.subject
+              : ''
+            : current.subject
       };
     });
   }
@@ -640,14 +671,14 @@ export function UploadWorkspaceClient() {
           </label>
 
           <label className="filter-field">
-            <span>Course</span>
+            <span>{academicCourseLabel}</span>
             <select
               value={academicForm.course}
               onChange={(event) => handleAcademicCourseChange(event.target.value)}
               required
             >
               <option value="" disabled>
-                Select course
+                {academicCourseLabel === 'Class' ? 'Select class' : 'Select course'}
               </option>
               {courseOptions.map((course) => (
                 <option key={course} value={course}>
@@ -699,15 +730,37 @@ export function UploadWorkspaceClient() {
             </>
           ) : null}
 
-          <label className="filter-field">
-            <span>Subject</span>
-            <input
-              placeholder="e.g. STET"
-              value={academicForm.subject}
-              onChange={(event) => setAcademicForm((current) => ({ ...current, subject: event.target.value }))}
-              required
-            />
-          </label>
+          {academicForm.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? (
+            isBsebClass(academicForm.university, academicForm.course) ? (
+              <label className="filter-field">
+                <span>Subject</span>
+                <select
+                  value={academicForm.subject}
+                  onChange={(event) => setAcademicForm((current) => ({ ...current, subject: event.target.value }))}
+                  required
+                >
+                  <option value="" disabled>
+                    Select subject
+                  </option>
+                  {BSEB_10TH_SUBJECTS.map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null
+          ) : (
+            <label className="filter-field">
+              <span>Subject</span>
+              <input
+                placeholder="e.g. STET"
+                value={academicForm.subject}
+                onChange={(event) => setAcademicForm((current) => ({ ...current, subject: event.target.value }))}
+                required
+              />
+            </label>
+          )}
 
           <label className="filter-field">
             <span>Year</span>
@@ -837,14 +890,14 @@ export function UploadWorkspaceClient() {
                       </label>
 
                       <label className="filter-field">
-                        <span>Course</span>
+                        <span>{editCourseLabel}</span>
                         <select
                           value={editPaperDraft.course}
                           onChange={(event) => handleEditCourseChange(event.target.value)}
                           required
                         >
                           <option value="" disabled>
-                            Select course
+                            {editCourseLabel === 'Class' ? 'Select class' : 'Select course'}
                           </option>
                           {editCourseOptions.map((course) => (
                             <option key={course} value={course}>
@@ -902,17 +955,43 @@ export function UploadWorkspaceClient() {
                         </>
                       ) : null}
 
-                      <label className="filter-field">
-                        <span>Subject</span>
-                        <input
-                          placeholder="e.g. STET"
-                          value={editPaperDraft.subject}
-                          onChange={(event) =>
-                            setEditPaperDraft((current) => (current ? { ...current, subject: event.target.value } : current))
-                          }
-                          required
-                        />
-                      </label>
+                      {editPaperDraft.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? (
+                        isBsebClass(editPaperDraft.university, editPaperDraft.course) ? (
+                          <label className="filter-field">
+                            <span>Subject</span>
+                            <select
+                              value={editPaperDraft.subject}
+                              onChange={(event) =>
+                                setEditPaperDraft((current) =>
+                                  current ? { ...current, subject: event.target.value } : current
+                                )
+                              }
+                              required
+                            >
+                              <option value="" disabled>
+                                Select subject
+                              </option>
+                              {BSEB_10TH_SUBJECTS.map((subject) => (
+                                <option key={subject} value={subject}>
+                                  {subject}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : null
+                      ) : (
+                        <label className="filter-field">
+                          <span>Subject</span>
+                          <input
+                            placeholder="e.g. STET"
+                            value={editPaperDraft.subject}
+                            onChange={(event) =>
+                              setEditPaperDraft((current) => (current ? { ...current, subject: event.target.value } : current))
+                            }
+                            required
+                          />
+                        </label>
+                      )}
 
                       <label className="filter-field">
                         <span>Year</span>

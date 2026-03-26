@@ -125,53 +125,47 @@ export function PapersFilterForm({
           </select>
         </label>
 
-        <label className="filter-field">
-          <span>BTECH departments</span>
-          <select
-            value={selectedDepartment}
-            onChange={(event) => setSelectedDepartment(event.target.value)}
-            disabled={!showBtechFilters}
-          >
-            <option value="">All departments</option>
-            {BTECH_DEPARTMENTS.map((department) => (
-              <option key={department} value={department}>
-                {department}
-              </option>
-            ))}
-          </select>
-        </label>
+        {showBtechFilters ? (
+          <>
+            <label className="filter-field">
+              <span>BTECH departments</span>
+              <select value={selectedDepartment} onChange={(event) => setSelectedDepartment(event.target.value)}>
+                <option value="">All departments</option>
+                {BTECH_DEPARTMENTS.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label className="filter-field">
-          <span>Semesters</span>
-          <select
-            value={selectedSemester}
-            onChange={(event) => setSelectedSemester(event.target.value)}
-            disabled={!showBtechFilters}
-          >
-            <option value="">All semesters</option>
-            {SEMESTERS.map((semester) => (
-              <option key={semester} value={String(semester)}>
-                Semester {semester}
-              </option>
-            ))}
-          </select>
-        </label>
+            <label className="filter-field">
+              <span>Semesters</span>
+              <select value={selectedSemester} onChange={(event) => setSelectedSemester(event.target.value)}>
+                <option value="">All semesters</option>
+                {SEMESTERS.map((semester) => (
+                  <option key={semester} value={String(semester)}>
+                    Semester {semester}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        ) : null}
 
-        <label className="filter-field">
-          <span>Subject</span>
-          <select
-            value={selectedSubject}
-            onChange={(event) => setSelectedSubject(event.target.value)}
-            disabled={!showBsebSubjectFilter}
-          >
-            <option value="">All subjects</option>
-            {BSEB_10TH_SUBJECTS.map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
-              </option>
-            ))}
-          </select>
-        </label>
+        {showBsebSubjectFilter ? (
+          <label className="filter-field">
+            <span>Subject</span>
+            <select value={selectedSubject} onChange={(event) => setSelectedSubject(event.target.value)}>
+              <option value="">All subjects</option>
+              {BSEB_10TH_SUBJECTS.map((subject) => (
+                <option key={subject} value={subject}>
+                  {subject}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
 
       <div className="filter-card__actions">

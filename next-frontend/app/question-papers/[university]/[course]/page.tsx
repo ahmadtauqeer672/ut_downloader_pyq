@@ -30,6 +30,22 @@ export async function generateMetadata({ params }: CoursePageProps) {
     });
   }
 
+  if (university.name === 'BIHAR BOARD (BSEB)' && course === '10TH') {
+    return buildMetadata({
+      title: 'Bihar Board 10th Question Papers | BSEB Class 10 Previous Year Papers | UTpaper',
+      description:
+        'Download Bihar Board 10th previous year question papers by subject. Browse BSEB Class 10 papers for Hindi MT, Hindi SIL, Urdu, Mathematics, Science, Social Science and Sanskrit on UTpaper.',
+      path: `/question-papers/${universitySlug}/${courseSlug}`,
+      keywords: [
+        'Bihar Board 10th question papers',
+        'BSEB Class 10 previous year papers',
+        'Bihar Board 10th papers',
+        'BSEB 10th subject wise papers',
+        'UTpaper'
+      ]
+    });
+  }
+
   return buildMetadata({
     title: `${university.name} ${course} Question Papers | UTpaper`,
     description: `Browse ${university.name} ${course} previous year question papers on UTpaper. Open semester-wise papers and download PYQs with SEO-friendly route URLs.`,
@@ -71,8 +87,16 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   return (
     <PapersView
-      heading={`${university.name} ${course} Question Papers`}
-      description={`Browse ${university.name} ${course} previous year papers and open semester-wise downloads faster on UTpaper.`}
+      heading={
+        university.name === 'BIHAR BOARD (BSEB)' && course === '10TH'
+          ? 'Bihar Board 10th Question Papers'
+          : `${university.name} ${course} Question Papers`
+      }
+      description={
+        university.name === 'BIHAR BOARD (BSEB)' && course === '10TH'
+          ? 'Browse BSEB Class 10 previous year question papers subject-wise and download Bihar Board 10th papers faster on UTpaper.'
+          : `Browse ${university.name} ${course} previous year papers and open semester-wise downloads faster on UTpaper.`
+      }
       university={university}
       course={course}
       department={department}

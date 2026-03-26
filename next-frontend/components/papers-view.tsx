@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { PapersFilterForm } from '@/components/papers-filter-form';
 import {
+  BSEB_10TH_SUBJECTS,
   FEATURE_ITEMS,
   UNIVERSITY_OPTIONS
 } from '@/lib/data';
@@ -69,6 +70,13 @@ export function PapersView({
   const activeUniversity = university ?? UNIVERSITY_OPTIONS[0] ?? null;
   const semesterGroups = groupPapersBySemester(papers);
   const competitiveGroups = groupCompetitiveByYear(competitivePapers);
+  const isBseb10thPage = university?.name === 'BIHAR BOARD (BSEB)' && course === '10TH';
+  const heroNote = isBseb10thPage
+    ? 'Browse Bihar Board 10th previous year question papers subject-wise with server-rendered content that helps students and search engines find the right papers faster.'
+    : 'Browse PTU, PU Chandigarh, GNDU, MDU and GTU question papers with cleaner URLs, better crawlability and server-rendered HTML for search engines.';
+  const pageFocusCopy = isBseb10thPage
+    ? 'This page focuses on BSEB Class 10 previous year papers, subject-wise browsing, and clear route text that can support Google indexing for Bihar Board searches.'
+    : 'This page is server-rendered in Next.js so Google can crawl the real content and metadata more easily than a purely client-side app shell.';
 
   return (
     <>
@@ -77,10 +85,7 @@ export function PapersView({
           <p className="eyebrow">Academic Resource Hub</p>
           <h1>{heading}</h1>
           <p className="hero__lede">{description}</p>
-          <p className="hero__note">
-            Browse PTU, PU Chandigarh, GNDU, MDU and GTU question papers with cleaner URLs, better crawlability and
-            server-rendered HTML for search engines.
-          </p>
+          <p className="hero__note">{heroNote}</p>
           <div className="button-row">
             <a className="button button--primary" href="#paper-directory">
               Browse question papers
@@ -129,18 +134,59 @@ export function PapersView({
           </div>
 
           <p className="section-copy">
-            UTpaper is built for students who want quick access to previous year question papers without hopping between
-            many websites. You can browse dedicated university and course URLs, then open or download papers directly.
+            {isBseb10thPage
+              ? 'Browse BSEB Class 10 previous year question papers subject-wise in one place. UTpaper helps students find Bihar Board 10th papers faster without going through confusing links and multiple websites.'
+              : 'UTpaper is built for students who want quick access to previous year question papers without hopping between many websites. You can browse dedicated university and course URLs, then open or download papers directly.'}
           </p>
 
-          <div className="feature-grid">
-            {FEATURE_ITEMS.map((item) => (
-              <article className="feature-card" key={item.title}>
-                <strong>{item.title}</strong>
-                <p>{item.description}</p>
-              </article>
-            ))}
-          </div>
+          {isBseb10thPage ? (
+            <>
+              <p className="section-copy">
+                You can open and download Bihar Board 10th question papers for Hindi MT, Hindi SIL, Urdu,
+                Mathematics, Science, Social Science and Sanskrit. These papers are useful for understanding exam
+                pattern, important chapters and repeated questions.
+              </p>
+
+              <p className="section-copy">
+                Use the subject filter to quickly find the paper you need. Regular practice with BSEB Class 10
+                previous year papers can help students improve revision, time management and confidence before board
+                exams.
+              </p>
+
+              <div className="feature-grid">
+                {BSEB_10TH_SUBJECTS.map((item) => (
+                  <article className="feature-card" key={item}>
+                    <strong>{item}</strong>
+                    <p>Bihar Board 10th previous year question papers for {item.toLowerCase()}.</p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="feature-grid section">
+                <article className="feature-card">
+                  <strong>How can I download Bihar Board 10th question papers?</strong>
+                  <p>Select Bihar Board (BSEB), choose Class 10th, then pick a subject and apply filters.</p>
+                </article>
+                <article className="feature-card">
+                  <strong>Which subjects are available for BSEB Class 10 papers?</strong>
+                  <p>Hindi MT, Hindi SIL, Urdu, Mathematics, Science, Social Science and Sanskrit are available.</p>
+                </article>
+                <article className="feature-card">
+                  <strong>Are Bihar Board 10th previous year papers useful?</strong>
+                  <p>Yes, they help students understand question style, important topics and time management.</p>
+                </article>
+              </div>
+            </>
+          ) : (
+            <div className="feature-grid">
+              {FEATURE_ITEMS.map((item) => (
+                <article className="feature-card" key={item.title}>
+                  <strong>{item.title}</strong>
+                  <p>{item.description}</p>
+                </article>
+              ))}
+            </div>
+          )}
         </article>
 
         <aside className="card section-card">
@@ -157,10 +203,7 @@ export function PapersView({
             <span>{papers.length} papers</span>
           </div>
 
-          <p className="muted-copy">
-            This page is server-rendered in Next.js so Google can crawl the real content and metadata more easily than a
-            purely client-side app shell.
-          </p>
+          <p className="muted-copy">{pageFocusCopy}</p>
 
           <div className="chip-row">
             {UNIVERSITY_OPTIONS.map((option) => (

@@ -6,7 +6,12 @@ import { findCourseBySlug, findUniversityBySlug } from '@/lib/slug';
 
 interface CoursePageProps {
   params: Promise<{ university: string; course: string }>;
-  searchParams?: Promise<{ department?: string | string[]; semester?: string | string[]; applied?: string | string[] }>;
+  searchParams?: Promise<{
+    department?: string | string[];
+    semester?: string | string[];
+    subject?: string | string[];
+    applied?: string | string[];
+  }>;
 }
 
 function readSearchValue(value?: string | string[]): string | undefined {
@@ -43,8 +48,9 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   const university = findUniversityBySlug(universitySlug);
   const department = readSearchValue(filters.department);
   const semester = readSearchValue(filters.semester);
+  const subject = readSearchValue(filters.subject);
   const applied = readSearchValue(filters.applied);
-  const showAcademicPapers = Boolean(applied || department || semester);
+  const showAcademicPapers = Boolean(applied || department || semester || subject);
 
   if (!university) {
     notFound();
@@ -57,7 +63,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   const [papers, competitiveSummary, competitivePapers] = await Promise.all([
     showAcademicPapers
-      ? listPapers({ university: university.name, course, department, semester, limit: 80 })
+      ? listPapers({ university: university.name, course, department, semester, subject, limit: 80 })
       : Promise.resolve([]),
     getCompetitiveSummary(),
     listCompetitivePapers('UPSC').catch(() => [])
@@ -71,6 +77,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       course={course}
       department={department}
       semester={semester}
+      subject={subject}
       papers={papers}
       showAcademicPapers={showAcademicPapers}
       competitiveSummary={competitiveSummary}

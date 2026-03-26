@@ -20,6 +20,7 @@ interface PapersViewProps {
   course?: string | null;
   department?: string | null;
   semester?: string | null;
+  subject?: string | null;
   papers: Paper[];
   competitiveSummary: CompetitiveSummary;
   competitivePapers?: CompetitivePaper[];
@@ -59,6 +60,7 @@ export function PapersView({
   course,
   department,
   semester,
+  subject,
   papers,
   competitiveSummary,
   competitivePapers = [],
@@ -185,6 +187,7 @@ export function PapersView({
             initialCourse={course ?? ''}
             initialDepartment={department ?? ''}
             initialSemester={semester ?? ''}
+            initialSubject={subject ?? ''}
           />
 
           {showAcademicPapers ? (

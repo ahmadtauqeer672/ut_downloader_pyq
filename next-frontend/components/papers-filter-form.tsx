@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { BTECH_DEPARTMENTS, SEMESTERS } from '@/lib/data';
+import { BSEB_10TH_SUBJECTS, BTECH_DEPARTMENTS, SEMESTERS } from '@/lib/data';
 import { courseHref, universityHref } from '@/lib/slug';
 import { UniversityOption } from '@/lib/types';
 
@@ -12,10 +12,15 @@ interface PapersFilterFormProps {
   initialCourse: string;
   initialDepartment: string;
   initialSemester: string;
+  initialSubject: string;
 }
 
 function isBtech(course: string): boolean {
   return course.trim().toUpperCase() === 'BTECH';
+}
+
+function isBsebClass(university: string, course: string): boolean {
+  return university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' && course.trim().toUpperCase() === '10TH';
 }
 
 export function PapersFilterForm({
@@ -23,7 +28,8 @@ export function PapersFilterForm({
   initialUniversity,
   initialCourse,
   initialDepartment,
-  initialSemester
+  initialSemester,
+  initialSubject
 }: PapersFilterFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -31,12 +37,15 @@ export function PapersFilterForm({
   const [selectedCourse, setSelectedCourse] = useState(initialCourse);
   const [selectedDepartment, setSelectedDepartment] = useState(initialDepartment);
   const [selectedSemester, setSelectedSemester] = useState(initialSemester);
+  const [selectedSubject, setSelectedSubject] = useState(initialSubject);
 
   const courseOptions = useMemo(
     () => universities.find((option) => option.name === selectedUniversity)?.courses ?? [],
     [selectedUniversity, universities]
   );
   const showBtechFilters = isBtech(selectedCourse);
+  const showBsebSubjectFilter = isBsebClass(selectedUniversity, selectedCourse);
+  const courseLabel = selectedUniversity.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'Class' : 'Course route';
 
   return (
     <form
@@ -48,6 +57,7 @@ export function PapersFilterForm({
         params.set('applied', '1');
         if (showBtechFilters && selectedDepartment) params.set('department', selectedDepartment);
         if (showBtechFilters && selectedSemester) params.set('semester', selectedSemester);
+        if (showBsebSubjectFilter && selectedSubject) params.set('subject', selectedSubject);
 
         const route = selectedCourse ? courseHref(selectedUniversity, selectedCourse) : universityHref(selectedUniversity);
         const href = params.toString() ? `${route}?${params.toString()}` : route;
@@ -74,6 +84,10 @@ export function PapersFilterForm({
                 setSelectedDepartment('');
                 setSelectedSemester('');
               }
+
+              if (!isBsebClass(university, nextCourse)) {
+                setSelectedSubject('');
+              }
             }}
           >
             {universities.map((option) => (
@@ -85,7 +99,7 @@ export function PapersFilterForm({
         </label>
 
         <label className="filter-field">
-          <span>Course route</span>
+          <span>{courseLabel}</span>
           <select
             value={selectedCourse}
             onChange={(event) => {
@@ -96,9 +110,13 @@ export function PapersFilterForm({
                 setSelectedDepartment('');
                 setSelectedSemester('');
               }
+
+              if (!isBsebClass(selectedUniversity, course)) {
+                setSelectedSubject('');
+              }
             }}
           >
-            <option value="">All courses</option>
+            <option value="">{selectedUniversity.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'All classes' : 'All courses'}</option>
             {courseOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -138,6 +156,22 @@ export function PapersFilterForm({
             ))}
           </select>
         </label>
+
+        <label className="filter-field">
+          <span>Subject</span>
+          <select
+            value={selectedSubject}
+            onChange={(event) => setSelectedSubject(event.target.value)}
+            disabled={!showBsebSubjectFilter}
+          >
+            <option value="">All subjects</option>
+            {BSEB_10TH_SUBJECTS.map((subject) => (
+              <option key={subject} value={subject}>
+                {subject}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="filter-card__actions">
@@ -147,7 +181,7 @@ export function PapersFilterForm({
       </div>
 
       <p className="muted-copy">
-        Choose a university or course route, then apply department or semester filters when browsing BTECH papers.
+        Choose a university route, then apply department and semester filters for BTECH or a subject filter for BSEB 10th papers.
       </p>
     </form>
   );

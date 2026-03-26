@@ -6,7 +6,12 @@ import { findUniversityBySlug } from '@/lib/slug';
 
 interface UniversityPageProps {
   params: Promise<{ university: string }>;
-  searchParams?: Promise<{ department?: string | string[]; semester?: string | string[]; applied?: string | string[] }>;
+  searchParams?: Promise<{
+    department?: string | string[];
+    semester?: string | string[];
+    subject?: string | string[];
+    applied?: string | string[];
+  }>;
 }
 
 function readSearchValue(value?: string | string[]): string | undefined {
@@ -38,15 +43,16 @@ export default async function UniversityPage({ params, searchParams }: Universit
   const university = findUniversityBySlug(universitySlug);
   const department = readSearchValue(filters.department);
   const semester = readSearchValue(filters.semester);
+  const subject = readSearchValue(filters.subject);
   const applied = readSearchValue(filters.applied);
-  const showAcademicPapers = Boolean(applied || department || semester);
+  const showAcademicPapers = Boolean(applied || department || semester || subject);
 
   if (!university) {
     notFound();
   }
 
   const [papers, competitiveSummary, competitivePapers] = await Promise.all([
-    showAcademicPapers ? listPapers({ university: university.name, department, semester, limit: 80 }) : Promise.resolve([]),
+    showAcademicPapers ? listPapers({ university: university.name, department, semester, subject, limit: 80 }) : Promise.resolve([]),
     getCompetitiveSummary(),
     listCompetitivePapers('UPSC').catch(() => [])
   ]);
@@ -58,6 +64,7 @@ export default async function UniversityPage({ params, searchParams }: Universit
       university={university}
       department={department}
       semester={semester}
+      subject={subject}
       papers={papers}
       showAcademicPapers={showAcademicPapers}
       competitiveSummary={competitiveSummary}

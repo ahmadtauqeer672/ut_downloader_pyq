@@ -81,6 +81,8 @@ const initialAcademicManageFilters = (): AcademicManageFilters => ({
   examType: ''
 });
 
+const ACADEMIC_YEAR_OPTIONS = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018'] as const;
+
 function getCourses(universityName: string): string[] {
   return UNIVERSITY_OPTIONS.find((option) => option.name === universityName)?.courses ?? [];
 }
@@ -102,7 +104,7 @@ function normalizeAcademicDraftForPaper(paper: Paper): AcademicFormState {
     semester: paper.semester ? String(paper.semester) : '',
     subject: paper.subject,
     year: String(paper.year),
-    examType: paper.examType,
+    examType: isBsebClass(paper.university, paper.course) ? 'FINAL' : paper.examType,
     driveUrl: paper.driveUrl || ''
   };
 }
@@ -243,6 +245,8 @@ export function UploadWorkspaceClient() {
   const academicCourseLabel = academicForm.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'Class' : 'Course';
   const editCourseLabel =
     editPaperDraft?.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'Class' : 'Course';
+  const isAcademicBsebClass = isBsebClass(academicForm.university, academicForm.course);
+  const isEditAcademicBsebClass = editPaperDraft ? isBsebClass(editPaperDraft.university, editPaperDraft.course) : false;
 
   useEffect(() => {
     if (ready && !isAuthenticated) {
@@ -307,15 +311,17 @@ export function UploadWorkspaceClient() {
     const nextCourses = getCourses(university);
     setAcademicForm((current) => {
       const nextCourse = nextCourses.includes(current.course) ? current.course : '';
+      const nextIsBseb = isBsebClass(university, nextCourse);
       return {
         ...current,
         university,
         course: nextCourse,
         department: nextCourse && isBtech(nextCourse) ? current.department : '',
         semester: nextCourse && isBtech(nextCourse) ? current.semester : '',
+        examType: nextIsBseb ? 'FINAL' : current.examType,
         subject:
           university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
-            ? isBsebClass(university, nextCourse)
+            ? nextIsBseb
               ? current.subject
               : ''
             : current.subject
@@ -324,18 +330,22 @@ export function UploadWorkspaceClient() {
   }
 
   function handleAcademicCourseChange(course: string) {
-    setAcademicForm((current) => ({
-      ...current,
-      course,
-      department: isBtech(course) ? current.department : '',
-      semester: isBtech(course) ? current.semester : '',
-      subject:
-        current.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
-          ? isBsebClass(current.university, course)
-            ? current.subject
-            : ''
-          : current.subject
-    }));
+    setAcademicForm((current) => {
+      const nextIsBseb = isBsebClass(current.university, course);
+      return {
+        ...current,
+        course,
+        department: isBtech(course) ? current.department : '',
+        semester: isBtech(course) ? current.semester : '',
+        examType: nextIsBseb ? 'FINAL' : current.examType,
+        subject:
+          current.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
+            ? nextIsBseb
+              ? current.subject
+              : ''
+            : current.subject
+      };
+    });
   }
 
   function handleEditUniversityChange(university: string) {
@@ -343,15 +353,17 @@ export function UploadWorkspaceClient() {
     setEditPaperDraft((current) => {
       if (!current) return current;
       const nextCourse = nextCourses.includes(current.course) ? current.course : '';
+      const nextIsBseb = isBsebClass(university, nextCourse);
       return {
         ...current,
         university,
         course: nextCourse,
         department: nextCourse && isBtech(nextCourse) ? current.department : '',
         semester: nextCourse && isBtech(nextCourse) ? current.semester : '',
+        examType: nextIsBseb ? 'FINAL' : current.examType,
         subject:
           university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
-            ? isBsebClass(university, nextCourse)
+            ? nextIsBseb
               ? current.subject
               : ''
             : current.subject
@@ -362,14 +374,16 @@ export function UploadWorkspaceClient() {
   function handleEditCourseChange(course: string) {
     setEditPaperDraft((current) => {
       if (!current) return current;
+      const nextIsBseb = isBsebClass(current.university, course);
       return {
         ...current,
         course,
         department: isBtech(course) ? current.department : '',
         semester: isBtech(course) ? current.semester : '',
+        examType: nextIsBseb ? 'FINAL' : current.examType,
         subject:
           current.university.trim().toUpperCase() === 'BIHAR BOARD (BSEB)'
-            ? isBsebClass(current.university, course)
+            ? nextIsBseb
               ? current.subject
               : ''
             : current.subject
@@ -785,12 +799,20 @@ export function UploadWorkspaceClient() {
 
           <label className="filter-field">
             <span>Year</span>
-            <input
-              placeholder="e.g. 2024"
+            <select
               value={academicForm.year}
               onChange={(event) => setAcademicForm((current) => ({ ...current, year: event.target.value }))}
               required
-            />
+            >
+              <option value="" disabled>
+                Select year
+              </option>
+              {ACADEMIC_YEAR_OPTIONS.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="filter-field">
@@ -799,6 +821,8 @@ export function UploadWorkspaceClient() {
               placeholder="e.g. Final / Mid Sem"
               value={academicForm.examType}
               onChange={(event) => setAcademicForm((current) => ({ ...current, examType: event.target.value }))}
+              disabled={isAcademicBsebClass}
+              readOnly={isAcademicBsebClass}
               required
             />
           </label>
@@ -1063,14 +1087,22 @@ export function UploadWorkspaceClient() {
 
                       <label className="filter-field">
                         <span>Year</span>
-                        <input
-                          placeholder="e.g. 2024"
+                        <select
                           value={editPaperDraft.year}
                           onChange={(event) =>
                             setEditPaperDraft((current) => (current ? { ...current, year: event.target.value } : current))
                           }
                           required
-                        />
+                        >
+                          <option value="" disabled>
+                            Select year
+                          </option>
+                          {ACADEMIC_YEAR_OPTIONS.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
                       </label>
 
                       <label className="filter-field">
@@ -1083,6 +1115,8 @@ export function UploadWorkspaceClient() {
                               current ? { ...current, examType: event.target.value } : current
                             )
                           }
+                          disabled={isEditAcademicBsebClass}
+                          readOnly={isEditAcademicBsebClass}
                           required
                         />
                       </label>

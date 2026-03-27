@@ -164,7 +164,7 @@ export function PapersView({
                 {BSEB_10TH_SUBJECTS.map((item) => (
                   <Link
                     className="feature-card feature-card--link"
-                    href={courseSubjectHref(university?.name ?? 'BIHAR BOARD (BSEB)', course ?? '10TH', item)}
+                    href={`${courseSubjectHref(university?.name ?? 'BIHAR BOARD (BSEB)', course ?? '10TH', item)}#paper-directory`}
                     key={item}
                   >
                     <strong>{item}</strong>
@@ -228,7 +228,7 @@ export function PapersView({
         </aside>
       </section>
 
-      <section id="paper-directory" className="section paper-layout">
+      <section id="paper-directory" className="section paper-layout paper-directory-section">
         <div className="card section-card">
           <div className="section-head">
             <div>

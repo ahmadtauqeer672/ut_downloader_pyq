@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { listCompetitiveExams } from '@/lib/api';
-import { SITE_URL, UNIVERSITY_OPTIONS } from '@/lib/data';
+import { BSEB_10TH_SUBJECTS, SITE_URL, UNIVERSITY_OPTIONS } from '@/lib/data';
 import { slugify } from '@/lib/slug';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -41,7 +41,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       )
     );
 
-    return [universityEntry, ...courseEntries];
+    const subjectEntries =
+      option.name === 'BIHAR BOARD (BSEB)'
+        ? BSEB_10TH_SUBJECTS.map<MetadataRoute.Sitemap[number]>((subject) =>
+            createEntry(
+              `/question-papers/${universitySlug}/${slugify('10TH')}/${slugify(subject)}`,
+              'weekly',
+              0.7
+            )
+          )
+        : [];
+
+    return [universityEntry, ...courseEntries, ...subjectEntries];
   });
 
   const competitiveExamRoutes = await listCompetitiveExams()

@@ -249,11 +249,13 @@ app.get(
   '/api/papers',
   asyncHandler(async (req, res) => {
     const {
+      title = '',
       university = '',
       course = '',
       department = '',
       semester = '',
       subject = '',
+      examType = '',
       year = '',
       limit = '',
       offset = '',
@@ -267,6 +269,10 @@ app.get(
     let sql = ' FROM papers WHERE 1=1';
     const params = [];
 
+    if (title) {
+      params.push(`%${title}%`);
+      sql += ` AND title ILIKE $${params.length}`;
+    }
     if (university) {
       params.push(`%${university}%`);
       sql += ` AND university ILIKE $${params.length}`;
@@ -286,6 +292,10 @@ app.get(
     if (subject) {
       params.push(`%${subject}%`);
       sql += ` AND subject ILIKE $${params.length}`;
+    }
+    if (examType) {
+      params.push(`%${examType}%`);
+      sql += ` AND examtype ILIKE $${params.length}`;
     }
     if (year && /^\d+$/.test(year)) {
       params.push(Number(year));

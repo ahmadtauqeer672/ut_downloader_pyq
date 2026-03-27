@@ -16,7 +16,7 @@ import {
 } from '@/lib/admin-api-client';
 import { competitiveDownloadHref, paperDownloadHref } from '@/lib/api';
 import { BSEB_10TH_SUBJECTS, BTECH_DEPARTMENTS, SEMESTERS, UNIVERSITY_OPTIONS } from '@/lib/data';
-import { competitiveExamHref, courseHref, universityHref } from '@/lib/slug';
+import { competitiveExamHref, courseHref, courseSubjectHref, universityHref } from '@/lib/slug';
 import { CompetitivePaper, Paper } from '@/lib/types';
 import { useAdminSession } from '@/lib/use-admin-session';
 
@@ -37,6 +37,11 @@ interface CompetitiveFormState {
   title: string;
   year: string;
   driveUrl: string;
+}
+
+interface AcademicManageFilters {
+  title: string;
+  examType: string;
 }
 
 interface UploadResultRoute {
@@ -69,6 +74,11 @@ const initialCompetitiveForm = (): CompetitiveFormState => ({
   title: '',
   year: '',
   driveUrl: ''
+});
+
+const initialAcademicManageFilters = (): AcademicManageFilters => ({
+  title: '',
+  examType: ''
 });
 
 function getCourses(universityName: string): string[] {
@@ -107,22 +117,32 @@ function normalizeCompetitiveDraftForPaper(paper: CompetitivePaper): Competitive
 }
 
 function buildAcademicUploadResult(form: AcademicFormState, hasLocalFile: boolean): UploadResultState {
+  const routes: UploadResultRoute[] = [
+    {
+      label: 'University route',
+      href: universityHref(form.university),
+      text: form.university
+    },
+    {
+      label: 'Course route',
+      href: courseHref(form.university, form.course),
+      text: `${form.university} ${form.course}`
+    }
+  ];
+
+  if (isBsebClass(form.university, form.course) && form.subject.trim()) {
+    routes.push({
+      label: 'Subject route',
+      href: courseSubjectHref(form.university, form.course, form.subject),
+      text: form.subject.trim()
+    });
+  }
+
   return {
     message: 'Academic paper uploaded successfully.',
     title: form.title.trim(),
     source: hasLocalFile ? 'Local file upload' : 'Google Drive file link',
-    routes: [
-      {
-        label: 'University route',
-        href: universityHref(form.university),
-        text: form.university
-      },
-      {
-        label: 'Course route',
-        href: courseHref(form.university, form.course),
-        text: `${form.university} ${form.course}`
-      }
-    ]
+    routes
   };
 }
 
@@ -189,6 +209,7 @@ export function UploadWorkspaceClient() {
   const [loadingPapers, setLoadingPapers] = useState(false);
   const [manageMessage, setManageMessage] = useState('');
   const [manageError, setManageError] = useState('');
+  const [manageAcademicFilters, setManageAcademicFilters] = useState<AcademicManageFilters>(initialAcademicManageFilters);
   const [editingPaperId, setEditingPaperId] = useState<number | null>(null);
   const [editPaperDraft, setEditPaperDraft] = useState<AcademicFormState | null>(null);
   const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
@@ -237,10 +258,10 @@ export function UploadWorkspaceClient() {
     }
   }, [ready, isAuthenticated]);
 
-  async function refreshAcademicPapers() {
+  async function refreshAcademicPapers(filters: AcademicManageFilters = manageAcademicFilters) {
     setLoadingPapers(true);
     try {
-      const rows = await listAdminPapers();
+      const rows = await listAdminPapers(filters);
       setPapers(rows);
       setManageMessage('');
       setManageError('');
@@ -828,12 +849,59 @@ export function UploadWorkspaceClient() {
           <div>
             <p className="eyebrow">Manage uploads</p>
             <h2 className="section-title">Manage Academic Papers</h2>
-            <p className="muted-copy">You are logged in as admin and can edit or delete papers below.</p>
+            <p className="muted-copy">You are logged in as admin and can filter, edit, or delete papers below.</p>
           </div>
           <button className="button button--secondary" type="button" onClick={() => void refreshAcademicPapers()}>
             Refresh
           </button>
         </div>
+
+        <form
+          className="admin-filter-row admin-filter-bar"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void refreshAcademicPapers(manageAcademicFilters);
+          }}
+        >
+          <label className="filter-field admin-filter-field">
+            <span>Paper title</span>
+            <input
+              placeholder="Search by paper title"
+              value={manageAcademicFilters.title}
+              onChange={(event) =>
+                setManageAcademicFilters((current) => ({ ...current, title: event.target.value }))
+              }
+            />
+          </label>
+
+          <label className="filter-field admin-filter-field">
+            <span>Exam type</span>
+            <input
+              placeholder="Search by exam type"
+              value={manageAcademicFilters.examType}
+              onChange={(event) =>
+                setManageAcademicFilters((current) => ({ ...current, examType: event.target.value }))
+              }
+            />
+          </label>
+
+          <button className="button button--secondary admin-filter-submit" type="submit" disabled={loadingPapers}>
+            {loadingPapers ? 'Loading...' : 'Show Results'}
+          </button>
+
+          <button
+            className="button button--secondary admin-filter-submit"
+            type="button"
+            onClick={() => {
+              const clearedFilters = initialAcademicManageFilters();
+              setManageAcademicFilters(clearedFilters);
+              void refreshAcademicPapers(clearedFilters);
+            }}
+            disabled={loadingPapers}
+          >
+            Clear Filters
+          </button>
+        </form>
 
         {manageMessage ? <p className="status-message status-success">{manageMessage}</p> : null}
         {manageError ? <p className="status-message status-error">{manageError}</p> : null}
@@ -851,7 +919,7 @@ export function UploadWorkspaceClient() {
                     <p>
                       {paper.course}
                       {paper.department ? ` / ${paper.department}` : ''}
-                      {paper.semester ? ` / Sem ${paper.semester}` : ''} / {paper.subject} / {paper.year}
+                      {paper.semester ? ` / Sem ${paper.semester}` : ''} / {paper.subject} / {paper.examType} / {paper.year}
                     </p>
                     <div className="paper-actions">
                       <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">

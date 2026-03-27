@@ -1,4 +1,4 @@
-import { UNIVERSITY_OPTIONS } from '@/lib/data';
+import { BSEB_10TH_SUBJECTS, UNIVERSITY_OPTIONS } from '@/lib/data';
 import { UniversityOption } from '@/lib/types';
 
 export function slugify(input: string): string {
@@ -24,6 +24,14 @@ export function universityHref(universityName: string): string {
 
 export function courseHref(universityName: string, courseName: string): string {
   return `${universityHref(universityName)}/${slugify(courseName)}`;
+}
+
+export function courseSubjectHref(universityName: string, courseName: string, subjectName: string): string {
+  return `${courseHref(universityName, courseName)}/${slugify(subjectName)}`;
+}
+
+export function findBsebSubjectBySlug(subjectSlug: string): string | null {
+  return BSEB_10TH_SUBJECTS.find((subject) => slugify(subject) === subjectSlug) ?? null;
 }
 
 export function competitiveExamHref(examName: string): string {

@@ -11,7 +11,7 @@ import {
   groupPapersBySemester,
   paperDownloadHref
 } from '@/lib/api';
-import { competitiveExamHref, courseHref, universityHref } from '@/lib/slug';
+import { competitiveExamHref, courseHref, courseSubjectHref, universityHref } from '@/lib/slug';
 import { CompetitivePaper, CompetitiveSummary, Paper, UniversityOption } from '@/lib/types';
 
 interface PapersViewProps {
@@ -71,10 +71,16 @@ export function PapersView({
   const semesterGroups = groupPapersBySemester(papers);
   const competitiveGroups = groupCompetitiveByYear(competitivePapers);
   const isBseb10thPage = university?.name === 'BIHAR BOARD (BSEB)' && course === '10TH';
-  const heroNote = isBseb10thPage
+  const isBsebSubjectPage = isBseb10thPage && Boolean(subject);
+  const directYearGroups = groupPapersByYear(papers);
+  const heroNote = isBsebSubjectPage
+    ? `Browse Bihar Board 10th ${subject} previous year papers on a dedicated year-wise page while keeping the main BSEB filter flow available.`
+    : isBseb10thPage
     ? 'Browse Bihar Board 10th previous year question papers subject-wise with server-rendered content that helps students and search engines find the right papers faster.'
     : 'Browse PTU, PU Chandigarh, GNDU, MDU and GTU question papers with cleaner URLs, better crawlability and server-rendered HTML for search engines.';
-  const pageFocusCopy = isBseb10thPage
+  const pageFocusCopy = isBsebSubjectPage
+    ? `This route is focused on BSEB Class 10 ${subject} papers with a year-wise archive that makes subject-specific browsing easier for students and search engines.`
+    : isBseb10thPage
     ? 'This page focuses on BSEB Class 10 previous year papers, subject-wise browsing, and clear route text that can support Google indexing for Bihar Board searches.'
     : 'This page is server-rendered in Next.js so Google can crawl the real content and metadata more easily than a purely client-side app shell.';
 
@@ -155,10 +161,15 @@ export function PapersView({
 
               <div className="feature-grid">
                 {BSEB_10TH_SUBJECTS.map((item) => (
-                  <article className="feature-card" key={item}>
+                  <Link
+                    className="feature-card feature-card--link"
+                    href={courseSubjectHref(university?.name ?? 'BIHAR BOARD (BSEB)', course ?? '10TH', item)}
+                    key={item}
+                  >
                     <strong>{item}</strong>
                     <p>Bihar Board 10th previous year question papers for {item.toLowerCase()}.</p>
-                  </article>
+                    <span className="feature-card__hint">Open year-wise papers</span>
+                  </Link>
                 ))}
               </div>
 
@@ -200,6 +211,7 @@ export function PapersView({
           <div className="badge-line">
             <span>{university?.name ?? 'All universities'}</span>
             <span>{course ?? 'All courses'}</span>
+            {subject ? <span>{subject}</span> : null}
             <span>{papers.length} papers</span>
           </div>
 
@@ -220,7 +232,9 @@ export function PapersView({
           <div className="section-head">
             <div>
               <p className="eyebrow">Academic library</p>
-              <h2 className="section-title">Academic question paper directory</h2>
+              <h2 className="section-title">
+                {isBsebSubjectPage ? `${subject} year-wise paper directory` : 'Academic question paper directory'}
+              </h2>
             </div>
           </div>
 
@@ -234,7 +248,46 @@ export function PapersView({
           />
 
           {showAcademicPapers ? (
-            semesterGroups.length > 0 ? (
+            isBsebSubjectPage ? (
+              directYearGroups.length > 0 ? (
+                directYearGroups.map((yearGroup) => (
+                  <article className="paper-group" key={yearGroup.year}>
+                    <div className="paper-group__head">
+                      <h3>{yearGroup.year}</h3>
+                      <span className="chip">{yearGroup.papers.length} papers</span>
+                    </div>
+
+                    <div className="paper-list">
+                      {yearGroup.papers.map((paper) => (
+                        <div className="paper-item" key={paper.id}>
+                          <div>
+                            <a className="paper-link" href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                              {paper.title || paper.subject}
+                            </a>
+                            <p className="paper-meta">
+                              {[paper.subject, paper.examType].filter(Boolean).join(' / ')}
+                            </p>
+                          </div>
+
+                          <div className="paper-actions">
+                            <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="notice-card">
+                  <strong>No papers found for {subject} yet.</strong>
+                  <p className="empty-state">
+                    Try another BSEB subject page or use the filter above while more papers are being uploaded.
+                  </p>
+                </div>
+              )
+            ) : semesterGroups.length > 0 ? (
             semesterGroups.map((group) => (
               <article className="paper-group" key={group.semester}>
                 <div className="paper-group__head">

@@ -8,6 +8,11 @@ export interface AdminSession {
   expiresAt: number;
 }
 
+interface AdminPaperFilters {
+  title?: string;
+  examType?: string;
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
@@ -35,8 +40,12 @@ export async function loginAdmin(userId: string, password: string): Promise<Admi
   return parseResponse<AdminSession>(response);
 }
 
-export async function listAdminPapers(): Promise<Paper[]> {
-  const response = await fetch('/api/papers', {
+export async function listAdminPapers(filters: AdminPaperFilters = {}): Promise<Paper[]> {
+  const params = new URLSearchParams();
+  if (filters.title?.trim()) params.set('title', filters.title.trim());
+  if (filters.examType?.trim()) params.set('examType', filters.examType.trim());
+  const query = params.toString();
+  const response = await fetch(`/api/papers${query ? `?${query}` : ''}`, {
     cache: 'no-store'
   });
   return parseResponse<Paper[]>(response);

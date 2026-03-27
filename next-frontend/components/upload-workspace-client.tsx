@@ -96,15 +96,16 @@ function isBsebClass(university: string, course: string): boolean {
 }
 
 function normalizeAcademicDraftForPaper(paper: Paper): AcademicFormState {
+  const isPaperBsebClass = isBsebClass(paper.university, paper.course);
   return {
-    title: paper.title,
+    title: isPaperBsebClass ? paper.subject : paper.title,
     university: paper.university,
     course: paper.course,
     department: paper.department || '',
     semester: paper.semester ? String(paper.semester) : '',
     subject: paper.subject,
     year: String(paper.year),
-    examType: isBsebClass(paper.university, paper.course) ? 'FINAL' : paper.examType,
+    examType: isPaperBsebClass ? 'FINAL' : paper.examType,
     driveUrl: paper.driveUrl || ''
   };
 }
@@ -316,6 +317,7 @@ export function UploadWorkspaceClient() {
         ...current,
         university,
         course: nextCourse,
+        title: nextIsBseb && current.subject ? current.subject : current.title,
         department: nextCourse && isBtech(nextCourse) ? current.department : '',
         semester: nextCourse && isBtech(nextCourse) ? current.semester : '',
         examType: nextIsBseb ? 'FINAL' : current.examType,
@@ -335,6 +337,7 @@ export function UploadWorkspaceClient() {
       return {
         ...current,
         course,
+        title: nextIsBseb && current.subject ? current.subject : current.title,
         department: isBtech(course) ? current.department : '',
         semester: isBtech(course) ? current.semester : '',
         examType: nextIsBseb ? 'FINAL' : current.examType,
@@ -358,6 +361,7 @@ export function UploadWorkspaceClient() {
         ...current,
         university,
         course: nextCourse,
+        title: nextIsBseb && current.subject ? current.subject : current.title,
         department: nextCourse && isBtech(nextCourse) ? current.department : '',
         semester: nextCourse && isBtech(nextCourse) ? current.semester : '',
         examType: nextIsBseb ? 'FINAL' : current.examType,
@@ -378,6 +382,7 @@ export function UploadWorkspaceClient() {
       return {
         ...current,
         course,
+        title: nextIsBseb && current.subject ? current.subject : current.title,
         department: isBtech(course) ? current.department : '',
         semester: isBtech(course) ? current.semester : '',
         examType: nextIsBseb ? 'FINAL' : current.examType,
@@ -774,7 +779,13 @@ export function UploadWorkspaceClient() {
                 <span>Subject</span>
                 <select
                   value={academicForm.subject}
-                  onChange={(event) => setAcademicForm((current) => ({ ...current, subject: event.target.value }))}
+                  onChange={(event) =>
+                    setAcademicForm((current) => ({
+                      ...current,
+                      subject: event.target.value,
+                      title: event.target.value
+                    }))
+                  }
                   required
                 >
                   <option value="" disabled>
@@ -1058,7 +1069,9 @@ export function UploadWorkspaceClient() {
                               value={editPaperDraft.subject}
                               onChange={(event) =>
                                 setEditPaperDraft((current) =>
-                                  current ? { ...current, subject: event.target.value } : current
+                                  current
+                                    ? { ...current, subject: event.target.value, title: event.target.value }
+                                    : current
                                 )
                               }
                               required

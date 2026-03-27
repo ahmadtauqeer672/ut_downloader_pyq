@@ -72,6 +72,7 @@ export function PapersView({
   const competitiveGroups = groupCompetitiveByYear(competitivePapers);
   const isBseb10thPage = university?.name === 'BIHAR BOARD (BSEB)' && course === '10TH';
   const isBsebSubjectPage = isBseb10thPage && Boolean(subject);
+  const useBsebYearArchive = isBseb10thPage;
   const directYearGroups = groupPapersByYear(papers);
   const heroNote = isBsebSubjectPage
     ? `Browse Bihar Board 10th ${subject} previous year papers on a dedicated year-wise page while keeping the main BSEB filter flow available.`
@@ -233,7 +234,11 @@ export function PapersView({
             <div>
               <p className="eyebrow">Academic library</p>
               <h2 className="section-title">
-                {isBsebSubjectPage ? `${subject} year-wise paper directory` : 'Academic question paper directory'}
+                {isBsebSubjectPage
+                  ? `${subject} year-wise paper directory`
+                  : isBseb10thPage
+                    ? 'All subjects year-wise paper directory'
+                    : 'Academic question paper directory'}
               </h2>
             </div>
           </div>
@@ -248,7 +253,7 @@ export function PapersView({
           />
 
           {showAcademicPapers ? (
-            isBsebSubjectPage ? (
+            useBsebYearArchive ? (
               directYearGroups.length > 0 ? (
                 directYearGroups.map((yearGroup) => (
                   <article className="paper-group paper-group--subject" key={yearGroup.year}>
@@ -271,7 +276,7 @@ export function PapersView({
                               target="_blank"
                               rel="noreferrer"
                             >
-                              {paper.title || paper.subject}
+                              {isBsebSubjectPage ? paper.title || paper.subject : paper.subject || paper.title}
                             </a>
                             <p className="paper-meta paper-meta--subject">
                               {[paper.subject, paper.examType].filter(Boolean).join(' / ')}
@@ -290,9 +295,11 @@ export function PapersView({
                 ))
               ) : (
                 <div className="notice-card">
-                  <strong>No papers found for {subject} yet.</strong>
+                  <strong>{isBsebSubjectPage ? `No papers found for ${subject} yet.` : 'No papers found for BSEB 10th yet.'}</strong>
                   <p className="empty-state">
-                    Try another BSEB subject page or use the filter above while more papers are being uploaded.
+                    {isBsebSubjectPage
+                      ? 'Try another BSEB subject page or use the filter above while more papers are being uploaded.'
+                      : 'Try a subject filter above while more Bihar Board 10th papers are being uploaded.'}
                   </p>
                 </div>
               )

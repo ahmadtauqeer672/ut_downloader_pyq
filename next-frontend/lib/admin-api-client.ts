@@ -13,15 +13,39 @@ interface AdminPaperFilters {
   examType?: string;
 }
 
-async function parseResponse<T>(response: Response): Promise<T> {
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+function parseJsonSafely(text: string) {
+  if (!text) return null;
 
-  if (!response.ok) {
-    throw new Error(data?.message || `Request failed with status ${response.status}`);
+  try {
+    return JSON.parse(text) as { message?: string } | null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeErrorMessage(response: Response, text: string, data: { message?: string } | null): string {
+  const rawMessage = data?.message?.trim() || text.trim();
+
+  if (response.status === 413) {
+    return 'File too large. Please upload a smaller PDF or use a Google Drive file link.';
   }
 
-  return data as T;
+  if (rawMessage) {
+    return rawMessage;
+  }
+
+  return `Request failed with status ${response.status}`;
+}
+
+async function parseResponse<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  const data = parseJsonSafely(text);
+
+  if (!response.ok) {
+    throw new Error(normalizeErrorMessage(response, text, data));
+  }
+
+  return (data ?? null) as T;
 }
 
 function authHeaders(token: string): HeadersInit {

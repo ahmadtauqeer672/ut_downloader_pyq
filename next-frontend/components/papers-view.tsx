@@ -251,25 +251,34 @@ export function PapersView({
             isBsebSubjectPage ? (
               directYearGroups.length > 0 ? (
                 directYearGroups.map((yearGroup) => (
-                  <article className="paper-group" key={yearGroup.year}>
-                    <div className="paper-group__head">
-                      <h3>{yearGroup.year}</h3>
-                      <span className="chip">{yearGroup.papers.length} papers</span>
+                  <article className="paper-group paper-group--subject" key={yearGroup.year}>
+                    <div className="paper-group__head paper-group__head--subject">
+                      <div className="subject-year-heading">
+                        <span className="subject-year-heading__label">Year Archive</span>
+                        <h3>{yearGroup.year}</h3>
+                      </div>
+                      <span className="chip chip--subject-count">{yearGroup.papers.length} papers</span>
                     </div>
 
-                    <div className="paper-list">
+                    <div className="paper-list paper-list--subject">
                       {yearGroup.papers.map((paper) => (
-                        <div className="paper-item" key={paper.id}>
-                          <div>
-                            <a className="paper-link" href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                        <div className="paper-item paper-item--subject" key={paper.id}>
+                          <div className="paper-copy paper-copy--subject">
+                            <span className="paper-mini-tag">{paper.examType || 'Question Paper'}</span>
+                            <a
+                              className="paper-link paper-link--subject"
+                              href={paperDownloadHref(paper.id)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
                               {paper.title || paper.subject}
                             </a>
-                            <p className="paper-meta">
+                            <p className="paper-meta paper-meta--subject">
                               {[paper.subject, paper.examType].filter(Boolean).join(' / ')}
                             </p>
                           </div>
 
-                          <div className="paper-actions">
+                          <div className="paper-actions paper-actions--subject">
                             <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
                               Download
                             </a>

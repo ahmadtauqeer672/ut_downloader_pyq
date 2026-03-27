@@ -677,6 +677,9 @@ export function UploadWorkspaceClient() {
               For BTECH, department and semester are required. Upload a file or paste a Google Drive file link.
             </p>
           </div>
+          <Link className="button button--secondary" href="/admin">
+            Back to Admin
+          </Link>
         </div>
 
         <form className="admin-form-grid admin-upload-grid" onSubmit={handleAcademicSubmit}>

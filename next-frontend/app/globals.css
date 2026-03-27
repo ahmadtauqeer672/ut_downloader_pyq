@@ -1433,7 +1433,19 @@ img {
   }
 
   .paper-item--subject {
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+  }
+
+  .paper-copy--subject {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .paper-actions--subject {
+    flex-shrink: 0;
   }
 
   .admin-form-actions,
@@ -1446,6 +1458,11 @@ img {
   .admin-filter-submit,
   .paper-actions a {
     width: 100%;
+  }
+
+  .paper-actions--subject a {
+    width: auto;
+    min-width: 6.8rem;
   }
 
   .competitive-paper-item {

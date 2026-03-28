@@ -21,18 +21,22 @@ export function SiteFooter() {
         <div className="site-footer__links">
           <div className="site-footer__group">
             <p className="site-footer__title">Explore</p>
-            <Link href="/">Home</Link>
-            <Link href="/question-papers/ptu">PTU Papers</Link>
-            <Link href="/question-papers/ptu/btech">PTU BTECH</Link>
+            <nav aria-label="Explore footer links">
+              <Link href="/">Home</Link>
+              <Link href="/question-papers/ptu">PTU Papers</Link>
+              <Link href="/question-papers/ptu/btech">PTU BTECH</Link>
+            </nav>
           </div>
 
           <div className="site-footer__group">
             <p className="site-footer__title">Important</p>
-            <Link href="/about">About Us</Link>
-            <Link href="/contact">Contact</Link>
-            <Link href="/privacy-policy">Privacy Policy</Link>
-            <Link href="/disclaimer">Disclaimer</Link>
-            <Link href="/admin">Admin</Link>
+            <nav aria-label="Important footer links">
+              <Link href="/about">About Us</Link>
+              <Link href="/contact">Contact</Link>
+              <Link href="/privacy-policy">Privacy Policy</Link>
+              <Link href="/disclaimer">Disclaimer</Link>
+              <Link href="/admin">Admin</Link>
+            </nav>
           </div>
         </div>
       </div>

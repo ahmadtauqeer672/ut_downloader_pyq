@@ -8,3 +8,5 @@ pythoncode/
 .angular/
 **/*.tsbuildinfo
 .next/
+backend/backend-local*.log
+next-frontend/.env.local

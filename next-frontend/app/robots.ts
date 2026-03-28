@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/'
     },
-    sitemap: `${SITE_URL}/sitemap.xml`
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/bseb-class-10-sitemap.xml`]
   };
 }

@@ -1,6 +1,6 @@
 import { UniversityOption } from '@/lib/types';
 
-export const SITE_URL = 'https://utpaper.in';
+export const SITE_URL = 'https://www.utpaper.in';
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.utpaper.in/api';
 
 export const UNIVERSITY_OPTIONS: UniversityOption[] = [

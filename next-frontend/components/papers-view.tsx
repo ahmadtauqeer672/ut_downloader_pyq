@@ -274,7 +274,7 @@ export function PapersView({
                               className="paper-link paper-link--subject"
                               href={paperDownloadHref(paper.id)}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="nofollow noopener noreferrer"
                             >
                               {isBsebSubjectPage ? paper.title || paper.subject : paper.subject || paper.title}
                             </a>
@@ -284,7 +284,7 @@ export function PapersView({
                           </div>
 
                           <div className="paper-actions paper-actions--subject">
-                            <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                            <a href={paperDownloadHref(paper.id)} target="_blank" rel="nofollow noopener noreferrer">
                               Download
                             </a>
                           </div>
@@ -319,13 +319,18 @@ export function PapersView({
                       {yearGroup.papers.map((paper) => (
                         <div className="paper-item" key={paper.id}>
                           <div>
-                            <a className="paper-link" href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                            <a
+                              className="paper-link"
+                              href={paperDownloadHref(paper.id)}
+                              target="_blank"
+                              rel="nofollow noopener noreferrer"
+                            >
                               {paperLabel(paper)}
                             </a>
                           </div>
 
                           <div className="paper-actions">
-                            <a href={paperDownloadHref(paper.id)} target="_blank" rel="noreferrer">
+                            <a href={paperDownloadHref(paper.id)} target="_blank" rel="nofollow noopener noreferrer">
                               Download
                             </a>
                           </div>
@@ -394,7 +399,7 @@ export function PapersView({
                             className="paper-link"
                             href={competitiveDownloadHref(paper.id)}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="nofollow noopener noreferrer"
                           >
                             {paper.title}
                           </a>

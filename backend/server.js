@@ -175,6 +175,20 @@ app.use(
     credentials: false
   })
 );
+
+app.use((req, res, next) => {
+  if (req.path === '/robots.txt' || req.path.startsWith('/api/')) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  }
+
+  next();
+});
+
+app.get('/robots.txt', (_req, res) => {
+  res.type('text/plain');
+  res.send(['User-Agent: *', 'Disallow: /'].join('\n'));
+});
+
 app.use(express.json());
 
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);

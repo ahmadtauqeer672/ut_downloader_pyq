@@ -93,7 +93,7 @@ export default async function CompetitiveExamPage({ params }: CompetitiveExamPag
                         className="paper-link competitive-paper-title"
                         href={competitiveDownloadHref(paper.id)}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="nofollow noopener noreferrer"
                       >
                         {paper.title}
                       </a>
@@ -104,7 +104,7 @@ export default async function CompetitiveExamPage({ params }: CompetitiveExamPag
                         className="competitive-download"
                         href={competitiveDownloadHref(paper.id)}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="nofollow noopener noreferrer"
                       >
                         Download
                       </a>

@@ -1,6 +1,6 @@
 import { JsonLdScript } from '@/components/json-ld-script';
 import { PapersView } from '@/components/papers-view';
-import { getCompetitiveSummary, listCompetitivePapers, listPapers } from '@/lib/api';
+import { getCompetitiveSummary } from '@/lib/api';
 import { buildMetadata, organizationJsonLd } from '@/lib/seo';
 
 export const metadata = buildMetadata({
@@ -17,21 +17,17 @@ export const metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [papers, competitiveSummary, competitivePapers] = await Promise.all([
-    listPapers({ university: 'PTU', limit: 60 }),
-    getCompetitiveSummary(),
-    listCompetitivePapers('UPSC').catch(() => [])
-  ]);
+  const competitiveSummary = await getCompetitiveSummary();
 
   return (
     <>
       <JsonLdScript payload={organizationJsonLd()} />
       <PapersView
         heading="Previous Year Papers and Competitive PYQs"
-        description="Download PTU, PU Chandigarh, GNDU, MDU and GTU question papers in one place. Browse BTECH, BCA, BBA, MBA, MCA and competitive exam papers semester-wise or year-wise on UTpaper."
-        papers={papers}
+        description="Download PTU BTECH, BCA, BBA, MBA and MCA question papers semester-wise, Bihar Board Class 10 papers subject-wise, and competitive exam papers year-wise. All free on UTpaper."
+        papers={[]}
+        showPaperList={false}
         competitiveSummary={competitiveSummary}
-        competitivePapers={competitivePapers}
       />
     </>
   );

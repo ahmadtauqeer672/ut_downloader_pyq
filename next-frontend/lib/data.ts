@@ -19,20 +19,3 @@ export const BSEB_10TH_SUBJECTS = [
   'SOCIAL SCIENCE',
   'SANSKRIT'
 ] as const;
-
-
-
-export const FEATURE_ITEMS = [
-  {
-    title: 'Semester-wise browsing',
-    description: 'Open academic papers by course, department and semester without digging through long menus.'
-  },
-  {
-    title: 'Multiple universities',
-    description: 'Browse PTU, PU Chandigarh, GNDU, MDU, GTU and selected other university paper collections.'
-  },
-  {
-    title: 'Competitive support',
-    description: 'See uploaded competitive exam papers year-wise to compare past exam patterns quickly.'
-  }
-] as const;

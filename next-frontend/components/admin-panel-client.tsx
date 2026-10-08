@@ -99,6 +99,11 @@ export function AdminPanelClient() {
               <span>Upload, edit, and delete academic and competitive papers.</span>
             </Link>
 
+            <Link className="admin-action-card" href="/admin/test-series">
+              <strong>Manage Test Series</strong>
+              <span>Create mock tests, add questions, and see registered students.</span>
+            </Link>
+
             <Link className="admin-action-card" href="/watermark-tool">
               <strong>Add Watermark in PYQ</strong>
               <span>Upload a PDF, watermark it in the browser, and download the result instantly.</span>

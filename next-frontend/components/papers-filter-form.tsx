@@ -45,7 +45,7 @@ export function PapersFilterForm({
   );
   const showBtechFilters = isBtech(selectedCourse);
   const showBsebSubjectFilter = isBsebClass(selectedUniversity, selectedCourse);
-  const courseLabel = selectedUniversity.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'Class' : 'Course route';
+  const courseLabel = selectedUniversity.trim().toUpperCase() === 'BIHAR BOARD (BSEB)' ? 'Class' : 'Course';
 
   return (
     <form
@@ -69,7 +69,7 @@ export function PapersFilterForm({
     >
       <div className="filter-card__grid">
         <label className="filter-field">
-          <span>University route</span>
+          <span>University / Board</span>
           <select
             value={selectedUniversity}
             onChange={(event) => {
@@ -175,7 +175,7 @@ export function PapersFilterForm({
       </div>
 
       <p className="muted-copy">
-        Choose a university route, then apply department and semester filters for BTECH or a subject filter for BSEB 10th papers.
+        Pick your university and course. For BTECH you can also filter by department and semester; for Bihar Board, by subject.
       </p>
     </form>
   );

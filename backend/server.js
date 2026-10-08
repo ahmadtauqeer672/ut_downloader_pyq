@@ -6,6 +6,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
+const { initTestSeriesDb, registerTestSeriesRoutes } = require('./test-series');
 require('dotenv').config();
 
 const app = express();
@@ -116,6 +117,11 @@ const pool = new Pool({
   ssl: process.env.POSTGRES_SSL === 'false' ? false : { rejectUnauthorized: false }
 });
 
+// Hosted Postgres (Neon) closes idle connections; without this listener that error crashes the process.
+pool.on('error', (err) => {
+  console.error('Postgres pool error (connection will be replaced):', err.message);
+});
+
 async function initDb() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS papers (
@@ -150,6 +156,7 @@ async function initDb() {
     );
   `);
 
+  await initTestSeriesDb(pool);
 }
 
 initDb().catch((err) => {
@@ -304,8 +311,9 @@ app.get(
       sql += ` AND semester = $${params.length}`;
     }
     if (subject) {
-      params.push(`%${subject}%`);
-      sql += ` AND subject ILIKE $${params.length}`;
+      // Exact (case-insensitive) match so "SCIENCE" does not also return "SOCIAL SCIENCE".
+      params.push(String(subject).trim());
+      sql += ` AND LOWER(TRIM(subject)) = LOWER($${params.length})`;
     }
     if (examType) {
       params.push(`%${examType}%`);
@@ -977,6 +985,15 @@ app.delete(
     return res.json({ message: 'Competitive paper deleted successfully' });
   })
 );
+
+registerTestSeriesRoutes(app, {
+  pool,
+  asyncHandler,
+  requireAdminAuth,
+  readBearerToken,
+  sessionSecret: process.env.STUDENT_SESSION_SECRET || ADMIN_SESSION_SECRET,
+  cloudinary
+});
 
 // ---- Error handling ----
 app.use((err, _req, res, _next) => {

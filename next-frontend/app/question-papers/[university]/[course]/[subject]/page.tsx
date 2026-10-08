@@ -68,7 +68,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
   return (
     <PapersView
       heading={`${subject} Previous Year Question Papers`}
-      description={`Browse Bihar Board 10th ${subject} previous year question papers year-wise and open the exact BSEB subject paper route faster on UTpaper.`}
+      description={`Browse Bihar Board 10th ${subject} previous year question papers year-wise and download them free on UTpaper.`}
       university={university}
       course={course}
       subject={subject}

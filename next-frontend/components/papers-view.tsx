@@ -1,17 +1,13 @@
 import Link from 'next/link';
 import { PapersFilterForm } from '@/components/papers-filter-form';
-import {
-  BSEB_10TH_SUBJECTS,
-  FEATURE_ITEMS,
-  UNIVERSITY_OPTIONS
-} from '@/lib/data';
+import { BSEB_10TH_SUBJECTS, UNIVERSITY_OPTIONS } from '@/lib/data';
 import {
   competitiveDownloadHref,
   groupCompetitiveByYear,
   groupPapersBySemester,
   paperDownloadHref
 } from '@/lib/api';
-import { competitiveExamHref, courseHref, courseSubjectHref, universityHref } from '@/lib/slug';
+import { competitiveExamHref, courseHref, courseSubjectHref } from '@/lib/slug';
 import { CompetitivePaper, CompetitiveSummary, Paper, UniversityOption } from '@/lib/types';
 
 interface PapersViewProps {
@@ -26,6 +22,7 @@ interface PapersViewProps {
   competitiveSummary: CompetitiveSummary;
   competitivePapers?: CompetitivePaper[];
   showAcademicPapers?: boolean;
+  showPaperList?: boolean;
 }
 
 function semesterLabel(semester: number): string {
@@ -65,7 +62,8 @@ export function PapersView({
   papers,
   competitiveSummary,
   competitivePapers = [],
-  showAcademicPapers = true
+  showAcademicPapers = true,
+  showPaperList = true
 }: PapersViewProps) {
   const activeUniversity = university ?? UNIVERSITY_OPTIONS[0] ?? null;
   const semesterGroups = groupPapersBySemester(papers);
@@ -75,21 +73,21 @@ export function PapersView({
   const useBsebYearArchive = isBseb10thPage;
   const directYearGroups = groupPapersByYear(papers);
   const heroNote = isBsebSubjectPage
-    ? `Browse Bihar Board 10th ${subject} previous year papers on a dedicated year-wise page while keeping the main BSEB filter flow available.`
+    ? `All Bihar Board 10th ${subject} papers are listed year-wise below. Open any paper to view or download it as a PDF.`
     : isBseb10thPage
-    ? 'Browse Bihar Board 10th previous year question papers subject-wise with server-rendered content that helps students and search engines find the right papers faster.'
-    : 'Browse PTU, PU Chandigarh, GNDU, MDU and GTU question papers with cleaner URLs, better crawlability and server-rendered HTML for search engines.';
-  const pageFocusCopy = isBsebSubjectPage
-    ? `This route is focused on BSEB Class 10 ${subject} papers with a year-wise archive that makes subject-specific browsing easier for students and search engines.`
-    : isBseb10thPage
-    ? 'This page focuses on BSEB Class 10 previous year papers, subject-wise browsing, and clear route text that can support Google indexing for Bihar Board searches.'
-    : 'This page is server-rendered in Next.js so Google can crawl the real content and metadata more easily than a purely client-side app shell.';
+    ? 'Pick a subject to see its papers year-wise, or scroll down for the full list. Every paper opens as a free PDF.'
+    : 'No sign-up needed to download papers. Pick your university and course, then open any paper as a PDF.';
+  const popularLinks = [
+    { label: 'PTU BTECH', hint: 'Semester-wise papers', href: courseHref('PTU', 'BTECH') },
+    { label: 'PTU BCA', hint: 'All semesters', href: courseHref('PTU', 'BCA') },
+    { label: 'PTU MBA', hint: 'All semesters', href: courseHref('PTU', 'MBA') },
+    { label: 'Bihar Board Class 10', hint: 'Subject-wise papers', href: courseHref('BIHAR BOARD (BSEB)', '10TH') }
+  ];
 
   return (
     <>
       <section className="hero">
         <div className="card hero__main">
-          <p className="eyebrow">Academic Resource Hub</p>
           <h1>{heading}</h1>
           <p className="hero__lede">{description}</p>
           <p className="hero__note">{heroNote}</p>
@@ -97,148 +95,102 @@ export function PapersView({
             <a className="button button--primary" href="#paper-directory">
               Browse question papers
             </a>
-            <Link className="button button--secondary" href={courseHref('PTU', 'BTECH')}>
-              Open PTU BTECH papers
+            <Link className="button button--secondary" href="/test-series">
+              Take a free mock test
             </Link>
           </div>
         </div>
 
         <aside className="card hero__side">
-          <p className="eyebrow">Trending on UTpaper</p>
-          <h2 className="section-title">Start with high-demand paper categories</h2>
-          <div className="hero-stat-grid">
-            <article className="stat-card">
-              <strong>{papers.length}</strong>
-              <p>Papers on this page</p>
-            </article>
-            <article className="stat-card">
-              <strong>{competitiveSummary.totalCount}</strong>
-              <p>Total competitive papers</p>
-            </article>
-          </div>
-          <div className="shortcut-grid">
-            <Link className="chip" href={courseHref('PTU', 'BTECH')}>
-              PTU BTECH
-            </Link>
-            <Link className="chip" href={courseHref('PTU', 'BCA')}>
-              PTU BCA
-            </Link>
-            <Link className="chip" href={courseHref('PTU', 'MBA')}>
-              PTU MBA
-            </Link>
-            
-          </div>
+          <h2 className="hero__side-title">Popular right now</h2>
+          <nav className="quick-links" aria-label="Popular paper categories">
+            {popularLinks.map((item) => (
+              <Link className="quick-link" href={item.href} key={item.label}>
+                <span>
+                  <strong>{item.label}</strong>
+                  <small>{item.hint}</small>
+                </span>
+                <span className="quick-link__arrow" aria-hidden="true">
+                  →
+                </span>
+              </Link>
+            ))}
+          </nav>
+          {competitiveSummary.totalCount > 0 ? (
+            <p className="hero__side-note">
+              Plus <b>{competitiveSummary.totalCount}</b> competitive exam papers across {competitiveSummary.exams.length}{' '}
+              exams.
+            </p>
+          ) : null}
         </aside>
       </section>
 
-      <section className="section content-grid">
-        <article className="card section-card">
+      {isBseb10thPage ? (
+        <section className="section card section-card">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Why students use UTpaper</p>
-              <h2 className="section-title">Find university question papers faster</h2>
+              <h2 className="section-title">Bihar Board 10th papers, subject-wise</h2>
             </div>
           </div>
 
           <p className="section-copy">
-            {isBseb10thPage
-              ? 'Browse BSEB Class 10 previous year question papers subject-wise in one place. UTpaper helps students find Bihar Board 10th papers faster without going through confusing links and multiple websites.'
-              : 'UTpaper is built for students who want quick access to previous year question papers without hopping between many websites. You can browse dedicated university and course URLs, then open or download papers directly.'}
+            Browse BSEB Class 10 previous year question papers subject-wise in one place. UTpaper helps students find
+            Bihar Board 10th papers faster without going through confusing links and multiple websites.
           </p>
 
-          {isBseb10thPage ? (
-            <>
-              <p className="section-copy">
-                You can open and download Bihar Board 10th question papers for Hindi MT, Hindi SIL, Urdu,
-                Mathematics, Science, Social Science and Sanskrit. These papers are useful for understanding exam
-                pattern, important chapters and repeated questions.
-              </p>
+          <p className="section-copy">
+            You can open and download Bihar Board 10th question papers for Hindi MT, Hindi SIL, Urdu,
+            Mathematics, Science, Social Science and Sanskrit. These papers are useful for understanding exam
+            pattern, important chapters and repeated questions.
+          </p>
 
-              <p className="section-copy">
-                Use the subject filter to quickly find the paper you need. Regular practice with BSEB Class 10
-                previous year papers can help students improve revision, time management and confidence before board
-                exams.
-              </p>
+          <p className="section-copy">
+            Use the subject filter to quickly find the paper you need. Regular practice with BSEB Class 10
+            previous year papers can help students improve revision, time management and confidence before board
+            exams.
+          </p>
 
-              <div className="feature-grid">
-                {BSEB_10TH_SUBJECTS.map((item) => (
-                  <Link
-                    className="feature-card feature-card--link"
-                    href={`${courseSubjectHref(university?.name ?? 'BIHAR BOARD (BSEB)', course ?? '10TH', item)}#paper-directory`}
-                    key={item}
-                  >
-                    <strong>{item}</strong>
-                    <p>Bihar Board 10th previous year question papers for {item.toLowerCase()}.</p>
-                    <span className="feature-card__hint">Open year-wise papers</span>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="feature-grid section">
-                <article className="feature-card">
-                  <strong>How can I download Bihar Board 10th question papers?</strong>
-                  <p>Select Bihar Board (BSEB), choose Class 10th, then pick a subject and apply filters.</p>
-                </article>
-                <article className="feature-card">
-                  <strong>Which subjects are available for BSEB Class 10 papers?</strong>
-                  <p>Hindi MT, Hindi SIL, Urdu, Mathematics, Science, Social Science and Sanskrit are available.</p>
-                </article>
-                <article className="feature-card">
-                  <strong>Are Bihar Board 10th previous year papers useful?</strong>
-                  <p>Yes, they help students understand question style, important topics and time management.</p>
-                </article>
-              </div>
-            </>
-          ) : (
-            <div className="feature-grid">
-              {FEATURE_ITEMS.map((item) => (
-                <article className="feature-card" key={item.title}>
-                  <strong>{item.title}</strong>
-                  <p>{item.description}</p>
-                </article>
-              ))}
-            </div>
-          )}
-        </article>
-
-        <aside className="card section-card">
-          <div className="section-head">
-            <div>
-              <p className="eyebrow">Page focus</p>
-              <h2 className="section-title">Current route details</h2>
-            </div>
-          </div>
-
-          <div className="badge-line">
-            <span>{university?.name ?? 'All universities'}</span>
-            <span>{course ?? 'All courses'}</span>
-            {subject ? <span>{subject}</span> : null}
-            <span>{papers.length} papers</span>
-          </div>
-
-          <p className="muted-copy">{pageFocusCopy}</p>
-
-          <div className="chip-row">
-            {UNIVERSITY_OPTIONS.map((option) => (
-              <Link className="chip" href={universityHref(option.name)} key={option.name}>
-                {option.name}
+          <div className="feature-grid">
+            {BSEB_10TH_SUBJECTS.map((item) => (
+              <Link
+                className="feature-card feature-card--link"
+                href={`${courseSubjectHref(university?.name ?? 'BIHAR BOARD (BSEB)', course ?? '10TH', item)}#paper-directory`}
+                key={item}
+              >
+                <strong>{item}</strong>
+                <p>Bihar Board 10th previous year question papers for {item.toLowerCase()}.</p>
+                <span className="feature-card__hint">Open year-wise papers</span>
               </Link>
             ))}
           </div>
-        </aside>
-      </section>
+
+          <div className="feature-grid section">
+            <article className="feature-card">
+              <strong>How can I download Bihar Board 10th question papers?</strong>
+              <p>Select Bihar Board (BSEB), choose Class 10th, then pick a subject and apply filters.</p>
+            </article>
+            <article className="feature-card">
+              <strong>Which subjects are available for BSEB Class 10 papers?</strong>
+              <p>Hindi MT, Hindi SIL, Urdu, Mathematics, Science, Social Science and Sanskrit are available.</p>
+            </article>
+            <article className="feature-card">
+              <strong>Are Bihar Board 10th previous year papers useful?</strong>
+              <p>Yes, they help students understand question style, important topics and time management.</p>
+            </article>
+          </div>
+        </section>
+      ) : null}
 
       <section id="paper-directory" className="section paper-layout paper-directory-section">
         <div className="card section-card">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Academic library</p>
               <h2 className="section-title">
                 {isBsebSubjectPage
-                  ? `${subject} year-wise paper directory`
+                  ? `${subject} papers, year-wise`
                   : isBseb10thPage
-                    ? 'All subjects year-wise paper directory'
-                    : 'Academic question paper directory'}
+                    ? 'All subjects, year-wise'
+                    : 'Find your question paper'}
               </h2>
             </div>
           </div>
@@ -252,7 +204,7 @@ export function PapersView({
             initialSubject={subject ?? ''}
           />
 
-          {showAcademicPapers ? (
+          {!showPaperList ? null : showAcademicPapers ? (
             useBsebYearArchive ? (
               directYearGroups.length > 0 ? (
                 directYearGroups.map((yearGroup) => (
@@ -343,26 +295,42 @@ export function PapersView({
             ))
           ) : (
             <div className="notice-card">
-              <strong>No academic papers found for this route yet.</strong>
+              <strong>No papers found for this selection yet.</strong>
               <p className="empty-state">
-                Try a broader university page or another course route while more papers are being uploaded.
+                Try another course or semester. New papers are added regularly.
               </p>
             </div>
             )
           ) : (
             <div className="notice-card">
-              <strong>Select your route and click Apply Filters.</strong>
+              <strong>Choose your filters and click Apply Filters.</strong>
               <p className="empty-state">Question papers will appear here after you apply the current selection.</p>
             </div>
           )}
         </div>
 
         <div>
-          <article className="card section-card">
+          <aside className="card section-card promo-card">
+            <span className="promo-card__badge">New on UTpaper</span>
+            <h2 className="section-title">Free mock tests</h2>
+            <p className="muted-copy">
+              Practise with timed mock tests, see your score and rank instantly, and check the correct answer with
+              explanation for every question.
+            </p>
+            <ul className="promo-card__list">
+              <li>Full-length mocks &amp; subject tests</li>
+              <li>Instant result with solutions</li>
+              <li>Track every attempt in one place</li>
+            </ul>
+            <Link className="button button--primary" href="/test-series">
+              Start a free test
+            </Link>
+          </aside>
+
+          <article className="card section-card section">
             <div className="section-head">
               <div>
-                <p className="eyebrow">Competitive exams</p>
-                <h2 className="section-title">Year-wise exam paper summary</h2>
+                <h2 className="section-title">Competitive exam papers</h2>
               </div>
             </div>
 
@@ -383,7 +351,6 @@ export function PapersView({
             <article className="card section-card section">
               <div className="section-head">
                 <div>
-                  <p className="eyebrow">Competitive samples</p>
                   <h2 className="section-title">Recent competitive exam papers</h2>
                 </div>
               </div>
@@ -414,32 +381,6 @@ export function PapersView({
           )}
         </div>
       </section>
-
-      <section className="section card section-card">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">Browse routes</p>
-            <h2 className="section-title">University and course pages</h2>
-          </div>
-        </div>
-
-        <div className="route-grid">
-          {UNIVERSITY_OPTIONS.map((option) => (
-            <article className="route-card" key={option.name}>
-              <strong>{option.name}</strong>
-              <div className="route-list">
-                <Link href={universityHref(option.name)}>All {option.name} courses</Link>
-                {option.courses.map((item) => (
-                  <Link href={courseHref(option.name, item)} key={item}>
-                    {option.name} {item}
-                  </Link>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
     </>
   );
 }

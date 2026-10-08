@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { listCompetitiveExams } from '@/lib/api';
+import { listCompetitiveExams, listTestSeries } from '@/lib/api';
 import { UNIVERSITY_OPTIONS } from '@/lib/data';
 import { slugify } from '@/lib/slug';
 import { createSitemapEntry, getBsebClass10SitemapEntries } from '@/lib/sitemaps';
@@ -7,6 +7,7 @@ import { createSitemapEntry, getBsebClass10SitemapEntries } from '@/lib/sitemaps
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     createSitemapEntry('/', { changeFrequency: 'daily', priority: 1, lastModified: new Date() }),
+    createSitemapEntry('/test-series', { changeFrequency: 'daily', priority: 0.85, lastModified: new Date() }),
     createSitemapEntry('/about', { changeFrequency: 'monthly', priority: 0.55, lastModified: new Date() }),
     createSitemapEntry('/contact', { changeFrequency: 'monthly', priority: 0.5, lastModified: new Date() }),
     createSitemapEntry('/privacy-policy', { changeFrequency: 'monthly', priority: 0.45, lastModified: new Date() }),
@@ -52,7 +53,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     )
     .catch(() => []);
 
-  return [...staticRoutes, ...courseRoutes, ...bsebClass10Routes, ...competitiveExamRoutes].sort((a, b) =>
+  const testSeriesRoutes = (await listTestSeries()).map<MetadataRoute.Sitemap[number]>((series) =>
+    createSitemapEntry(`/test-series/${series.slug}`, {
+      changeFrequency: 'weekly',
+      priority: 0.75,
+      lastModified: new Date()
+    })
+  );
+
+  return [...staticRoutes, ...courseRoutes, ...bsebClass10Routes, ...competitiveExamRoutes, ...testSeriesRoutes].sort((a, b) =>
     a.url.localeCompare(b.url)
   );
 }

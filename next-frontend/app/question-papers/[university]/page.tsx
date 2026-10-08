@@ -60,7 +60,7 @@ export default async function UniversityPage({ params, searchParams }: Universit
   return (
     <PapersView
       heading={`${university.name} Question Papers All Courses`}
-      description={`Browse ${university.name} previous year papers across all available courses. Use the clean route to open semester-wise and course-wise paper collections faster.`}
+      description={`Browse ${university.name} previous year papers across all available courses. Pick a course to open its papers semester-wise.`}
       university={university}
       department={department}
       semester={semester}

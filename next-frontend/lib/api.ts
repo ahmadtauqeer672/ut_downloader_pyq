@@ -1,5 +1,13 @@
 import { API_BASE_URL } from '@/lib/data';
-import { CompetitivePaper, CompetitiveSummary, Paper, SemesterGroup, YearGroup } from '@/lib/types';
+import {
+  CompetitivePaper,
+  CompetitiveSummary,
+  Paper,
+  SemesterGroup,
+  TestSeries,
+  TestSeriesDetail,
+  YearGroup
+} from '@/lib/types';
 
 interface PaperFilterOptions {
   university?: string;
@@ -13,12 +21,13 @@ interface PaperFilterOptions {
 
 interface FetchJsonOptions {
   tags?: string[];
+  revalidate?: number;
 }
 
 async function fetchJson<T>(path: string, options?: FetchJsonOptions): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     next: {
-      revalidate: 1800,
+      revalidate: options?.revalidate ?? 1800,
       tags: options?.tags ?? []
     }
   });
@@ -67,6 +76,26 @@ export async function listCompetitivePapers(examName: string): Promise<Competiti
   return fetchJson<CompetitivePaper[]>(`/competitive-papers?${params.toString()}`, {
     tags: ['competitive-papers']
   });
+}
+
+// Test series pages must still render if the backend has not been deployed with these routes yet.
+export async function listTestSeries(): Promise<TestSeries[]> {
+  try {
+    return await fetchJson<TestSeries[]>('/test-series', { tags: ['test-series'], revalidate: 300 });
+  } catch {
+    return [];
+  }
+}
+
+export async function getTestSeries(slug: string): Promise<TestSeriesDetail | null> {
+  try {
+    return await fetchJson<TestSeriesDetail>(`/test-series/${encodeURIComponent(slug)}`, {
+      tags: ['test-series'],
+      revalidate: 300
+    });
+  } catch {
+    return null;
+  }
 }
 
 export function groupPapersBySemester(papers: Paper[]): SemesterGroup[] {

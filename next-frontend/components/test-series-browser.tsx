@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 import { ChevronIcon, LanguageIcon, TestsIcon, UsersIcon } from '@/components/icons';
+import { cloudinaryThumb } from '@/lib/image';
 import { TestSeries } from '@/lib/types';
 
 const OTHER = 'Other exams';
@@ -61,7 +62,7 @@ function SeriesCard({ series }: { series: TestSeries }) {
         {series.logoUrl ? (
           <span className="ts-card__logo" aria-hidden="true">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={series.logoUrl} alt="" loading="lazy" />
+            <img src={cloudinaryThumb(series.logoUrl, 96)} alt="" width={42} height={42} loading="lazy" />
           </span>
         ) : (
           <span className="ts-card__logo ts-card__logo--text" style={{ background: badgeColor(series) }} aria-hidden="true">

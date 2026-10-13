@@ -8,6 +8,11 @@ interface SubjectPageProps {
   params: Promise<{ university: string; course: string; subject: string }>;
 }
 
+// Render each page on its first visit, then serve it from the cache until its data revalidates.
+export function generateStaticParams() {
+  return [];
+}
+
 async function resolveSubjectRoute(params: SubjectPageProps['params']) {
   const { university: universitySlug, course: courseSlug, subject: subjectSlug } = await params;
   const university = findUniversityBySlug(universitySlug);

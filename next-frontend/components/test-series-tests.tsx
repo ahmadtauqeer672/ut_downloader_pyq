@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronIcon, CloseIcon, LanguageIcon, TestsIcon, UsersIcon } from '@/components/icons';
 import { StudentAuthForm } from '@/components/student-auth-form';
 import { TestCard } from '@/components/test-card';
+import { cloudinaryThumb } from '@/lib/image';
 import { MockTest, TestKind, TestSeriesDetail } from '@/lib/types';
 import { useStudentSession } from '@/lib/use-student-session';
 
@@ -116,7 +117,7 @@ export function TestSeriesTests({ series }: { series: TestSeriesDetail }) {
             {series.logoUrl ? (
               <span className="sd-hero__logo">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={series.logoUrl} alt={`${series.examName || series.title} logo`} />
+                <img src={cloudinaryThumb(series.logoUrl, 160)} alt={`${series.examName || series.title} logo`} width={52} height={52} />
               </span>
             ) : null}
             <div>

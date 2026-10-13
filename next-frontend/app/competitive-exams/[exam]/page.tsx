@@ -8,6 +8,11 @@ interface CompetitiveExamPageProps {
   params: Promise<{ exam: string }>;
 }
 
+// Render each page on its first visit, then serve it from the cache until its data revalidates.
+export function generateStaticParams() {
+  return [];
+}
+
 async function findExamNameBySlug(examSlug: string): Promise<string | null> {
   const exams = await listCompetitiveExams().catch(() => []);
   return exams.find((exam) => slugify(exam) === examSlug) ?? null;

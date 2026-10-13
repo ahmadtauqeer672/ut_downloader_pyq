@@ -7,6 +7,11 @@ interface TestSeriesPageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Render each page on its first visit, then serve it from the cache until its data revalidates.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: TestSeriesPageProps) {
   const { slug } = await params;
   const series = await getTestSeries(slug);

@@ -470,18 +470,21 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
   app.get(
     '/api/test-series/:slug',
     asyncHandler(async (req, res) => {
-      const { rows } = await pool.query(
-        `SELECT ${SERIES_COLUMNS}, ${seriesStatsSql(true)} FROM test_series s WHERE s.slug = $1 AND s.is_published`,
-        [String(req.params.slug)]
-      );
+      const slug = String(req.params.slug);
+      const [{ rows }, tests] = await Promise.all([
+        pool.query(
+          `SELECT ${SERIES_COLUMNS}, ${seriesStatsSql(true)} FROM test_series s WHERE s.slug = $1 AND s.is_published`,
+          [slug]
+        ),
+        pool.query(
+          `SELECT ${TEST_COLUMNS} FROM tests t JOIN test_series s ON s.id = t.series_id
+           WHERE s.slug = $1 AND t.is_published
+           ORDER BY t.sort_order ASC, t.id ASC`,
+          [slug]
+        )
+      ]);
       const series = rows[0];
       if (!series) return res.status(404).json({ message: 'Test series not found' });
-
-      const tests = await pool.query(
-        `SELECT ${TEST_COLUMNS} FROM tests t WHERE t.series_id = $1 AND t.is_published
-         ORDER BY t.sort_order ASC, t.id ASC`,
-        [series.id]
-      );
       res.json({ ...series, tests: tests.rows.filter((test) => test.questionCount > 0) });
     })
   );
@@ -500,19 +503,21 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
     '/api/tests/:id/start',
     requireStudentAuth,
     asyncHandler(async (req, res) => {
-      const test = await loadTest(toInt(req.params.id), { publishedOnly: true });
+      const testId = toInt(req.params.id);
+      // Independent reads run together: each query is a network round trip to the database.
+      const [test, questions, open] = await Promise.all([
+        loadTest(testId, { publishedOnly: true }),
+        loadQuestions(testId, { withAnswers: false }),
+        // Resume an unfinished attempt if there is still time left, so a page refresh does not reset the timer.
+        pool.query(
+          `SELECT id, answers, started_at AS "startedAt" FROM attempts
+           WHERE test_id = $1 AND student_id = $2 AND submitted_at IS NULL
+           ORDER BY started_at DESC LIMIT 1`,
+          [testId, req.studentId]
+        )
+      ]);
       if (!test) return res.status(404).json({ message: 'Test not found' });
-
-      const questions = await loadQuestions(test.id, { withAnswers: false });
       if (questions.length === 0) return res.status(400).json({ message: 'This test has no questions yet' });
-
-      // Resume an unfinished attempt if there is still time left, so a page refresh does not reset the timer.
-      const open = await pool.query(
-        `SELECT id, answers, started_at AS "startedAt" FROM attempts
-         WHERE test_id = $1 AND student_id = $2 AND submitted_at IS NULL
-         ORDER BY started_at DESC LIMIT 1`,
-        [test.id, req.studentId]
-      );
 
       let attempt = open.rows[0];
       const durationMs = test.durationMinutes * 60 * 1000;
@@ -573,8 +578,10 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
       if (!attempt) return res.status(404).json({ message: 'Attempt not found' });
       if (attempt.submittedAt) return res.json({ attemptId: attempt.id });
 
-      const test = await loadTest(attempt.testId, { publishedOnly: false });
-      const questions = await loadQuestions(attempt.testId, { withAnswers: true });
+      const [test, questions] = await Promise.all([
+        loadTest(attempt.testId, { publishedOnly: false }),
+        loadQuestions(attempt.testId, { withAnswers: true })
+      ]);
       const answers = cleanAnswers(req.body?.answers, questions.map((q) => q.id));
       const result = gradeAttempt(questions, answers, test);
       const elapsed = Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000);
@@ -616,18 +623,19 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
       const attempt = rows[0];
       if (!attempt) return res.status(404).json({ message: 'Result not found' });
 
-      const test = await loadTest(attempt.testId, { publishedOnly: false });
-      const questions = await loadQuestions(attempt.testId, { withAnswers: true });
-
-      // Rank is based on each candidate's best score for this test.
-      const rankResult = await pool.query(
-        `WITH best AS (
-           SELECT student_id, MAX(score) AS score FROM attempts
-           WHERE test_id = $1 AND submitted_at IS NOT NULL GROUP BY student_id
-         )
-         SELECT (SELECT COUNT(*)::int FROM best WHERE score > $2) + 1 AS rank, (SELECT COUNT(*)::int FROM best) AS total`,
-        [attempt.testId, attempt.score]
-      );
+      const [test, questions, rankResult] = await Promise.all([
+        loadTest(attempt.testId, { publishedOnly: false }),
+        loadQuestions(attempt.testId, { withAnswers: true }),
+        // Rank is based on each candidate's best score for this test.
+        pool.query(
+          `WITH best AS (
+             SELECT student_id, MAX(score) AS score FROM attempts
+             WHERE test_id = $1 AND submitted_at IS NOT NULL GROUP BY student_id
+           )
+           SELECT (SELECT COUNT(*)::int FROM best WHERE score > $2) + 1 AS rank, (SELECT COUNT(*)::int FROM best) AS total`,
+          [attempt.testId, attempt.score]
+        )
+      ]);
 
       res.json({
         ...attempt,

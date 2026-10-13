@@ -114,7 +114,11 @@ const upload = multer({
 // ---- Postgres ----
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
-  ssl: process.env.POSTGRES_SSL === 'false' ? false : { rejectUnauthorized: false }
+  ssl: process.env.POSTGRES_SSL === 'false' ? false : { rejectUnauthorized: false },
+  // Reusing open connections avoids a fresh TLS handshake to the database on most requests
+  // (pg closes idle connections after 10s by default).
+  idleTimeoutMillis: 5 * 60 * 1000,
+  keepAlive: true
 });
 
 // Hosted Postgres (Neon) closes idle connections; without this listener that error crashes the process.

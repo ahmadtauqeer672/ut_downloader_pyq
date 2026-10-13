@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { SupportContact } from '@/components/support-contact';
+import { SUPPORT_EMAIL } from '@/lib/data';
 import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
@@ -15,9 +17,14 @@ export default function ContactPage() {
         <p className="eyebrow">Contact</p>
         <h1>Contact UTpaper</h1>
         <p className="hero__lede">
-          Use this page for paper corrections, broken download links, feedback, and copyright-related concerns about
-          content shown on utpaper.in.
+          Use this page for paper corrections, broken download links, mock test errors, account or privacy requests,
+          feedback, and copyright-related concerns about content shown on utpaper.in.
         </p>
+        {SUPPORT_EMAIL ? (
+          <p className="hero__lede">
+            Email: <SupportContact subject="UTpaper support" />
+          </p>
+        ) : null}
         <div className="button-row">
           <Link className="button button--primary" href="/">
             Back to home
@@ -25,10 +32,10 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="card disclaimer-copy">
+      <section className="card disclaimer-copy legal-copy">
         <p>
-          If you find an incorrect paper title, wrong year, broken file link, duplicate upload, or a missing subject
-          route, please contact the UTpaper team with as much detail as possible so the issue can be reviewed faster.
+          If you find an incorrect paper title, wrong year, broken file link, duplicate upload, a wrong answer in a mock
+          test, or a missing subject route, please contact the UTpaper team with as much detail as possible so the issue can be reviewed faster.
         </p>
         <p>
           For copyright or ownership concerns, please include the paper title, route URL, proof of ownership, and the
@@ -47,8 +54,8 @@ export default function ContactPage() {
           4. Any proof or reference links needed to review the request
         </p>
         <p>
-          If you are setting up this page for production, add your public support email, business contact form, or
-          verified social/business contact method here so users and rights holders can reach you directly.
+          To delete your account and test history, write from your registered email address. See the{' '}
+          <Link href="/privacy-policy">Privacy Policy</Link> for details.
         </p>
         <p>
           UTpaper aims to review valid reports as quickly as possible, but response time may vary depending on the

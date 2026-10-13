@@ -4833,3 +4833,49 @@ a.chip:focus-visible {
   background: var(--border);
   content: "";
 }
+
+/* ==========================================================================
+   Legal pages (privacy policy, terms, contact)
+   ========================================================================== */
+
+.legal-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.legal-copy h2 {
+  margin: 1.4rem 0 0.35rem;
+  font-size: 1.12rem;
+  font-weight: 900;
+}
+
+.legal-copy h2:first-child {
+  margin-top: 0;
+}
+
+.legal-copy p,
+.legal-copy li {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.legal-copy ul {
+  margin: 0 0 0.6rem;
+  padding-left: 1.25rem;
+}
+
+.legal-copy a {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.legal-copy strong {
+  color: var(--text);
+}
+
+.legal-updated {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}

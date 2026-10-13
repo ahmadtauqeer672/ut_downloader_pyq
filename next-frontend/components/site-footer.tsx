@@ -24,7 +24,7 @@ const FOOTER_GROUPS = [
       { label: 'About us', href: '/about' },
       { label: 'Contact', href: '/contact' },
       { label: 'Privacy policy', href: '/privacy-policy' },
-      { label: 'Disclaimer', href: '/disclaimer' }
+      { label: 'Terms & disclaimer', href: '/disclaimer' }
     ]
   }
 ];

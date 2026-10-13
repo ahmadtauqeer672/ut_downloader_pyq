@@ -1,6 +1,8 @@
 import { UniversityOption } from '@/lib/types';
 
 export const SITE_URL = 'https://www.utpaper.in';
+// Public support address shown on the privacy, terms and contact pages. Leave empty to hide it.
+export const SUPPORT_EMAIL = 'utpaper.help@gmail.com';
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.utpaper.in/api';
 
 export const UNIVERSITY_OPTIONS: UniversityOption[] = [

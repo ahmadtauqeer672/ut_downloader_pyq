@@ -4093,30 +4093,126 @@ a.chip:focus-visible {
 
 /* Formula images copied from PDFs */
 .rich-img {
+  /* Every crop shares the PDF's render scale; drawing each at the same share of its natural width
+     keeps question and option text the same size. --rich-w is set once the image has loaded. */
+  --rich-scale: 0.9;
   display: block;
   /* Crops have a white background; multiply lets highlighted (green/red) rows show through. */
   mix-blend-mode: multiply;
   max-width: 100%;
   height: auto;
-  max-height: 420px;
   object-fit: contain;
+}
+
+.rich-img.is-sized {
+  width: calc(var(--rich-w) * var(--rich-scale) * 1px);
 }
 
 .option .rich-img,
 .solution__options .rich-img,
 .admin-qlist__opts .rich-img {
   display: inline-block;
-  max-height: 72px;
   vertical-align: middle;
 }
 
 .admin-qlist__opts .rich-img {
-  max-height: 40px;
+  --rich-scale: 0.6;
 }
 
-.exam__qtext .rich-img,
-.solution__q .rich-img {
-  max-width: min(100%, 640px);
+.rich-zoom {
+  position: relative;
+  display: block;
+  max-width: 100%;
+}
+
+.rich-zoom__cover {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+}
+
+.rich-zoom__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #c7d7fe;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.rich-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.rich-viewer__close {
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0.75rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.rich-viewer__scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 0 1rem;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.rich-viewer__scroll img {
+  display: block;
+  max-width: none;
+  margin: auto;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.rich-viewer__tip {
+  margin: 0;
+  padding: 0.75rem 1rem 1.25rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .rich-img {
+    --rich-scale: 0.8;
+  }
+
+  /* Option crops are short words; at the question's scale they look oversized next to a shrunk question. */
+  .option .rich-img,
+  .solution__options .rich-img {
+    --rich-scale: 0.6;
+  }
+
+  /* Give wide question crops every pixel of the screen. */
+  .exam__question {
+    padding: 0.9rem 0.75rem;
+  }
 }
 
 /* ==========================================================================
@@ -4697,4 +4793,43 @@ a.chip:focus-visible {
   .sd-inside__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ==========================================================================
+   Google sign-in
+   ========================================================================== */
+
+.google-signin {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.google-signin__slot {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.google-signin__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.google-signin__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.google-signin__divider::before,
+.google-signin__divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  content: "";
 }

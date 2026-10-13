@@ -23,6 +23,17 @@ function readStoredSession(): StudentSession | null {
   }
 }
 
+// Stores a session and tells every useStudentSession() on the page (and other tabs) about it.
+// Usable outside React, e.g. from the Google One Tap callback.
+export function saveStudentSession(next: StudentSession) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Storage can be unavailable in private mode; the in-memory session still works for this page.
+  }
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
 export function useStudentSession() {
   const [session, setSession] = useState<StudentSession | null>(null);
   const [ready, setReady] = useState(false);
@@ -42,13 +53,8 @@ export function useStudentSession() {
   }, []);
 
   const login = (next: StudentSession) => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Storage can be unavailable in private mode; the in-memory session still works for this page.
-    }
+    saveStudentSession(next);
     setSession(next);
-    window.dispatchEvent(new Event(CHANGE_EVENT));
   };
 
   const logout = () => {
@@ -57,6 +63,8 @@ export function useStudentSession() {
     } catch {
       // ignore
     }
+    // Stop Google One Tap from signing the same account straight back in.
+    window.google?.accounts?.id?.disableAutoSelect();
     setSession(null);
     window.dispatchEvent(new Event(CHANGE_EVENT));
   };

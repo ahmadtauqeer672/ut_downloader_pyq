@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Lato } from 'next/font/google';
 import '@/app/globals.css';
+import { GoogleOneTap } from '@/components/google-sign-in';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { buildMetadata } from '@/lib/seo';
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SiteHeader />
           <main className="page-shell">{children}</main>
           <SiteFooter />
+          <GoogleOneTap />
         </div>
       </body>
     </html>

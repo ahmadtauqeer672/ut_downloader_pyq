@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const multer = require('multer');
+const { OAuth2Client } = require('google-auth-library');
 
 // Test series: candidate accounts, mock tests, attempts and admin management.
 // Registered from server.js via registerTestSeriesRoutes(app, deps).
@@ -84,6 +85,10 @@ async function initTestSeriesDb(pool) {
       submitted_at TIMESTAMPTZ
     );
   `);
+
+  // Students who sign in with Google are matched by Google's stable account id; they have no password.
+  await pool.query("ALTER TABLE students ADD COLUMN IF NOT EXISTS google_id TEXT");
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS students_google_id_idx ON students(google_id) WHERE google_id IS NOT NULL');
 
   // Questions/options copied from PDFs can carry formula images.
   await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS image_url TEXT NOT NULL DEFAULT ''");
@@ -332,6 +337,8 @@ const logoUpload = multer({
 
 function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, readBearerToken, sessionSecret, cloudinary }) {
   const { signStudentToken, verifyStudentToken } = createTokenHelpers(sessionSecret);
+  const googleClientId = String(process.env.GOOGLE_CLIENT_ID || '').trim();
+  const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
 
   function requireStudentAuth(req, res, next) {
     const session = verifyStudentToken(readBearerToken(req));
@@ -418,8 +425,59 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
         [email]
       );
       const student = rows[0];
+      if (student && !student.passwordHash) {
+        return res.status(401).json({ message: 'This account uses Google sign-in. Please continue with Google.' });
+      }
       if (!student || !verifyPassword(password, student.passwordHash)) {
         return res.status(401).json({ message: 'Incorrect email or password' });
+      }
+
+      res.json(sessionFor(student));
+    })
+  );
+
+  // "Sign in with Google" button and One Tap both post the ID token (credential) Google gives the browser.
+  app.post(
+    '/api/students/google',
+    asyncHandler(async (req, res) => {
+      if (!googleClient) return res.status(503).json({ message: 'Google sign-in is not available right now' });
+      if (isRateLimited(`google:${req.ip}`, 30)) {
+        return res.status(429).json({ message: 'Too many attempts. Please try again in a few minutes.' });
+      }
+
+      let payload;
+      try {
+        const ticket = await googleClient.verifyIdToken({ idToken: String(req.body?.credential || ''), audience: googleClientId });
+        payload = ticket.getPayload();
+      } catch {
+        return res.status(401).json({ message: 'Google sign-in failed. Please try again.' });
+      }
+
+      const email = String(payload?.email || '').trim().toLowerCase();
+      if (!payload?.sub || !email || !payload.email_verified) {
+        return res.status(401).json({ message: 'Your Google account email is not verified' });
+      }
+      const name = String(payload.name || '').trim() || email.split('@')[0];
+
+      // Match the Google account first; otherwise link it to an existing account with the same (verified) email.
+      const found = await pool.query(
+        `SELECT id, name, email, phone, google_id AS "googleId" FROM students
+         WHERE google_id = $1 OR email = $2 ORDER BY (google_id = $1) DESC NULLS LAST LIMIT 1`,
+        [payload.sub, email]
+      );
+      let student = found.rows[0];
+
+      if (student && !student.googleId) {
+        // Signup never verified the email, so whoever set the old password may not own it. Google has now
+        // proved ownership: drop the password so only the Google account can sign in from here on.
+        await pool.query("UPDATE students SET google_id = $1, password_hash = '' WHERE id = $2", [payload.sub, student.id]);
+      } else if (!student) {
+        const created = await pool.query(
+          `INSERT INTO students (name, email, password_hash, google_id) VALUES ($1, $2, '', $3)
+           RETURNING id, name, email, phone`,
+          [name, email, payload.sub]
+        );
+        student = created.rows[0];
       }
 
       res.json(sessionFor(student));

@@ -153,7 +153,7 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
                   </span>
                 </div>
                 <div className="solution__q">
-                  <RichContent text={q.question} image={q.imageUrl} />
+                  <RichContent text={q.question} image={q.imageUrl} zoomable />
                 </div>
                 <ul className="solution__options">
                   {q.options.map((option, index) => {

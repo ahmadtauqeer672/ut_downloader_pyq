@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { GoogleSignInButton } from '@/components/google-sign-in';
 import { loginStudent, registerStudent } from '@/lib/student-api';
 import { StudentSession } from '@/lib/types';
 
@@ -45,6 +46,8 @@ export function StudentAuthForm({ onSuccess, initialMode = 'register', heading }
             : 'Login with the email and password you registered with.'}
         </p>
       </div>
+
+      <GoogleSignInButton onSuccess={onSuccess} />
 
       <div className="auth-tabs" role="tablist">
         <button

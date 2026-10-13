@@ -57,6 +57,10 @@ export function loginStudent(input: { email: string; password: string }) {
   return request<StudentSession>('students/login', { method: 'POST', body: input });
 }
 
+export function googleLoginStudent(credential: string) {
+  return request<StudentSession>('students/google', { method: 'POST', body: { credential } });
+}
+
 export function listMyAttempts(token: string) {
   return request<AttemptSummary[]>('students/me/attempts', { token });
 }

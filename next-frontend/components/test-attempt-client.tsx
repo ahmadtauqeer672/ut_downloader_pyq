@@ -298,7 +298,7 @@ function ExamScreen({ attempt, token, onSubmitted, onSessionExpired }: ExamScree
           </div>
 
           <div className="exam__qtext">
-            <RichContent text={question.question} image={question.imageUrl} />
+            <RichContent text={question.question} image={question.imageUrl} zoomable />
           </div>
 
           <div className="options" role="radiogroup" aria-label={`Question ${current + 1} options`}>

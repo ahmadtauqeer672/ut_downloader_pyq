@@ -203,7 +203,11 @@ function seriesStatsSql(publishedOnly) {
     (SELECT COUNT(*)::int FROM tests t WHERE t.series_id = s.id AND t.kind = 'subject' ${testFilter}) AS "subjectTestCount",
     (SELECT COUNT(*)::int FROM tests t WHERE t.series_id = s.id AND t.kind = 'pyq' ${testFilter}) AS "pyqTestCount",
     (SELECT COUNT(DISTINCT a.student_id)::int FROM attempts a JOIN tests t ON t.id = a.test_id
-      WHERE t.series_id = s.id AND a.submitted_at IS NOT NULL) AS "studentCount"
+      WHERE t.series_id = s.id AND a.submitted_at IS NOT NULL) AS "studentCount",
+    (SELECT COUNT(*)::int FROM attempts a JOIN tests t ON t.id = a.test_id
+      WHERE t.series_id = s.id AND a.submitted_at IS NOT NULL) AS "attemptCount",
+    (SELECT COALESCE(ARRAY_AGG(DISTINCT TRIM(t.language)) FILTER (WHERE TRIM(t.language) <> ''), '{}')
+      FROM tests t WHERE t.series_id = s.id ${testFilter}) AS "languages"
   `;
 }
 

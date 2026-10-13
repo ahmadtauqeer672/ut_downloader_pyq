@@ -1,34 +1,22 @@
 import { JsonLdScript } from '@/components/json-ld-script';
-import { PapersView } from '@/components/papers-view';
-import { getCompetitiveSummary } from '@/lib/api';
+import { TestSeriesBrowser } from '@/components/test-series-browser';
+import { listTestSeries } from '@/lib/api';
 import { buildMetadata, organizationJsonLd } from '@/lib/seo';
 
 export const metadata = buildMetadata({
-  title: 'PTU Question Papers, Previous Year Papers and Competitive Exam PYQs | UTpaper',
+  title: 'Free Online Test Series and Mock Tests for Govt. Exams | UTpaper',
   description:
-    'Browse PTU and other university previous year question papers semester-wise. Download BTECH, BCA, BBA, MBA, MCA and competitive exam PYQs on UTpaper.',
-  keywords: [
-    'PTU question papers',
-    'previous year papers',
-    'BTECH papers',
-    'university PYQ',
-    'competitive exam papers'
-  ]
+    'Attempt free online mock test series for SSC, Railway, BPSC, State and other Govt. exams. Instant score, all-India rank and detailed solutions on UTpaper.',
+  keywords: ['free mock test', 'online test series', 'govt exam mock test', 'SSC mock test', 'BPSC TRE mock test', 'UTpaper']
 });
 
 export default async function HomePage() {
-  const competitiveSummary = await getCompetitiveSummary();
+  const seriesList = await listTestSeries();
 
   return (
     <>
       <JsonLdScript payload={organizationJsonLd()} />
-      <PapersView
-        heading="Previous Year Papers and Competitive PYQs"
-        description="Download PTU BTECH, BCA, BBA, MBA and MCA question papers semester-wise, Bihar Board Class 10 papers subject-wise, and competitive exam papers year-wise. All free on UTpaper."
-        papers={[]}
-        showPaperList={false}
-        competitiveSummary={competitiveSummary}
-      />
+      <TestSeriesBrowser seriesList={seriesList} heading="Online Test Series" />
     </>
   );
 }

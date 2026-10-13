@@ -9,7 +9,7 @@ export function SiteHeader() {
           <span className="brand__badge brand__badge--logo">UT</span>
           <span>
             <p className="brand__name">UTpaper</p>
-            <p className="brand__tag">Previous year papers &amp; mock tests</p>
+            <p className="brand__tag">Free mock tests &amp; test series</p>
           </span>
         </Link>
 

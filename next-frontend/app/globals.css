@@ -3534,165 +3534,435 @@ a.chip:focus-visible {
 }
 
 /* ==========================================================================
-   Test series index: search, categories, compact tiles
+   Test series browser (homepage + /test-series): hero search, popular carousel, category filter, cards
    ========================================================================== */
 
-.series-toolbar {
-  position: sticky;
-  top: 4.2rem;
-  z-index: 15;
+.ts-hero {
   display: grid;
-  gap: 0.75rem;
-  margin: 0 -0.5rem 1.25rem;
-  padding: 0.75rem 0.5rem 0.25rem;
-  background: var(--bg);
+  justify-items: center;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem);
+  border: 1px solid #e4ecfb;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #eef4ff 0%, #f7faff 100%);
+  text-align: center;
 }
 
-.series-search {
+.ts-hero h1,
+.ts-hero h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3.6vw, 2.3rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.ts-hero p {
+  max-width: 68ch;
+  margin: 0;
+  color: #3d4757;
+  line-height: 1.6;
+}
+
+.ts-hero .ts-hero__stats {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.ts-hero__stats strong {
+  color: var(--text);
+}
+
+.ts-hero__search {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  max-width: 560px;
-  padding: 0 0.9rem;
+  width: min(100%, 760px);
+  margin-top: 0.6rem;
+  padding: 0 1rem;
   border: 1px solid var(--border-strong);
   border-radius: 12px;
   background: #ffffff;
   color: var(--muted);
+  box-shadow: var(--shadow);
 }
 
-.series-search:focus-within {
+.ts-hero__search:focus-within {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
 }
 
-.series-search input {
+.ts-hero__search input {
   flex: 1;
   min-width: 0;
-  min-height: 2.9rem;
+  min-height: 3.1rem;
   border: none;
   background: none;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1rem;
   outline: none;
 }
 
-.series-toolbar__pills {
-  margin-bottom: 0;
+.ts-section {
+  scroll-margin-top: 5rem;
 }
 
-.pill__count {
-  margin-left: 0.3rem;
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  background: #f0f2f5;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 700;
+.ts-section + .ts-section {
+  margin-top: 2.5rem;
 }
 
-.pill.is-active .pill__count {
-  background: #ffffff;
-  color: var(--primary);
-}
-
-.series-group + .series-group {
-  margin-top: 2rem;
-}
-
-.series-group__head {
+.ts-section__head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 0.75rem;
-  margin-bottom: 0.85rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.series-group__head h2 {
+.ts-section__head h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 900;
 }
 
-.series-group__head > span {
-  color: var(--muted);
-  font-size: 0.88rem;
+.ts-section__head .ts-found {
+  font-size: clamp(1.35rem, 2.6vw, 1.7rem);
 }
 
-.series-group__head .text-link {
-  margin-left: auto;
+.ts-carousel__nav {
+  display: flex;
+  gap: 0.5rem;
 }
 
-.series-tiles {
+.ts-carousel__nav button {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 265px), 1fr));
-  gap: 0.75rem;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
 }
 
-.series-tile {
+.ts-carousel__nav button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.ts-flip {
+  transform: rotate(180deg);
+}
+
+.ts-carousel {
+  display: grid;
+  grid-auto-columns: minmax(270px, calc((100% - 3rem) / 4));
+  grid-auto-flow: column;
+  gap: 1rem;
+  padding: 0.25rem 0.1rem 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.ts-carousel > .ts-card {
+  scroll-snap-align: start;
+}
+
+.ts-layout {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.ts-layout > :only-child {
+  grid-column: 1 / -1;
+}
+
+.ts-filter {
+  position: sticky;
+  top: 5rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.ts-filter h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.ts-filter__search {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  min-height: 4.75rem;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #ffffff;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  color: var(--muted);
 }
 
-.series-tile:hover,
-.series-tile:focus-visible {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-lg);
+.ts-filter__search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.4rem;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 0.9rem;
   outline: none;
 }
 
-.series-tile__badge {
+.ts-filter__list {
+  display: grid;
+  gap: 0.15rem;
+  max-height: 60vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.ts-filter__list label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.45rem;
+  border-radius: 8px;
+  color: #344054;
+  font-size: 0.93rem;
+  cursor: pointer;
+}
+
+.ts-filter__list label:hover {
+  background: var(--surface-soft);
+}
+
+.ts-filter__list label.is-checked {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.ts-filter__list input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.ts-filter__list label > span:first-of-type {
+  flex: 1;
+  min-width: 0;
+}
+
+.ts-filter__count {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.ts-filter__none {
+  padding: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.ts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 1rem;
+}
+
+.ts-empty {
+  margin: 0;
+}
+
+.ts-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 1rem 1rem 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.ts-card:hover,
+.ts-card:focus-visible {
+  border-color: #b9cdf6;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.ts-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ts-card__logo {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 2.9rem;
-  height: 2.9rem;
-  border-radius: 10px;
+  width: 2.6rem;
+  height: 2.6rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.ts-card__logo img {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  object-fit: contain;
+}
+
+.ts-card__logo--text {
+  border: none;
   color: #ffffff;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.02em;
 }
 
-.series-tile__body {
-  display: grid;
-  flex: 1;
-  gap: 0.2rem;
-  min-width: 0;
+.ts-card__tag {
+  max-width: 60%;
+  overflow: hidden;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  background: #f0f2f5;
+  color: #475467;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.series-tile__body strong {
+.ts-card__title {
   display: -webkit-box;
+  min-height: 2.7em;
   overflow: hidden;
-  font-size: 0.95rem;
+  font-size: 1.02rem;
   line-height: 1.35;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
-.series-tile__meta {
+.ts-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
   color: var(--muted);
   font-size: 0.82rem;
 }
 
-.series-tile__arrow {
-  flex-shrink: 0;
-  color: #98a2b3;
+.ts-card__meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.series-tile:hover .series-tile__arrow {
+.ts-card__meta em {
   color: var(--primary);
+  font-style: normal;
 }
 
-@media (max-width: 760px) {
-  .series-toolbar {
-    top: 5.6rem;
+.ts-card__free {
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--success);
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.ts-card__foot {
+  margin: auto -1rem 0;
+  padding: 0.75rem 1rem 1rem;
+  background: var(--surface-soft);
+}
+
+.ts-card__cta {
+  display: block;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  background: #fddc3a;
+  color: #1c2434;
+  font-weight: 900;
+  text-align: center;
+  transition: background 140ms ease;
+}
+
+.ts-card:hover .ts-card__cta {
+  background: #fcd116;
+}
+
+@media (max-width: 900px) {
+  .ts-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .ts-filter {
+    position: static;
+    padding: 0;
+    border: none;
+    background: none;
+  }
+
+  .ts-filter h3,
+  .ts-filter__search {
+    display: none;
+  }
+
+  /* Categories become a horizontal row of chips on small screens. */
+  .ts-filter__list {
+    display: flex;
+    gap: 0.5rem;
+    max-height: none;
+    padding-bottom: 0.25rem;
+    overflow-x: auto;
+  }
+
+  .ts-filter__list label {
+    flex-shrink: 0;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--border-strong);
+    background: #ffffff;
+    white-space: nowrap;
+  }
+
+  .ts-filter__list label.is-checked {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  .ts-filter__list input {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ts-carousel {
+    grid-auto-columns: 82%;
+  }
+
+  .ts-carousel__nav {
+    display: none;
   }
 }
 
@@ -3700,23 +3970,10 @@ a.chip:focus-visible {
    Series logos
    ========================================================================== */
 
-.series-tile__badge--logo {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: #ffffff;
-}
-
-.series-tile__badge--logo img,
 .series-hero__logo,
 .logo-picker__preview img,
 .logo-library__item img {
   object-fit: contain;
-}
-
-.series-tile__badge--logo img {
-  width: 100%;
-  height: 100%;
-  padding: 3px;
 }
 
 .series-hero__title {

@@ -66,6 +66,9 @@ export interface TestSeries {
   subjectTestCount: number;
   pyqTestCount: number;
   studentCount: number;
+  // Older API responses may not include these yet.
+  attemptCount?: number;
+  languages?: string[];
 }
 
 export interface MockTest {

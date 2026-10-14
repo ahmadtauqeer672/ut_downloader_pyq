@@ -5,10 +5,9 @@ const FOOTER_GROUPS = [
     title: 'Question Papers',
     links: [
       { label: 'PTU BTECH', href: '/question-papers/ptu/btech' },
-      { label: 'PTU BCA', href: '/question-papers/ptu/bca' },
-      { label: 'PTU MBA', href: '/question-papers/ptu/mba' },
       { label: 'All PTU courses', href: '/question-papers/ptu' },
-      { label: 'Bihar Board Class 10', href: '/question-papers/bihar-board-bseb/10th' }
+      { label: 'Bihar Board Class 10', href: '/question-papers/bihar-board-bseb/10th' },
+      { label: 'BPSC TRE papers', href: '/competitive-exams/bpsc-tre' }
     ]
   },
   {

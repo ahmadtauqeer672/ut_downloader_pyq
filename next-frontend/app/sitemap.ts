@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getTestSeries, listCompetitiveExams, listTestSeries } from '@/lib/api';
+import { getTestSeries, listCompetitiveExams, listPapers, listTestSeries } from '@/lib/api';
 import { UNIVERSITY_OPTIONS } from '@/lib/data';
 import { slugify, testHref } from '@/lib/slug';
 import { createSitemapEntry, getBsebClass10SitemapEntries } from '@/lib/sitemaps';
@@ -17,30 +17,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     createSitemapEntry('/disclaimer', { changeFrequency: 'monthly', priority: 0.3, lastModified: new Date() })
   ];
 
-  const courseRoutes = UNIVERSITY_OPTIONS.flatMap((option) => {
-    if (option.name === 'BIHAR BOARD (BSEB)') {
-      return [];
-    }
+  const universities = UNIVERSITY_OPTIONS.filter((option) => option.name !== 'BIHAR BOARD (BSEB)');
+  const courseRoutes = (
+    await Promise.all(
+      universities.map(async (option) => {
+        const universitySlug = slugify(option.name);
+        const isPrimaryUniversity = option.name === 'PTU';
+        const lastModified = new Date();
+        const universityEntry = createSitemapEntry(`/question-papers/${universitySlug}`, {
+          changeFrequency: isPrimaryUniversity ? 'daily' : 'weekly',
+          priority: isPrimaryUniversity ? 0.9 : 0.76,
+          lastModified
+        });
 
-    const universitySlug = slugify(option.name);
-    const isPrimaryUniversity = option.name === 'PTU';
-    const lastModified = new Date();
-    const universityEntry = createSitemapEntry(`/question-papers/${universitySlug}`, {
-      changeFrequency: isPrimaryUniversity ? 'daily' : 'weekly',
-      priority: isPrimaryUniversity ? 0.9 : 0.76,
-      lastModified
-    });
+        // Course pages without papers are noindex, so they stay out of the sitemap too.
+        const courseEntries = await Promise.all(
+          option.courses.map(async (course) => {
+            const papers = await listPapers({ university: option.name, course, limit: 1 }).catch(() => []);
+            if (papers.length === 0) return null;
+            return createSitemapEntry(`/question-papers/${universitySlug}/${slugify(course)}`, {
+              changeFrequency: isPrimaryUniversity ? 'daily' : 'weekly',
+              priority: isPrimaryUniversity ? 0.82 : 0.72,
+              lastModified
+            });
+          })
+        );
 
-    const courseEntries = option.courses.map<MetadataRoute.Sitemap[number]>((course) =>
-      createSitemapEntry(`/question-papers/${universitySlug}/${slugify(course)}`, {
-        changeFrequency: isPrimaryUniversity ? 'daily' : 'weekly',
-        priority: isPrimaryUniversity ? 0.82 : 0.72,
-        lastModified
+        return [universityEntry, ...courseEntries.filter((entry): entry is MetadataRoute.Sitemap[number] => entry !== null)];
       })
-    );
-
-    return [universityEntry, ...courseEntries];
-  });
+    )
+  ).flat();
 
   const bsebClass10Routes = await getBsebClass10SitemapEntries();
 

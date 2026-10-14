@@ -46,7 +46,10 @@ export async function generateMetadata({ params }: CoursePageProps) {
     });
   }
 
+  // A course with no papers yet is thin content: keep it out of the index until papers are added.
+  const papers = await listPapers({ university: university.name, course, limit: 1 }).catch(() => []);
   return buildMetadata({
+    noIndex: papers.length === 0,
     title: `${university.name} ${course} Previous Year Question Papers (All Semesters) | UTpaper`,
     description: `Download free ${university.name} ${course} previous year question papers semester-wise and subject-wise. Old question papers of all semesters as PDF, no sign-up needed, on UTpaper.`,
     path: `/question-papers/${universitySlug}/${courseSlug}`,

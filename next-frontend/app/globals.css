@@ -5363,3 +5363,18 @@ a.chip:focus-visible {
     padding: 18px 16px;
   }
 }
+
+.seo-copy ul {
+  margin: 0 0 14px;
+  padding-left: 22px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.seo-copy ul li {
+  margin: 4px 0;
+}
+
+.seo-copy ul strong {
+  color: var(--text);
+}

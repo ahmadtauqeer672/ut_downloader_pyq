@@ -37,8 +37,24 @@ const emptyTest = (): TestInput => ({
   negativeMarks: 0,
   isFeatured: false,
   isPublished: true,
-  sortOrder: 0
+  sortOrder: 0,
+  sections: [],
+  notAttemptedOption: false
 });
+
+// BPSC TRE 4.0 (class 11-12): Language is qualifying, General Studies + subject make the merit score,
+// 1/3 negative marking and an option for "question not attempted". Check the pass mark against the notification.
+const TRE_PRESET: Partial<TestInput> = {
+  durationMinutes: 150,
+  marksPerQuestion: 1,
+  negativeMarks: 0.3333,
+  notAttemptedOption: true,
+  sections: [
+    { name: 'Language', qualifying: true, passPercent: 30 },
+    { name: 'General Studies', qualifying: false, passPercent: 0 },
+    { name: 'Computer Science', qualifying: false, passPercent: 0 }
+  ]
+};
 const emptyQuestion = (): QuestionInput => ({ question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' });
 
 function errorText(err: unknown) {
@@ -562,7 +578,9 @@ function TestsManager({ series, token, onChanged, notify }: TestsManagerProps) {
                   negativeMarks: test.negativeMarks,
                   isFeatured: test.isFeatured,
                   isPublished: test.isPublished,
-                  sortOrder: test.sortOrder
+                  sortOrder: test.sortOrder,
+                  sections: test.sections ?? [],
+                  notAttemptedOption: Boolean(test.notAttemptedOption)
                 }}
                 onCancel={() => setEditing(null)}
                 onSubmit={async (input) => {
@@ -580,7 +598,13 @@ function TestsManager({ series, token, onChanged, notify }: TestsManagerProps) {
             ) : null}
 
             {openQuestions === test.id ? (
-              <QuestionsManager testId={test.id} token={token} onChanged={() => afterChange('Questions updated.')} notify={notify} />
+              <QuestionsManager
+                testId={test.id}
+                sectionNames={(test.sections ?? []).map((item) => item.name)}
+                token={token}
+                onChanged={() => afterChange('Questions updated.')}
+                notify={notify}
+              />
             ) : null}
           </div>
         ))}
@@ -680,7 +704,66 @@ function TestForm({ initial, onSubmit, onCancel, onDelete, onError }: TestFormPr
           <input type="checkbox" checked={form.isPublished} onChange={(e) => set('isPublished', e.target.checked)} />
           Visible on website
         </label>
+        <label className="check field--wide">
+          <input type="checkbox" checked={form.notAttemptedOption} onChange={(e) => set('notAttemptedOption', e.target.checked)} />
+          Add a “Question not attempted” option (BPSC style). Questions left blank then get the negative marks.
+        </label>
       </div>
+
+      <div className="section-editor">
+        <div className="section-editor__head">
+          <b>Sections</b>
+          <span className="muted small">Optional. Tag each question with a section name. Qualifying sections must be passed but are not added to the score.</span>
+          <button className="text-link" type="button" onClick={() => setForm((prev) => ({ ...prev, ...TRE_PRESET }))}>
+            Use BPSC TRE 4.0 pattern
+          </button>
+        </div>
+        {form.sections.map((section, index) => (
+          <div className="section-editor__row" key={index}>
+            <input
+              value={section.name}
+              placeholder="Section name, e.g. Language"
+              onChange={(e) => set('sections', form.sections.map((item, i) => (i === index ? { ...item, name: e.target.value } : item)))}
+              required
+            />
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={section.qualifying}
+                onChange={(e) => set('sections', form.sections.map((item, i) => (i === index ? { ...item, qualifying: e.target.checked } : item)))}
+              />
+              Qualifying
+            </label>
+            {section.qualifying ? (
+              <label className="section-editor__pass">
+                Pass
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="1"
+                  value={section.passPercent}
+                  onChange={(e) =>
+                    set('sections', form.sections.map((item, i) => (i === index ? { ...item, passPercent: Number(e.target.value) } : item)))
+                  }
+                />
+                %
+              </label>
+            ) : null}
+            <button className="text-link text-link--danger" type="button" onClick={() => set('sections', form.sections.filter((_, i) => i !== index))}>
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          className="text-link"
+          type="button"
+          onClick={() => set('sections', [...form.sections, { name: '', qualifying: false, passPercent: 0 }])}
+        >
+          + Add section
+        </button>
+      </div>
+
       <div className="admin-form__actions">
         <button className="button button--primary button--sm" type="submit" disabled={busy}>
           {busy ? 'Saving…' : 'Save test'}
@@ -710,12 +793,13 @@ function TestForm({ initial, onSubmit, onCancel, onDelete, onError }: TestFormPr
 // ---- Questions ----
 interface QuestionsManagerProps {
   testId: number;
+  sectionNames: string[];
   token: string;
   onChanged: () => void | Promise<void>;
   notify: (kind: 'ok' | 'error', text: string) => void;
 }
 
-function QuestionsManager({ testId, token, onChanged, notify }: QuestionsManagerProps) {
+function QuestionsManager({ testId, sectionNames, token, onChanged, notify }: QuestionsManagerProps) {
   const [questions, setQuestions] = useState<TestQuestion[]>([]);
   const [mode, setMode] = useState<'bulk' | 'single'>('bulk');
   const [bulkText, setBulkText] = useState('');
@@ -763,7 +847,10 @@ function QuestionsManager({ testId, token, onChanged, notify }: QuestionsManager
       {mode === 'bulk' ? (
         <div className="admin-subform">
           <label className="field">
-            <span>Paste questions — leave a blank line between questions</span>
+            <span>
+              Paste questions — leave a blank line between questions
+              {sectionNames.length > 0 ? `. Start each part with a line like “Section: ${sectionNames[0]}”` : ''}
+            </span>
             <textarea rows={10} value={bulkText} onChange={(e) => setBulkText(e.target.value)} placeholder={SAMPLE_BULK} className="mono" />
           </label>
           {parsed ? (
@@ -800,6 +887,7 @@ function QuestionsManager({ testId, token, onChanged, notify }: QuestionsManager
         <QuestionEditor
           value={single}
           onChange={setSingle}
+          sectionNames={sectionNames}
           busy={busy}
           submitLabel="Add question"
           onSubmit={() =>
@@ -817,6 +905,7 @@ function QuestionsManager({ testId, token, onChanged, notify }: QuestionsManager
             {editingId === q.id ? (
               <EditQuestion
                 question={q}
+                sectionNames={sectionNames}
                 busy={busy}
                 onCancel={() => setEditingId(null)}
                 onSave={(input) =>
@@ -828,6 +917,7 @@ function QuestionsManager({ testId, token, onChanged, notify }: QuestionsManager
               />
             ) : (
               <>
+                {q.section ? <span className="tag tag--plain">{q.section}</span> : null}
                 <div className="admin-qlist__q">
                   <RichContent text={q.question} image={q.imageUrl} />
                 </div>
@@ -863,11 +953,13 @@ function QuestionsManager({ testId, token, onChanged, notify }: QuestionsManager
 
 function EditQuestion({
   question,
+  sectionNames,
   busy,
   onSave,
   onCancel
 }: {
   question: TestQuestion;
+  sectionNames: string[];
   busy: boolean;
   onSave: (input: QuestionInput) => Promise<void>;
   onCancel: () => void;
@@ -876,21 +968,33 @@ function EditQuestion({
     question: question.question,
     options: [...question.options],
     correctIndex: question.correctIndex ?? 0,
-    explanation: question.explanation ?? ''
+    explanation: question.explanation ?? '',
+    section: question.section ?? ''
   });
-  return <QuestionEditor value={value} onChange={setValue} busy={busy} submitLabel="Save question" onSubmit={() => onSave(value)} onCancel={onCancel} />;
+  return (
+    <QuestionEditor
+      value={value}
+      onChange={setValue}
+      sectionNames={sectionNames}
+      busy={busy}
+      submitLabel="Save question"
+      onSubmit={() => onSave(value)}
+      onCancel={onCancel}
+    />
+  );
 }
 
 interface QuestionEditorProps {
   value: QuestionInput;
   onChange: (value: QuestionInput) => void;
+  sectionNames: string[];
   onSubmit: () => Promise<void>;
   onCancel?: () => void;
   busy: boolean;
   submitLabel: string;
 }
 
-function QuestionEditor({ value, onChange, onSubmit, onCancel, busy, submitLabel }: QuestionEditorProps) {
+function QuestionEditor({ value, onChange, sectionNames, onSubmit, onCancel, busy, submitLabel }: QuestionEditorProps) {
   const setOption = (index: number, text: string) => {
     const options = [...value.options];
     options[index] = text;
@@ -905,6 +1009,19 @@ function QuestionEditor({ value, onChange, onSubmit, onCancel, busy, submitLabel
         void onSubmit();
       }}
     >
+      {sectionNames.length > 0 ? (
+        <label className="field">
+          <span>Section</span>
+          <select value={value.section ?? ''} onChange={(e) => onChange({ ...value, section: e.target.value })}>
+            <option value="">No section</option>
+            {sectionNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <label className="field">
         <span>Question</span>
         <textarea rows={3} value={value.question} onChange={(e) => onChange({ ...value, question: e.target.value })} required />

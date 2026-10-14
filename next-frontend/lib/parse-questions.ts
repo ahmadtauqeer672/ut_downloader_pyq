@@ -9,6 +9,10 @@ import type { QuestionInput } from '@/lib/student-api';
 //   D) Muzaffarpur
 //   Answer: B
 //   Explanation: Patna is the capital.   (optional)
+//
+// A line "Section: Language" puts that question and every following one in the section, until the next
+// "Section:" line.
+const SECTION_LINE = /^section\s*[:\-]\s*(.+)$/i;
 const OPTION_LINE = /^\(?([A-F])\s*[).:]\s*(.*)$/i;
 const ANSWER_LINE = /^(?:ans|answer|correct(?:\s+answer)?)\s*[:\-.]\s*\(?([A-F])\)?/i;
 const EXPLANATION_LINE = /^(?:explanation|exp|solution)\s*[:\-.]\s*(.*)$/i;
@@ -28,9 +32,22 @@ export function parseQuestionBlock(text: string): ParsedQuestions {
 
   const questions: QuestionInput[] = [];
   const errors: string[] = [];
+  let currentSection = '';
+  let count = 0;
 
-  blocks.forEach((block, blockIndex) => {
-    const label = `Question ${blockIndex + 1}`;
+  blocks.forEach((rawBlock) => {
+    const block = rawBlock
+      .split('\n')
+      .filter((line) => {
+        const match = line.trim().match(SECTION_LINE);
+        if (match) currentSection = match[1].trim();
+        return !match;
+      })
+      .join('\n')
+      .trim();
+    if (!block) return; // a block holding only "Section: …"
+    count += 1;
+    const label = `Question ${count}`;
     const questionLines: string[] = [];
     const options: string[] = [];
     const explanationLines: string[] = [];
@@ -69,7 +86,14 @@ export function parseQuestionBlock(text: string): ParsedQuestions {
     else if (options.length < 2) errors.push(`${label}: needs at least 2 options (A), B), …)`);
     else if (options.some((item) => !item)) errors.push(`${label}: one of the options is empty`);
     else if (correctIndex < 0 || correctIndex >= options.length) errors.push(`${label}: add a valid "Answer: X" line`);
-    else questions.push({ question, options, correctIndex, explanation: explanationLines.join('\n').trim() });
+    else
+      questions.push({
+        question,
+        options,
+        correctIndex,
+        explanation: explanationLines.join('\n').trim(),
+        ...(currentSection ? { section: currentSection } : {})
+      });
   });
 
   return { questions, errors };

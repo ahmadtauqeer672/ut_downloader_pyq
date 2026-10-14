@@ -8,10 +8,25 @@ import { RichContent } from '@/components/rich-content';
 import { StudentAuthForm } from '@/components/student-auth-form';
 import { formatMarks } from '@/components/test-card';
 import { ApiError, getTest, saveAnswers, startAttempt, submitAttempt } from '@/lib/student-api';
-import { AttemptStart, MockTest } from '@/lib/types';
+import { AttemptStart, MockTest, NOT_ATTEMPTED, TestQuestion } from '@/lib/types';
 import { useStudentSession } from '@/lib/use-student-session';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+// Sections in the order their questions appear; tests without sections give one unnamed group.
+function groupBySection(questions: TestQuestion[]) {
+  const groups: { name: string; start: number; indexes: number[] }[] = [];
+  questions.forEach((q, index) => {
+    const name = (q.section || '').trim();
+    let group = groups.find((item) => item.name === name);
+    if (!group) {
+      group = { name, start: index, indexes: [] };
+      groups.push(group);
+    }
+    group.indexes.push(index);
+  });
+  return groups;
+}
 
 function formatClock(totalSeconds: number) {
   const safe = Math.max(totalSeconds, 0);
@@ -117,6 +132,32 @@ export function TestAttemptClient({ testId }: { testId: number }) {
               ' There is no negative marking.'
             )}
           </li>
+          {test.notAttemptedOption ? (
+            <li>
+              Every question has an extra last option, <b>“Question not attempted”</b>. Choose it to skip a question
+              without losing marks. A question left completely blank is treated like a wrong answer
+              {test.negativeMarks > 0 ? (
+                <>
+                  {' '}
+                  and deducts <b>{formatMarks(test.negativeMarks)}</b>
+                </>
+              ) : null}
+              .
+            </li>
+          ) : null}
+          {test.sections && test.sections.length > 0 ? (
+            <li>
+              This test has {test.sections.length} sections:{' '}
+              {test.sections.map((section, index) => (
+                <span key={section.name}>
+                  {index > 0 ? ', ' : ''}
+                  <b>{section.name}</b>
+                  {section.qualifying ? ` (qualifying — need ${section.passPercent}%, not added to your score)` : ''}
+                </span>
+              ))}
+              .
+            </li>
+          ) : null}
           <li>The timer starts when you click Start test. The test submits automatically when time runs out.</li>
           <li>Your answers are saved as you go. If the page closes, open the test again to continue.</li>
           <li>Use “Mark for review” for questions you want to revisit before submitting.</li>
@@ -251,15 +292,23 @@ function ExamScreen({ attempt, token, onSubmitted, onSessionExpired }: ExamScree
     if (current < questions.length - 1) goTo(current + 1);
   }
 
-  const answeredCount = questions.filter((q) => answers[String(q.id)] !== undefined).length;
+  const valueOf = (id: number) => answers[String(id)];
+  const answeredCount = questions.filter((q) => (valueOf(q.id) ?? -2) >= 0).length;
+  const optedOutCount = questions.filter((q) => valueOf(q.id) === NOT_ATTEMPTED).length;
+  const blankCount = questions.length - answeredCount - optedOutCount;
   const markedCount = questions.filter((q) => marked.has(q.id)).length;
   const notVisitedCount = questions.filter((q) => !visited.has(q.id)).length;
-  const skippedCount = questions.filter((q) => visited.has(q.id) && !marked.has(q.id) && answers[String(q.id)] === undefined).length;
-  const chosen = answers[String(question.id)];
+  const skippedCount = questions.filter((q) => visited.has(q.id) && !marked.has(q.id) && valueOf(q.id) === undefined).length;
+  const chosen = valueOf(question.id);
+  const sections = groupBySection(questions);
+  const currentSection = sections.find((group) => group.indexes.includes(current));
+  const sectionConfig = (name: string) => test.sections?.find((item) => item.name.toLowerCase() === name.toLowerCase());
 
   function statusOf(id: number) {
-    const isAnswered = answers[String(id)] !== undefined;
+    const value = valueOf(id);
+    const isAnswered = value !== undefined;
     if (marked.has(id)) return isAnswered ? 'marked-answered' : 'marked';
+    if (value === NOT_ATTEMPTED) return 'optout';
     if (isAnswered) return 'answered';
     if (visited.has(id)) return 'skipped';
     return 'fresh';
@@ -284,6 +333,23 @@ function ExamScreen({ attempt, token, onSubmitted, onSessionExpired }: ExamScree
 
       <div className="exam__body">
         <section className="exam__question">
+          {sections.length > 1 ? (
+            <div className="exam__sections" role="tablist" aria-label="Sections">
+              {sections.map((group) => (
+                <button
+                  key={group.name}
+                  type="button"
+                  role="tab"
+                  aria-selected={group === currentSection}
+                  className={group === currentSection ? 'is-active' : undefined}
+                  onClick={() => goTo(group.start)}
+                >
+                  {group.name || 'Other'}
+                  {sectionConfig(group.name)?.qualifying ? <em>Qualifying</em> : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <div className="exam__qhead">
             <span>
               Question {current + 1} of {questions.length}
@@ -317,6 +383,18 @@ function ExamScreen({ attempt, token, onSubmitted, onSessionExpired }: ExamScree
                 </span>
               </button>
             ))}
+            {test.notAttemptedOption ? (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={chosen === NOT_ATTEMPTED}
+                className={`option option--optout${chosen === NOT_ATTEMPTED ? ' is-chosen' : ''}`}
+                onClick={() => choose(NOT_ATTEMPTED)}
+              >
+                <span className="option__letter">{OPTION_LETTERS[question.options.length]}</span>
+                <span className="option__text">Question not attempted (प्रश्न अनुत्तरित)</span>
+              </button>
+            ) : null}
           </div>
 
           <div className="exam__actions">
@@ -356,19 +434,34 @@ function ExamScreen({ attempt, token, onSubmitted, onSessionExpired }: ExamScree
             <li>
               <i className="dot dot--fresh" /> Not visited <b>{notVisitedCount}</b>
             </li>
+            {test.notAttemptedOption ? (
+              <li>
+                <i className="dot dot--optout" /> Not attempted <b>{optedOutCount}</b>
+              </li>
+            ) : null}
           </ul>
-          <div className="palette-grid">
-            {questions.map((q, index) => (
-              <button
-                key={q.id}
-                type="button"
-                className={`palette-cell palette-cell--${statusOf(q.id)}${index === current ? ' is-current' : ''}`}
-                onClick={() => goTo(index)}
-                aria-label={`Question ${index + 1}`}
-              >
-                {index + 1}
-              </button>
-            ))}
+          <div className="palette-sections">
+          {sections.map((group) => (
+            <div key={group.name} className="palette-section">
+              {sections.length > 1 ? <h3 className="palette-section__title">{group.name || 'Other'}</h3> : null}
+              <div className="palette-grid">
+                {group.indexes.map((index) => {
+                  const q = questions[index];
+                  return (
+                    <button
+                      key={q.id}
+                      type="button"
+                      className={`palette-cell palette-cell--${statusOf(q.id)}${index === current ? ' is-current' : ''}`}
+                      onClick={() => goTo(index)}
+                      aria-label={`Question ${index + 1}`}
+                    >
+                      {index + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
           </div>
           <button className="button button--primary button--block" type="button" onClick={() => setConfirming(true)}>
             Submit test
@@ -386,15 +479,27 @@ function ExamScreen({ attempt, token, onSubmitted, onSessionExpired }: ExamScree
                 <strong>{answeredCount}</strong>
                 <span>Answered</span>
               </div>
+              {test.notAttemptedOption ? (
+                <div>
+                  <strong>{optedOutCount}</strong>
+                  <span>Not attempted</span>
+                </div>
+              ) : null}
               <div>
-                <strong>{questions.length - answeredCount}</strong>
-                <span>Not answered</span>
+                <strong>{blankCount}</strong>
+                <span>{test.notAttemptedOption ? 'Left blank' : 'Not answered'}</span>
               </div>
               <div>
                 <strong>{markedCount}</strong>
                 <span>Marked</span>
               </div>
             </div>
+            {test.notAttemptedOption && blankCount > 0 && test.negativeMarks > 0 ? (
+              <p className="form-error">
+                {blankCount} question{blankCount === 1 ? ' is' : 's are'} left blank and will deduct{' '}
+                {formatMarks(test.negativeMarks)} each. Choose “Question not attempted” to skip without a penalty.
+              </p>
+            ) : null}
             <p className="muted">Time left: {formatClock(remaining)}. You cannot change answers after submitting.</p>
             {submitError ? <p className="form-error">{submitError}</p> : null}
             <div className="modal__actions">

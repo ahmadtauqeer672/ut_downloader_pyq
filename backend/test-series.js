@@ -94,6 +94,15 @@ async function initTestSeriesDb(pool) {
   await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS image_url TEXT NOT NULL DEFAULT ''");
   await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS option_images JSONB NOT NULL DEFAULT '[]'::jsonb");
 
+  // Exam-style tests (e.g. BPSC TRE): questions belong to sections, some sections only need to be passed
+  // (qualifying) and an explicit "not attempted" option, where leaving a question blank is penalised.
+  await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS section TEXT NOT NULL DEFAULT ''");
+  await pool.query("ALTER TABLE tests ADD COLUMN IF NOT EXISTS sections JSONB NOT NULL DEFAULT '[]'::jsonb");
+  await pool.query('ALTER TABLE tests ADD COLUMN IF NOT EXISTS not_attempted_option BOOLEAN NOT NULL DEFAULT FALSE');
+  await pool.query('ALTER TABLE attempts ADD COLUMN IF NOT EXISTS unmarked INTEGER NOT NULL DEFAULT 0');
+  await pool.query('ALTER TABLE attempts ADD COLUMN IF NOT EXISTS qualified BOOLEAN NOT NULL DEFAULT TRUE');
+  await pool.query("ALTER TABLE attempts ADD COLUMN IF NOT EXISTS section_scores JSONB NOT NULL DEFAULT '[]'::jsonb");
+
   await pool.query('CREATE INDEX IF NOT EXISTS tests_series_idx ON tests(series_id)');
   await pool.query('CREATE INDEX IF NOT EXISTS questions_test_idx ON questions(test_id, position)');
   await pool.query('CREATE INDEX IF NOT EXISTS attempts_test_idx ON attempts(test_id, submitted_at)');
@@ -184,6 +193,7 @@ const TEST_COLUMNS = `
   t.duration_minutes AS "durationMinutes", t.marks_per_question::float AS "marksPerQuestion",
   t.negative_marks::float AS "negativeMarks", t.is_featured AS "isFeatured", t.is_published AS "isPublished",
   t.sort_order AS "sortOrder", t.created_at AS "createdAt",
+  t.sections, t.not_attempted_option AS "notAttemptedOption",
   (SELECT COUNT(*)::int FROM questions q WHERE q.test_id = t.id) AS "questionCount",
   (SELECT COUNT(*)::int FROM attempts a WHERE a.test_id = t.id AND a.submitted_at IS NOT NULL) AS "attemptCount"
 `;
@@ -234,6 +244,9 @@ function parseTestInput(body = {}) {
   if (marksPerQuestion <= 0) return { error: 'Marks per question must be more than 0' };
   if (negativeMarks < 0) return { error: 'Negative marks cannot be below 0' };
 
+  const sections = parseSections(body.sections);
+  if (sections.error) return { error: sections.error };
+
   return {
     value: {
       title,
@@ -246,9 +259,31 @@ function parseTestInput(body = {}) {
       negativeMarks,
       isFeatured: toBool(body.isFeatured, false),
       isPublished: toBool(body.isPublished, true),
-      sortOrder: toInt(body.sortOrder, 0)
+      sortOrder: toInt(body.sortOrder, 0),
+      sections: sections.value,
+      notAttemptedOption: toBool(body.notAttemptedOption, false)
     }
   };
+}
+
+// [{ name, qualifying, passPercent }]: questions are grouped by name; qualifying sections must reach
+// passPercent of their marks but do not count towards the merit score.
+function parseSections(raw) {
+  if (raw === undefined || raw === null) return { value: [] };
+  if (!Array.isArray(raw) || raw.length > 12) return { error: 'Add at most 12 sections' };
+  const seen = new Set();
+  const value = [];
+  for (const item of raw) {
+    const name = String(item?.name || '').trim().slice(0, 60);
+    if (!name) return { error: 'Every section needs a name' };
+    if (seen.has(name.toLowerCase())) return { error: `Section "${name}" is listed twice` };
+    seen.add(name.toLowerCase());
+    const qualifying = toBool(item?.qualifying, false);
+    const passPercent = qualifying ? toNumber(item?.passPercent, 0) : 0;
+    if (passPercent < 0 || passPercent > 100) return { error: `Pass mark for "${name}" must be between 0 and 100%` };
+    value.push({ name, qualifying, passPercent });
+  }
+  return { value };
 }
 
 function cleanImageUrl(value) {
@@ -285,32 +320,77 @@ function parseQuestionInput(body = {}) {
       correctIndex,
       explanation: String(body.explanation || '').trim(),
       imageUrl,
-      optionImages
+      optionImages,
+      // undefined keeps the current section when editing.
+      section: body.section === undefined ? undefined : String(body.section || '').trim().slice(0, 60)
     }
   };
 }
 
+const round2 = (value) => Math.round(value * 100) / 100;
+
+// Answer values: an option index, NOT_ATTEMPTED (the explicit "question not attempted" choice) or nothing.
+// With notAttemptedOption on, a question left completely blank is penalised like a wrong answer (BPSC rule).
+const NOT_ATTEMPTED = -1;
+
 function gradeAttempt(questions, answers, test) {
-  let correct = 0;
-  let wrong = 0;
-  let skipped = 0;
+  const configured = Array.isArray(test.sections) ? test.sections : [];
+  const groups = new Map();
+  const groupFor = (name) => {
+    if (!groups.has(name)) {
+      const config = configured.find((item) => item.name.toLowerCase() === name.toLowerCase());
+      groups.set(name, {
+        name: config?.name || name,
+        qualifying: Boolean(config?.qualifying),
+        passPercent: config?.passPercent || 0,
+        correct: 0,
+        wrong: 0,
+        skipped: 0,
+        unmarked: 0,
+        total: 0
+      });
+    }
+    return groups.get(name);
+  };
+  // Keep the configured order, then any other sections in question order.
+  configured.forEach((item) => groupFor(item.name));
 
   for (const question of questions) {
+    const group = groupFor(String(question.section || '').trim());
     const raw = answers[String(question.id)];
-    const chosen = raw === undefined || raw === null || raw === '' ? null : toInt(raw, -1);
-    if (chosen === null || chosen < 0) skipped += 1;
-    else if (chosen === question.correctIndex) correct += 1;
-    else wrong += 1;
+    const chosen = raw === undefined || raw === null || raw === '' ? null : toInt(raw, -2);
+    group.total += 1;
+    if (chosen === null || chosen < NOT_ATTEMPTED) {
+      if (test.notAttemptedOption) group.unmarked += 1;
+      else group.skipped += 1;
+    } else if (chosen === NOT_ATTEMPTED) group.skipped += 1;
+    else if (chosen === question.correctIndex) group.correct += 1;
+    else group.wrong += 1;
   }
 
-  const score = correct * test.marksPerQuestion - wrong * test.negativeMarks;
+  const sectionScores = [...groups.values()]
+    .filter((group) => group.total > 0)
+    .map((group) => {
+      const score = round2(group.correct * test.marksPerQuestion - (group.wrong + group.unmarked) * test.negativeMarks);
+      const maxScore = round2(group.total * test.marksPerQuestion);
+      const passed = !group.qualifying || score >= round2((maxScore * group.passPercent) / 100);
+      return { ...group, score, maxScore, passed };
+    });
+
+  const sum = (key, list = sectionScores) => list.reduce((total, item) => total + item[key], 0);
+  const merit = sectionScores.filter((item) => !item.qualifying);
   return {
-    correct,
-    wrong,
-    skipped,
+    correct: sum('correct'),
+    wrong: sum('wrong'),
+    skipped: sum('skipped'),
+    unmarked: sum('unmarked'),
     total: questions.length,
-    score: Math.round(score * 100) / 100,
-    maxScore: Math.round(questions.length * test.marksPerQuestion * 100) / 100
+    // Merit score leaves out qualifying sections.
+    score: round2(sum('score', merit)),
+    maxScore: round2(sum('maxScore', merit)),
+    qualified: sectionScores.every((item) => item.passed),
+    // Only worth storing when the test is split into sections.
+    sectionScores: sectionScores.length > 1 || sectionScores.some((item) => item.qualifying) ? sectionScores : []
   };
 }
 
@@ -320,8 +400,8 @@ function cleanAnswers(raw, questionIds) {
   for (const id of questionIds) {
     const value = raw[String(id)];
     if (value === undefined || value === null || value === '') continue;
-    const index = toInt(value, -1);
-    if (index >= 0) result[String(id)] = index;
+    const index = toInt(value, -2);
+    if (index >= NOT_ATTEMPTED) result[String(id)] = index;
   }
   return result;
 }
@@ -371,7 +451,7 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
   async function loadQuestions(testId, { withAnswers }) {
     const answerColumns = withAnswers ? ', correct_index AS "correctIndex", explanation' : '';
     const { rows } = await pool.query(
-      `SELECT id, position, question, options, image_url AS "imageUrl", option_images AS "optionImages"${answerColumns}
+      `SELECT id, position, section, question, options, image_url AS "imageUrl", option_images AS "optionImages"${answerColumns}
        FROM questions WHERE test_id = $1 ORDER BY position ASC, id ASC`,
       [testId]
     );
@@ -648,7 +728,7 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
       await pool.query(
         `UPDATE attempts
          SET answers = $1, score = $2, max_score = $3, correct = $4, wrong = $5, skipped = $6, total = $7,
-             time_taken_seconds = $8, submitted_at = NOW()
+             time_taken_seconds = $8, submitted_at = NOW(), unmarked = $10, qualified = $11, section_scores = $12
          WHERE id = $9`,
         [
           JSON.stringify(answers),
@@ -659,7 +739,10 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
           result.skipped,
           result.total,
           timeTaken,
-          attempt.id
+          attempt.id,
+          result.unmarked,
+          result.qualified,
+          JSON.stringify(result.sectionScores)
         ]
       );
 
@@ -673,8 +756,8 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
     asyncHandler(async (req, res) => {
       const { rows } = await pool.query(
         `SELECT a.id, a.test_id AS "testId", a.answers, a.score::float AS score, a.max_score::float AS "maxScore",
-                a.correct, a.wrong, a.skipped, a.total, a.time_taken_seconds AS "timeTakenSeconds",
-                a.submitted_at AS "submittedAt"
+                a.correct, a.wrong, a.skipped, a.unmarked, a.total, a.time_taken_seconds AS "timeTakenSeconds",
+                a.submitted_at AS "submittedAt", a.qualified, a.section_scores AS "sectionScores"
          FROM attempts a WHERE a.id = $1 AND a.student_id = $2 AND a.submitted_at IS NOT NULL`,
         [toInt(req.params.id), req.studentId]
       );
@@ -684,14 +767,17 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
       const [test, questions, rankResult] = await Promise.all([
         loadTest(attempt.testId, { publishedOnly: false }),
         loadQuestions(attempt.testId, { withAnswers: true }),
-        // Rank is based on each candidate's best score for this test.
+        // Rank uses each candidate's best attempt; candidates who cleared every qualifying section rank first.
         pool.query(
           `WITH best AS (
-             SELECT student_id, MAX(score) AS score FROM attempts
-             WHERE test_id = $1 AND submitted_at IS NOT NULL GROUP BY student_id
+             SELECT DISTINCT ON (student_id) student_id, qualified, score FROM attempts
+             WHERE test_id = $1 AND submitted_at IS NOT NULL
+             ORDER BY student_id, qualified DESC, score DESC
            )
-           SELECT (SELECT COUNT(*)::int FROM best WHERE score > $2) + 1 AS rank, (SELECT COUNT(*)::int FROM best) AS total`,
-          [attempt.testId, attempt.score]
+           SELECT (SELECT COUNT(*)::int FROM best
+                   WHERE (qualified AND NOT $3::boolean) OR (qualified = $3::boolean AND score > $2)) + 1 AS rank,
+                  (SELECT COUNT(*)::int FROM best) AS total`,
+          [attempt.testId, attempt.score, attempt.qualified]
         )
       ]);
 
@@ -866,10 +952,10 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
 
       const { rows } = await pool.query(
         `INSERT INTO tests (series_id, title, kind, category, language, difficulty, duration_minutes, marks_per_question,
-                            negative_marks, is_featured, is_published, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+                            negative_marks, is_featured, is_published, sort_order, sections, not_attempted_option)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
         [seriesId, t.title, t.kind, t.category, t.language, t.difficulty, t.durationMinutes, t.marksPerQuestion,
-          t.negativeMarks, t.isFeatured, t.isPublished, t.sortOrder]
+          t.negativeMarks, t.isFeatured, t.isPublished, t.sortOrder, JSON.stringify(t.sections), t.notAttemptedOption]
       );
       res.status(201).json(await loadTest(rows[0].id, { publishedOnly: false }));
     })
@@ -885,10 +971,11 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
 
       const { rowCount } = await pool.query(
         `UPDATE tests SET title = $1, kind = $2, category = $3, language = $4, difficulty = $5, duration_minutes = $6,
-                marks_per_question = $7, negative_marks = $8, is_featured = $9, is_published = $10, sort_order = $11
+                marks_per_question = $7, negative_marks = $8, is_featured = $9, is_published = $10, sort_order = $11,
+                sections = $13, not_attempted_option = $14
          WHERE id = $12`,
         [t.title, t.kind, t.category, t.language, t.difficulty, t.durationMinutes, t.marksPerQuestion, t.negativeMarks,
-          t.isFeatured, t.isPublished, t.sortOrder, toInt(req.params.id)]
+          t.isFeatured, t.isPublished, t.sortOrder, toInt(req.params.id), JSON.stringify(t.sections), t.notAttemptedOption]
       );
       if (!rowCount) return res.status(404).json({ message: 'Test not found' });
       res.json(await loadTest(toInt(req.params.id), { publishedOnly: false }));
@@ -939,12 +1026,12 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
       const rows = parsed.map((q, i) => {
         const base = values.length;
         values.push(q.question, JSON.stringify(q.options), q.correctIndex, q.explanation, q.imageUrl || '',
-          JSON.stringify(q.optionImages || []));
+          JSON.stringify(q.optionImages || []), q.section || '');
         return `($1, (SELECT COALESCE(MAX(position), 0) FROM questions WHERE test_id = $1) + ${i + 1}, ` +
-          `$${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
+          `$${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8})`;
       });
       await pool.query(
-        `INSERT INTO questions (test_id, position, question, options, correct_index, explanation, image_url, option_images)
+        `INSERT INTO questions (test_id, position, question, options, correct_index, explanation, image_url, option_images, section)
          VALUES ${rows.join(', ')}`,
         [testId, ...values]
       );
@@ -962,11 +1049,13 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
       const q = parsed.value;
       const { rowCount } = await pool.query(
         `UPDATE questions SET question = $1, options = $2, correct_index = $3, explanation = $4,
-                image_url = COALESCE($6, image_url), option_images = COALESCE($7::jsonb, option_images)
+                image_url = COALESCE($6, image_url), option_images = COALESCE($7::jsonb, option_images),
+                section = COALESCE($8, section)
          WHERE id = $5`,
         [q.question, JSON.stringify(q.options), q.correctIndex, q.explanation, toInt(req.params.id),
           q.imageUrl === undefined ? null : q.imageUrl,
-          q.optionImages === undefined ? null : JSON.stringify(q.optionImages)]
+          q.optionImages === undefined ? null : JSON.stringify(q.optionImages),
+          q.section === undefined ? null : q.section]
       );
       if (!rowCount) return res.status(404).json({ message: 'Question not found' });
       res.json({ message: 'Question updated' });

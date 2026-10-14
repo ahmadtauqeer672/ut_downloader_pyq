@@ -8,6 +8,7 @@ import {
   StudentSession,
   TestQuestion,
   TestSeries,
+  TestSection,
   StudentRecord
 } from '@/lib/types';
 
@@ -107,6 +108,8 @@ export interface TestInput {
   isFeatured: boolean;
   isPublished: boolean;
   sortOrder: number;
+  sections: TestSection[];
+  notAttemptedOption: boolean;
 }
 
 export interface QuestionInput {
@@ -116,6 +119,7 @@ export interface QuestionInput {
   explanation: string;
   imageUrl?: string;
   optionImages?: string[];
+  section?: string;
 }
 
 export const adminTestApi = {

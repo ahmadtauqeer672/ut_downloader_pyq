@@ -5,11 +5,18 @@ import { useEffect, useState } from 'react';
 import { RichContent } from '@/components/rich-content';
 import { StudentAuthForm } from '@/components/student-auth-form';
 import { ApiError, getAttemptResult } from '@/lib/student-api';
-import { AttemptResult } from '@/lib/types';
+import { AttemptResult, NOT_ATTEMPTED } from '@/lib/types';
 import { useStudentSession } from '@/lib/use-student-session';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
-type Filter = 'all' | 'correct' | 'wrong' | 'skipped';
+type Filter = 'all' | 'correct' | 'wrong' | 'skipped' | 'unmarked';
+const FILTER_LABELS: Record<Filter, string> = {
+  all: 'All',
+  correct: 'Correct',
+  wrong: 'Wrong',
+  skipped: 'Not attempted',
+  unmarked: 'Left blank'
+};
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -62,11 +69,24 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
   const accuracy = attempted > 0 ? Math.round((result.correct / attempted) * 100) : 0;
   const percent = result.maxScore > 0 ? Math.max(0, Math.round((result.score / result.maxScore) * 100)) : 0;
 
-  const outcomeOf = (questionId: number, correctIndex?: number) => {
+  const penalisesBlank = Boolean(result.test.notAttemptedOption);
+  const unmarked = result.unmarked ?? 0;
+  const sectionScores = result.sectionScores ?? [];
+  const hasQualifying = sectionScores.some((item) => item.qualifying);
+  const outcomeOf = (questionId: number, correctIndex?: number): Exclude<Filter, 'all'> => {
     const chosen = result.answers[String(questionId)];
-    if (chosen === undefined) return 'skipped';
+    if (chosen === undefined) return penalisesBlank ? 'unmarked' : 'skipped';
+    if (chosen === NOT_ATTEMPTED) return 'skipped';
     return chosen === correctIndex ? 'correct' : 'wrong';
   };
+  const counts: Record<Filter, number> = {
+    all: result.total,
+    correct: result.correct,
+    wrong: result.wrong,
+    skipped: result.skipped,
+    unmarked
+  };
+  const filters: Filter[] = penalisesBlank ? ['all', 'correct', 'wrong', 'skipped', 'unmarked'] : ['all', 'correct', 'wrong', 'skipped'];
   const filtered = result.questions.filter((q) => filter === 'all' || outcomeOf(q.id, q.correctIndex) === filter);
 
   return (
@@ -85,10 +105,20 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
         <div className="score-ring" style={{ '--pct': percent } as React.CSSProperties}>
           <div>
             <strong>{result.score}</strong>
-            <span>of {result.maxScore}</span>
+            <span>
+              {hasQualifying ? 'merit ' : ''}of {result.maxScore}
+            </span>
           </div>
         </div>
       </section>
+
+      {hasQualifying ? (
+        <p className={`qualify-banner${result.qualified === false ? ' is-failed' : ''}`}>
+          {result.qualified === false
+            ? 'Not qualified: you did not reach the pass mark in a qualifying section, so this score would not count in the real exam.'
+            : 'Qualified: you cleared every qualifying section.'}
+        </p>
+      ) : null}
 
       <section className="result-stats">
         <div>
@@ -112,8 +142,14 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
         </div>
         <div>
           <strong>{result.skipped}</strong>
-          <span>Skipped</span>
+          <span>{penalisesBlank ? 'Not attempted' : 'Skipped'}</span>
         </div>
+        {penalisesBlank ? (
+          <div className={unmarked > 0 ? 'is-bad' : undefined}>
+            <strong>{unmarked}</strong>
+            <span>Left blank</span>
+          </div>
+        ) : null}
         <div>
           <strong>{formatDuration(result.timeTakenSeconds)}</strong>
           <span>Time taken</span>
@@ -129,12 +165,57 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
         </Link>
       </div>
 
+      {sectionScores.length > 0 ? (
+        <section className="series-section">
+          <h2 className="series-section__title">Section-wise result</h2>
+          <div className="section-table-wrap">
+            <table className="section-table">
+              <thead>
+                <tr>
+                  <th>Section</th>
+                  <th>Correct</th>
+                  <th>Wrong</th>
+                  <th>{penalisesBlank ? 'Not attempted' : 'Skipped'}</th>
+                  {penalisesBlank ? <th>Left blank</th> : null}
+                  <th>Marks</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sectionScores.map((item) => (
+                  <tr key={item.name || 'other'}>
+                    <td>
+                      <b>{item.name || 'Other'}</b>
+                      {item.qualifying ? <em>Qualifying · pass {item.passPercent}%</em> : null}
+                    </td>
+                    <td>{item.correct}</td>
+                    <td>{item.wrong}</td>
+                    <td>{item.skipped}</td>
+                    {penalisesBlank ? <td>{item.unmarked}</td> : null}
+                    <td>
+                      {item.score} / {item.maxScore}
+                    </td>
+                    <td>
+                      {item.qualifying ? (
+                        <span className={`tag ${item.passed ? 'tag--correct' : 'tag--wrong'}`}>{item.passed ? 'Passed' : 'Failed'}</span>
+                      ) : (
+                        <span className="muted small">Counted</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
       <section className="series-section">
         <h2 className="series-section__title">Solutions</h2>
         <div className="pill-scroller">
-          {(['all', 'correct', 'wrong', 'skipped'] as Filter[]).map((item) => (
+          {filters.map((item) => (
             <button key={item} type="button" className={`pill${filter === item ? ' is-active' : ''}`} onClick={() => setFilter(item)}>
-              {item === 'all' ? `All (${result.total})` : `${item[0].toUpperCase()}${item.slice(1)} (${result[item]})`}
+              {FILTER_LABELS[item]} ({counts[item]})
             </button>
           ))}
         </div>
@@ -147,10 +228,11 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
             return (
               <article className={`solution solution--${outcome}`} key={q.id}>
                 <div className="solution__head">
-                  <span>Q{number}</span>
-                  <span className={`tag tag--${outcome}`}>
-                    {outcome === 'correct' ? 'Correct' : outcome === 'wrong' ? 'Wrong' : 'Not attempted'}
+                  <span>
+                    Q{number}
+                    {q.section ? <small className="muted"> · {q.section}</small> : null}
                   </span>
+                  <span className={`tag tag--${outcome === 'unmarked' ? 'wrong' : outcome}`}>{FILTER_LABELS[outcome]}</span>
                 </div>
                 <div className="solution__q">
                   <RichContent text={q.question} image={q.imageUrl} zoomable />
@@ -170,6 +252,10 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
                     );
                   })}
                 </ul>
+                {chosen === NOT_ATTEMPTED ? <p className="muted small">You chose “Question not attempted”.</p> : null}
+                {outcome === 'unmarked' ? (
+                  <p className="form-error small">Left blank — this cost the same as a wrong answer.</p>
+                ) : null}
                 {q.explanation ? (
                   <div className="solution__explain">
                     <b>Explanation</b>

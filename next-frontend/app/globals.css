@@ -4879,3 +4879,211 @@ a.chip:focus-visible {
   color: var(--muted);
   font-size: 0.88rem;
 }
+
+/* ==========================================================================
+   Exam sections and "question not attempted" option
+   ========================================================================== */
+
+.exam__sections {
+  display: flex;
+  gap: 0.4rem;
+  margin: -0.25rem 0 0.9rem;
+  padding-bottom: 0.75rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.exam__sections button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #344054;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.exam__sections button.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.exam__sections em {
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: #fff4e0;
+  color: #b45309;
+  font-size: 0.7rem;
+  font-style: normal;
+}
+
+.option--optout {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.option--optout.is-chosen {
+  border-style: solid;
+  border-color: #64748b;
+  background: #f1f5f9;
+  color: var(--text);
+}
+
+.option--optout.is-chosen .option__letter {
+  border-color: #64748b;
+  background: #64748b;
+}
+
+.dot--optout {
+  background: #64748b;
+}
+
+.palette-cell--optout {
+  border-color: #64748b;
+  background: #64748b;
+  color: #ffffff;
+}
+
+.palette-sections {
+  max-height: 420px;
+  margin: 0 -4px 1rem;
+  padding: 0 4px;
+  overflow-y: auto;
+}
+
+.palette-sections .palette-grid {
+  max-height: none;
+  margin: 0 -4px 0.75rem;
+  overflow: visible;
+}
+
+.palette-section__title {
+  margin: 0.25rem 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.submit-summary {
+  grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
+}
+
+.section-editor {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  padding: 0.85rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+}
+
+.section-editor__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+}
+
+.section-editor__head .text-link {
+  margin-left: auto;
+}
+
+.section-editor__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+}
+
+.section-editor__row > input {
+  flex: 1 1 14rem;
+  min-height: 2.4rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.section-editor__pass {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.section-editor__pass input {
+  width: 4.5rem;
+  min-height: 2.2rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font: inherit;
+}
+
+/* Result: qualifying status and section-wise table */
+.qualify-banner {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  background: var(--success-soft);
+  color: #065f46;
+  font-weight: 700;
+}
+
+.qualify-banner.is-failed {
+  border-color: #fecaca;
+  background: var(--danger-soft);
+  color: #991b1b;
+}
+
+.section-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.section-table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.section-table th,
+.section-table td {
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.section-table th {
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.section-table tr:last-child td {
+  border-bottom: none;
+}
+
+.section-table td em {
+  display: block;
+  color: #b45309;
+  font-size: 0.75rem;
+  font-style: normal;
+}

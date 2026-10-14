@@ -71,6 +71,28 @@ export interface TestSeries {
   languages?: string[];
 }
 
+// A group of questions in an exam-style test. Qualifying sections must reach passPercent of their
+// marks but are left out of the merit score (e.g. the Language part of BPSC TRE).
+export interface TestSection {
+  name: string;
+  qualifying: boolean;
+  passPercent: number;
+}
+
+export interface SectionScore extends TestSection {
+  correct: number;
+  wrong: number;
+  skipped: number;
+  unmarked: number;
+  total: number;
+  score: number;
+  maxScore: number;
+  passed: boolean;
+}
+
+// Answer value for the explicit "question not attempted" choice.
+export const NOT_ATTEMPTED = -1;
+
 export interface MockTest {
   id: number;
   seriesId: number;
@@ -90,6 +112,9 @@ export interface MockTest {
   attemptCount: number;
   seriesTitle?: string;
   seriesSlug?: string;
+  sections?: TestSection[];
+  // BPSC-style: an extra "not attempted" option; questions left completely blank are penalised.
+  notAttemptedOption?: boolean;
 }
 
 export interface TestSeriesDetail extends TestSeries {
@@ -99,6 +124,7 @@ export interface TestSeriesDetail extends TestSeries {
 export interface TestQuestion {
   id: number;
   position: number;
+  section?: string;
   question: string;
   options: string[];
   imageUrl?: string;
@@ -137,9 +163,12 @@ export interface AttemptResult {
   correct: number;
   wrong: number;
   skipped: number;
+  unmarked?: number;
   total: number;
   timeTakenSeconds: number;
   submittedAt: string;
+  qualified?: boolean;
+  sectionScores?: SectionScore[];
   rank: number;
   rankOutOf: number;
   test: MockTest;

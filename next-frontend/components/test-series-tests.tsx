@@ -255,7 +255,7 @@ export function TestSeriesTests({ series }: { series: TestSeriesDetail }) {
           ) : (
             <div className="sd-grid">
               {visible.map((test, index) => (
-                <TestCard key={test.id} test={test} index={index + 1} onAttempt={handleAttempt} />
+                <TestCard key={test.id} test={test} index={index + 1} seriesSlug={series.slug} onAttempt={handleAttempt} />
               ))}
             </div>
           )}

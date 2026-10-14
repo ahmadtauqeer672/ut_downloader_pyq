@@ -1,5 +1,6 @@
 import { JsonLdScript } from '@/components/json-ld-script';
 import { FaqItem, breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo';
+import { testHref } from '@/lib/slug';
 import { TestSeriesDetail } from '@/lib/types';
 
 // Marks like 0.3333 read better as "1/3".
@@ -87,7 +88,7 @@ export function SeriesSeoContent({ series }: { series: TestSeriesDetail }) {
       <JsonLdScript
         payload={itemListJsonLd(
           series.title,
-          tests.map((test) => ({ name: test.title, path: `/tests/${test.id}` }))
+          tests.map((test) => ({ name: test.title, path: testHref(test, series.slug) }))
         )}
       />
       <JsonLdScript payload={faqJsonLd(faqs)} />
@@ -116,7 +117,9 @@ export function SeriesSeoContent({ series }: { series: TestSeriesDetail }) {
             <tbody>
               {tests.map((test) => (
                 <tr key={test.id}>
-                  <td>{test.title}</td>
+                  <td>
+                    <a href={testHref(test, series.slug)}>{test.title}</a>
+                  </td>
                   <td>{test.questionCount}</td>
                   <td>{test.durationMinutes} min</td>
                   <td>

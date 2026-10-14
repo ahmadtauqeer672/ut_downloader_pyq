@@ -637,6 +637,26 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
     })
   );
 
+  // Public preview for the test's landing page: a few questions without answers, plus section sizes.
+  app.get(
+    '/api/tests/:id/preview',
+    asyncHandler(async (req, res) => {
+      const testId = toInt(req.params.id);
+      const test = await loadTest(testId, { publishedOnly: true });
+      if (!test) return res.status(404).json({ message: 'Test not found' });
+      const questions = await loadQuestions(testId, { withAnswers: false });
+      const counts = new Map();
+      for (const q of questions) counts.set(q.section || '', (counts.get(q.section || '') || 0) + 1);
+      res.json({
+        sampleQuestions: questions
+          .filter((q) => !q.imageUrl && !(q.optionImages || []).some(Boolean))
+          .slice(0, 5)
+          .map((q) => ({ position: q.position, section: q.section || '', question: q.question, options: q.options })),
+        sectionCounts: [...counts.entries()].map(([name, count]) => ({ name, count }))
+      });
+    })
+  );
+
   app.post(
     '/api/tests/:id/start',
     requireStudentAuth,

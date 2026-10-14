@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
-import { listCompetitiveExams, listTestSeries } from '@/lib/api';
+import { getTestSeries, listCompetitiveExams, listTestSeries } from '@/lib/api';
 import { UNIVERSITY_OPTIONS } from '@/lib/data';
-import { slugify } from '@/lib/slug';
+import { slugify, testHref } from '@/lib/slug';
 import { createSitemapEntry, getBsebClass10SitemapEntries } from '@/lib/sitemaps';
 
 // Rebuild at most hourly so newly added test series and papers show up without a redeploy.
@@ -56,7 +56,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     )
     .catch(() => []);
 
-  const testSeriesRoutes = (await listTestSeries()).map<MetadataRoute.Sitemap[number]>((series) =>
+  const seriesList = await listTestSeries();
+  const testSeriesRoutes = seriesList.map<MetadataRoute.Sitemap[number]>((series) =>
     createSitemapEntry(`/test-series/${series.slug}`, {
       changeFrequency: 'weekly',
       priority: 0.8,
@@ -64,7 +65,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  return [...staticRoutes, ...courseRoutes, ...bsebClass10Routes, ...competitiveExamRoutes, ...testSeriesRoutes].sort((a, b) =>
-    a.url.localeCompare(b.url)
+  // One landing page per test, so each previous year paper and mock test can rank on its own.
+  const seriesDetails = await Promise.all(seriesList.map((series) => getTestSeries(series.slug)));
+  const testRoutes = seriesDetails.flatMap<MetadataRoute.Sitemap[number]>((series) =>
+    series
+      ? series.tests.map((test) =>
+          createSitemapEntry(testHref(test, series.slug), {
+            changeFrequency: 'monthly',
+            priority: 0.75,
+            lastModified: test.createdAt ? new Date(test.createdAt) : new Date()
+          })
+        )
+      : []
   );
+
+  return [
+    ...staticRoutes,
+    ...courseRoutes,
+    ...bsebClass10Routes,
+    ...competitiveExamRoutes,
+    ...testSeriesRoutes,
+    ...testRoutes
+  ].sort((a, b) => a.url.localeCompare(b.url));
 }

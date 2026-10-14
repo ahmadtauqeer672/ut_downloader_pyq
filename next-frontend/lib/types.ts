@@ -121,6 +121,12 @@ export interface TestSeriesDetail extends TestSeries {
   tests: MockTest[];
 }
 
+// Crawlable preview of a test for its landing page (no answers).
+export interface TestPreview {
+  sampleQuestions: { position: number; section: string; question: string; options: string[] }[];
+  sectionCounts: { name: string; count: number }[];
+}
+
 export interface TestQuestion {
   id: number;
   position: number;

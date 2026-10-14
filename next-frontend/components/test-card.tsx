@@ -1,9 +1,12 @@
+import Link from 'next/link';
 import { ClockIcon, LanguageIcon, MarksIcon, QuestionIcon, UsersIcon } from '@/components/icons';
+import { testHref } from '@/lib/slug';
 import { MockTest } from '@/lib/types';
 
 interface TestCardProps {
   test: MockTest;
   index: number;
+  seriesSlug?: string;
   onAttempt: (test: MockTest) => void;
 }
 
@@ -17,7 +20,7 @@ export function formatMarks(value: number) {
   return value.toFixed(2).replace(/0+$/, '');
 }
 
-export function TestCard({ test, index, onAttempt }: TestCardProps) {
+export function TestCard({ test, index, seriesSlug, onAttempt }: TestCardProps) {
   const totalMarks = formatMarks(test.questionCount * test.marksPerQuestion);
 
   return (
@@ -31,7 +34,9 @@ export function TestCard({ test, index, onAttempt }: TestCardProps) {
         </span>
       </div>
 
-      <h3 className="sd-test__title">{test.title}</h3>
+      <h3 className="sd-test__title">
+        {seriesSlug ? <Link href={testHref(test, seriesSlug)}>{test.title}</Link> : test.title}
+      </h3>
 
       <ul className="sd-test__stats">
         <li>

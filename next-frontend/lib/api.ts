@@ -4,6 +4,8 @@ import {
   CompetitiveSummary,
   Paper,
   SemesterGroup,
+  MockTest,
+  TestPreview,
   TestSeries,
   TestSeriesDetail,
   YearGroup
@@ -93,6 +95,23 @@ export async function getTestSeries(slug: string): Promise<TestSeriesDetail | nu
       tags: ['test-series'],
       revalidate: 300
     });
+  } catch {
+    return null;
+  }
+}
+
+export async function getTest(id: number): Promise<MockTest | null> {
+  try {
+    return await fetchJson<MockTest>(`/tests/${id}`, { tags: ['test-series'], revalidate: 300 });
+  } catch {
+    return null;
+  }
+}
+
+// Older backends do not have the preview route; the landing page then simply omits the sample questions.
+export async function getTestPreview(id: number): Promise<TestPreview | null> {
+  try {
+    return await fetchJson<TestPreview>(`/tests/${id}/preview`, { tags: ['test-series'], revalidate: 1800 });
   } catch {
     return null;
   }

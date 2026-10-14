@@ -34,6 +34,22 @@ export function findBsebSubjectBySlug(subjectSlug: string): string | null {
   return BSEB_10TH_SUBJECTS.find((subject) => slugify(subject) === subjectSlug) ?? null;
 }
 
+// Landing page of a test: /test-series/<series>/<title-slug>-<id>. The id at the end is what identifies
+// the test, so a renamed test keeps working and the old URL redirects to the new slug.
+export function testSlug(test: { id: number; title: string }): string {
+  return `${slugify(test.title).slice(0, 80).replace(/-+$/, '')}-${test.id}`;
+}
+
+export function testHref(test: { id: number; title: string }, seriesSlug: string): string {
+  return `/test-series/${seriesSlug}/${testSlug(test)}`;
+}
+
+export function parseTestIdFromSlug(param: string): number | null {
+  const match = /(\d+)$/.exec(param);
+  const id = match ? Number(match[1]) : NaN;
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 export function competitiveExamHref(examName: string): string {
   return `/competitive-exams/${slugify(examName)}`;
 }

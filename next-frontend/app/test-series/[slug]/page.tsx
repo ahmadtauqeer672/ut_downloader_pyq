@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { SeriesSeoContent } from '@/components/series-seo-content';
 import { TestSeriesTests } from '@/components/test-series-tests';
 import { getTestSeries } from '@/lib/api';
 import { buildMetadata } from '@/lib/seo';
@@ -20,11 +21,26 @@ export async function generateMetadata({ params }: TestSeriesPageProps) {
     return buildMetadata({ title: 'Test Series | UTpaper', description: 'Free online mock tests on UTpaper.' });
   }
 
+  const exam = series.examName || series.title;
+  const pyqCount = series.tests.filter((test) => test.kind === 'pyq').length;
+  const description =
+    series.description ||
+    `Attempt ${series.tests.length} free ${exam} online tests${pyqCount > 0 ? ` including ${pyqCount} previous year papers with the official answer key` : ''}. Real exam pattern, instant score, all-India rank and detailed solutions on UTpaper.`;
+
   return buildMetadata({
-    title: `${series.title} | UTpaper`,
-    description: series.description || `Attempt ${series.title} online with instant results and solutions on UTpaper.`,
+    title: `${series.title} | Free Online Test | UTpaper`,
+    description: description.length > 300 ? `${description.slice(0, 297)}…` : description,
     path: `/test-series/${series.slug}`,
-    keywords: [series.title, `${series.examName} mock test`, `${series.examName} test series`, 'free mock test']
+    keywords: [
+      series.title,
+      `${exam} mock test`,
+      `${exam} test series`,
+      `${exam} previous year paper`,
+      `${exam} online test`,
+      `${exam} PYQ`,
+      'free mock test',
+      'UTpaper'
+    ]
   });
 }
 
@@ -33,5 +49,10 @@ export default async function TestSeriesPage({ params }: TestSeriesPageProps) {
   const series = await getTestSeries(slug);
   if (!series) notFound();
 
-  return <TestSeriesTests key={series.id} series={series} />;
+  return (
+    <>
+      <TestSeriesTests key={series.id} series={series} />
+      <SeriesSeoContent series={series} />
+    </>
+  );
 }

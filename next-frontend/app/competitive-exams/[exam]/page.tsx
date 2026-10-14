@@ -1,7 +1,18 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { competitiveDownloadHref, groupCompetitiveByYear, listCompetitiveExams, listCompetitivePapers } from '@/lib/api';
-import { buildMetadata } from '@/lib/seo';
+import { JsonLdScript } from '@/components/json-ld-script';
+import { competitiveDownloadHref, groupCompetitiveByYear, listCompetitiveExams, listCompetitivePapers, listTestSeries } from '@/lib/api';
+import { breadcrumbJsonLd, buildMetadata } from '@/lib/seo';
+import { TestSeries } from '@/lib/types';
+
+// Test series for the same exam, matched on the exam's words ("TRE" -> "BPSC TRE", "STET" -> "BIHAR STET").
+function relatedSeries(examName: string, seriesList: TestSeries[]) {
+  const words = examName.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3);
+  return seriesList.filter((series) => {
+    const haystack = `${series.examName} ${series.title}`.toLowerCase();
+    return words.some((word) => haystack.includes(word));
+  });
+}
 import { competitiveExamHref, slugify } from '@/lib/slug';
 
 interface CompetitiveExamPageProps {
@@ -45,11 +56,34 @@ export default async function CompetitiveExamPage({ params }: CompetitiveExamPag
     notFound();
   }
 
-  const papers = await listCompetitivePapers(examName);
+  const [papers, seriesList] = await Promise.all([listCompetitivePapers(examName), listTestSeries()]);
   const yearGroups = groupCompetitiveByYear(papers);
+  const related = relatedSeries(examName, seriesList);
 
   return (
     <>
+      <JsonLdScript
+        payload={breadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Competitive Exams', path: '/' },
+          { name: `${examName} Previous Year Papers`, path: `/competitive-exams/${examSlug}` }
+        ])}
+      />
+      {related.length > 0 ? (
+        <section className="related-series">
+          <div>
+            <h2>Attempt {examName} papers online</h2>
+            <p>Free mock tests and previous year papers with timer, instant score, rank and solutions.</p>
+          </div>
+          <div className="related-series__links">
+            {related.map((series) => (
+              <Link key={series.id} className="button button--primary button--sm" href={`/test-series/${series.slug}`}>
+                {series.title} →
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <section className="card section-card competitive-page-head">
         <div className="competitive-page-head__copy">
           <p className="eyebrow">Competitive Exam Papers</p>

@@ -4,6 +4,9 @@ import { UNIVERSITY_OPTIONS } from '@/lib/data';
 import { slugify } from '@/lib/slug';
 import { createSitemapEntry, getBsebClass10SitemapEntries } from '@/lib/sitemaps';
 
+// Rebuild at most hourly so newly added test series and papers show up without a redeploy.
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     createSitemapEntry('/', { changeFrequency: 'daily', priority: 1, lastModified: new Date() }),
@@ -56,8 +59,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const testSeriesRoutes = (await listTestSeries()).map<MetadataRoute.Sitemap[number]>((series) =>
     createSitemapEntry(`/test-series/${series.slug}`, {
       changeFrequency: 'weekly',
-      priority: 0.75,
-      lastModified: new Date()
+      priority: 0.8,
+      lastModified: series.createdAt ? new Date(series.createdAt) : new Date()
     })
   );
 

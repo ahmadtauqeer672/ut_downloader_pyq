@@ -5087,3 +5087,96 @@ a.chip:focus-visible {
   font-size: 0.75rem;
   font-style: normal;
 }
+
+/* ==========================================================================
+   SEO content blocks (exam pattern, FAQ) under series pages and the homepage
+   ========================================================================== */
+
+.seo-copy {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.seo-copy h2 {
+  margin: 1.5rem 0 0.6rem;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.seo-copy h2:first-child {
+  margin-top: 0;
+}
+
+.seo-copy p {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.seo-copy a {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.seo-copy .section-table td:first-child {
+  white-space: normal;
+  min-width: 14rem;
+}
+
+.seo-faq {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.seo-faq > div {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.seo-faq dt {
+  margin: 0 0 0.3rem;
+  font-weight: 900;
+}
+
+.seo-faq dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* "Attempt online" banner on competitive exam paper pages */
+.related-series {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #c7d7fe;
+  border-radius: 14px;
+  background: var(--primary-soft);
+}
+
+.related-series h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.related-series p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.related-series__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

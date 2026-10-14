@@ -295,10 +295,24 @@ export function PapersView({
             ))
           ) : (
             <div className="notice-card">
-              <strong>No papers found for this selection yet.</strong>
+              <strong>
+                {course ? `${activeUniversity?.name ?? ''} ${course} papers are being added.` : 'No papers found for this selection yet.'}
+              </strong>
               <p className="empty-state">
-                Try another course or semester. New papers are added regularly.
+                {department || semester || subject
+                  ? 'Try clearing a filter, or pick another course below. New papers are added regularly.'
+                  : 'We are collecting papers for this course. Meanwhile, open another course below or practise with free online mock tests.'}
               </p>
+              <div className="chip-row">
+                {popularLinks.map((item) => (
+                  <Link className="chip" href={item.href} key={item.href}>
+                    {item.label}
+                  </Link>
+                ))}
+                <Link className="chip" href="/test-series">
+                  Free mock tests
+                </Link>
+              </div>
             </div>
             )
           ) : (

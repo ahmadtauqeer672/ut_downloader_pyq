@@ -47,12 +47,14 @@ export async function generateMetadata({ params }: CoursePageProps) {
   }
 
   return buildMetadata({
-    title: `${university.name} ${course} Question Papers | UTpaper`,
-    description: `Browse ${university.name} ${course} previous year question papers on UTpaper. Open semester-wise papers and download PYQs with SEO-friendly route URLs.`,
+    title: `${university.name} ${course} Previous Year Question Papers (All Semesters) | UTpaper`,
+    description: `Download free ${university.name} ${course} previous year question papers semester-wise and subject-wise. Old question papers of all semesters as PDF, no sign-up needed, on UTpaper.`,
     path: `/question-papers/${universitySlug}/${courseSlug}`,
     keywords: [
-      `${university.name} ${course} papers`,
-      `${university.name} ${course} previous year papers`,
+      `${university.name} ${course} question paper`,
+      `${university.name} ${course} previous year question paper`,
+      `${university.name} old question papers ${course}`,
+      `${university.name} ${course} question papers all semesters`,
       'UTpaper'
     ]
   });
@@ -65,8 +67,9 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   const department = readSearchValue(filters.department);
   const semester = readSearchValue(filters.semester);
   const subject = readSearchValue(filters.subject);
-  const applied = readSearchValue(filters.applied);
-  const showAcademicPapers = Boolean(applied || department || semester || subject);
+  // The paper list is always rendered on the server so searchers (and Google) see the papers at once;
+  // the filters only narrow it down.
+  const showAcademicPapers = true;
 
   if (!university) {
     notFound();
@@ -78,9 +81,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   }
 
   const [papers, competitiveSummary, competitivePapers] = await Promise.all([
-    showAcademicPapers
-      ? listPapers({ university: university.name, course, department, semester, subject, limit: 80 })
-      : Promise.resolve([]),
+    listPapers({ university: university.name, course, department, semester, subject, limit: 200 }),
     getCompetitiveSummary(),
     listCompetitivePapers('UPSC').catch(() => [])
   ]);
@@ -90,12 +91,12 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       heading={
         university.name === 'BIHAR BOARD (BSEB)' && course === '10TH'
           ? 'Bihar Board 10th Question Papers'
-          : `${university.name} ${course} Question Papers`
+          : `${university.name} ${course} Previous Year Question Papers`
       }
       description={
         university.name === 'BIHAR BOARD (BSEB)' && course === '10TH'
           ? 'Browse BSEB Class 10 previous year question papers subject-wise and download Bihar Board 10th papers faster on UTpaper.'
-          : `Browse ${university.name} ${course} previous year papers and open semester-wise downloads faster on UTpaper.`
+          : `Free ${university.name} ${course} old question papers of all semesters, subject-wise. Open any paper as a PDF or narrow the list by semester.`
       }
       university={university}
       course={course}

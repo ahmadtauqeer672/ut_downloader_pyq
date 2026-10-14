@@ -29,11 +29,18 @@ export async function generateMetadata({ params }: UniversityPageProps) {
     });
   }
 
+  const courses = university.courses.join(', ');
   return buildMetadata({
-    title: `${university.name} Question Papers All Courses | UTpaper`,
-    description: `Browse ${university.name} question papers for all available courses on UTpaper. Download previous year papers with crawlable course URLs.`,
+    title: `${university.name} Previous Year Question Papers – ${courses} | UTpaper`,
+    description: `Download free ${university.name} previous year question papers for ${courses}, semester-wise and subject-wise as PDF. Old question papers of all courses in one place on UTpaper.`,
     path: `/question-papers/${universitySlug}`,
-    keywords: [`${university.name} question papers`, `${university.name} previous year papers`, 'UTpaper']
+    keywords: [
+      `${university.name} question papers`,
+      `${university.name} previous year question paper`,
+      `${university.name} old question papers`,
+      ...university.courses.map((course) => `${university.name} ${course} question paper`),
+      'UTpaper'
+    ]
   });
 }
 
@@ -44,23 +51,23 @@ export default async function UniversityPage({ params, searchParams }: Universit
   const department = readSearchValue(filters.department);
   const semester = readSearchValue(filters.semester);
   const subject = readSearchValue(filters.subject);
-  const applied = readSearchValue(filters.applied);
-  const showAcademicPapers = Boolean(applied || department || semester || subject);
+  // Always render the paper list on the server so searchers (and Google) see the papers at once.
+  const showAcademicPapers = true;
 
   if (!university) {
     notFound();
   }
 
   const [papers, competitiveSummary, competitivePapers] = await Promise.all([
-    showAcademicPapers ? listPapers({ university: university.name, department, semester, subject, limit: 80 }) : Promise.resolve([]),
+    listPapers({ university: university.name, department, semester, subject, limit: 200 }),
     getCompetitiveSummary(),
     listCompetitivePapers('UPSC').catch(() => [])
   ]);
 
   return (
     <PapersView
-      heading={`${university.name} Question Papers All Courses`}
-      description={`Browse ${university.name} previous year papers across all available courses. Pick a course to open its papers semester-wise.`}
+      heading={`${university.name} Previous Year Question Papers`}
+      description={`Free ${university.name} old question papers for ${university.courses.join(', ')}. Pick a course to open its papers semester-wise, or browse everything below.`}
       university={university}
       department={department}
       semester={semester}

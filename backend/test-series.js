@@ -417,6 +417,29 @@ const logoUpload = multer({
 
 function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, readBearerToken, sessionSecret, cloudinary }) {
   const { signStudentToken, verifyStudentToken } = createTokenHelpers(sessionSecret);
+  // Short signature that makes a result shareable by link (/r/<id>-<sig>) without exposing other attempts.
+  const shareSigFor = (attemptId) =>
+    crypto.createHmac('sha256', sessionSecret).update(`share:${attemptId}`).digest('hex').slice(0, 20);
+  const validShareSig = (attemptId, sig) => {
+    const expected = Buffer.from(shareSigFor(attemptId));
+    const given = Buffer.from(String(sig || ''));
+    return expected.length === given.length && crypto.timingSafeEqual(expected, given);
+  };
+  // Rank uses each candidate's best attempt; candidates who cleared every qualifying section rank first.
+  async function rankOf(testId, score, qualified) {
+    const { rows } = await pool.query(
+      `WITH best AS (
+         SELECT DISTINCT ON (student_id) student_id, qualified, score FROM attempts
+         WHERE test_id = $1 AND submitted_at IS NOT NULL
+         ORDER BY student_id, qualified DESC, score DESC
+       )
+       SELECT (SELECT COUNT(*)::int FROM best
+               WHERE (qualified AND NOT $3::boolean) OR (qualified = $3::boolean AND score > $2)) + 1 AS rank,
+              (SELECT COUNT(*)::int FROM best) AS total`,
+      [testId, score, qualified]
+    );
+    return { rank: rows[0]?.rank ?? 1, rankOutOf: rows[0]?.total ?? 1 };
+  }
   const googleClientId = String(process.env.GOOGLE_CLIENT_ID || '').trim();
   const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
 
@@ -814,8 +837,45 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
         ...attempt,
         rank: rankResult.rows[0]?.rank ?? 1,
         rankOutOf: rankResult.rows[0]?.total ?? 1,
+        shareSig: shareSigFor(attempt.id),
         test,
         questions
+      });
+    })
+  );
+
+  // Public summary of a shared result, used by the /r/<id>-<sig> page and its link preview image.
+  app.get(
+    '/api/attempts/:id/share',
+    asyncHandler(async (req, res) => {
+      const attemptId = toInt(req.params.id);
+      if (!attemptId || !validShareSig(attemptId, req.query.sig)) return res.status(404).json({ message: 'Result not found' });
+      const { rows } = await pool.query(
+        `SELECT a.id, a.test_id AS "testId", a.score::float AS score, a.max_score::float AS "maxScore", a.correct, a.wrong,
+                a.skipped, a.total, a.qualified, a.submitted_at AS "submittedAt", s.name AS "studentName"
+         FROM attempts a JOIN students s ON s.id = a.student_id
+         WHERE a.id = $1 AND a.submitted_at IS NOT NULL`,
+        [attemptId]
+      );
+      const attempt = rows[0];
+      if (!attempt) return res.status(404).json({ message: 'Result not found' });
+      const [test, rank] = await Promise.all([loadTest(attempt.testId, { publishedOnly: true }), rankOf(attempt.testId, attempt.score, attempt.qualified)]);
+      if (!test) return res.status(404).json({ message: 'Result not found' });
+      const { studentName, ...rest } = attempt;
+      res.set('Cache-Control', 'public, max-age=300');
+      res.json({
+        ...rest,
+        ...rank,
+        studentName: String(studentName || '').trim(),
+        test: {
+          id: test.id,
+          title: test.title,
+          kind: test.kind,
+          questionCount: test.questionCount,
+          durationMinutes: test.durationMinutes,
+          seriesTitle: test.seriesTitle,
+          seriesSlug: test.seriesSlug
+        }
       });
     })
   );

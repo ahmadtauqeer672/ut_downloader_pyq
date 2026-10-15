@@ -181,7 +181,9 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
           accuracy,
           correct: result.correct,
           wrong: result.wrong,
-          url: `${SITE_URL}${result.test.seriesSlug ? testHref(result.test, result.test.seriesSlug) : `/tests/${result.testId}`}`
+          url: result.shareSig
+            ? `${SITE_URL}/r/${result.id}-${result.shareSig}`
+            : `${SITE_URL}${result.test.seriesSlug ? testHref(result.test, result.test.seriesSlug) : `/tests/${result.testId}`}`
         }}
       />
 

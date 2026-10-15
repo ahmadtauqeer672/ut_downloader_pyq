@@ -177,8 +177,28 @@ export interface AttemptResult {
   sectionScores?: SectionScore[];
   rank: number;
   rankOutOf: number;
+  // Signature for the public share link /r/<id>-<shareSig>; missing on older backends.
+  shareSig?: string;
   test: MockTest;
   questions: TestQuestion[];
+}
+
+// Public summary of a shared result (no answers, no email).
+export interface SharedResult {
+  id: number;
+  testId: number;
+  score: number;
+  maxScore: number;
+  correct: number;
+  wrong: number;
+  skipped: number;
+  total: number;
+  qualified?: boolean;
+  submittedAt: string;
+  rank: number;
+  rankOutOf: number;
+  studentName: string;
+  test: Pick<MockTest, 'id' | 'title' | 'kind' | 'questionCount' | 'durationMinutes' | 'seriesTitle' | 'seriesSlug'>;
 }
 
 export interface AttemptSummary {

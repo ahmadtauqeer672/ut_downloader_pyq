@@ -50,7 +50,7 @@ export function ShareResult({ card }: ShareResultProps) {
     const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
     if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
       try {
-        await nav.share({ files: [file], text });
+        await nav.share({ files: [file], text, url: card.url });
         return;
       } catch (err) {
         // The user closed the share sheet; nothing to report.

@@ -5,6 +5,7 @@ import {
   Paper,
   SemesterGroup,
   MockTest,
+  SharedResult,
   TestPreview,
   TestSeries,
   TestSeriesDetail,
@@ -103,6 +104,17 @@ export async function getTestSeries(slug: string): Promise<TestSeriesDetail | nu
 export async function getTest(id: number): Promise<MockTest | null> {
   try {
     return await fetchJson<MockTest>(`/tests/${id}`, { tags: ['test-series'], revalidate: 300 });
+  } catch {
+    return null;
+  }
+}
+
+export async function getSharedResult(attemptId: number, sig: string): Promise<SharedResult | null> {
+  try {
+    return await fetchJson<SharedResult>(`/attempts/${attemptId}/share?sig=${encodeURIComponent(sig)}`, {
+      tags: ['shared-result'],
+      revalidate: 300
+    });
   } catch {
     return null;
   }

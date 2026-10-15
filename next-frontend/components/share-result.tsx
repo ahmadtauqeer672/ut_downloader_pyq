@@ -44,22 +44,38 @@ export function ShareResult({ card }: ShareResultProps) {
   const text = shareText(card);
   const whatsappHref = `https://wa.me/?text=${encodeURIComponent(text)}`;
 
-  async function share() {
-    if (!blob) return;
+  // Opens the system share sheet with the image, text and link. Returns false when this browser
+  // cannot share files (desktop), so the caller can fall back to a text-only route.
+  async function shareViaSheet() {
+    if (!blob) return false;
     const file = new File([blob], fileName, { type: 'image/png' });
     const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-    if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
-      try {
-        await nav.share({ files: [file], text, url: card.url });
-        return;
-      } catch (err) {
-        // The user closed the share sheet; nothing to report.
-        if (err instanceof Error && err.name === 'AbortError') return;
-      }
+    if (typeof nav.share !== 'function' || !nav.canShare?.({ files: [file] })) return false;
+    try {
+      await nav.share({ files: [file], text, url: card.url });
+    } catch (err) {
+      // The user closed the share sheet: handled, nothing else to open.
+      if (!(err instanceof Error && err.name === 'AbortError')) return false;
     }
+    return true;
+  }
+
+  async function share() {
+    if (await shareViaSheet()) return;
     // No file sharing here (desktop browsers): save the image and open WhatsApp with the text.
     download();
     window.open(whatsappHref, '_blank', 'noopener');
+  }
+
+  async function shareToWhatsApp() {
+    // On phones the share sheet carries the image too; the user just picks WhatsApp there.
+    if (await shareViaSheet()) return;
+    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (mobile) {
+      window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
+    } else {
+      window.open(whatsappHref, '_blank', 'noopener');
+    }
   }
 
   function download() {
@@ -103,9 +119,9 @@ export function ShareResult({ card }: ShareResultProps) {
           <button className="button button--primary" type="button" onClick={share} disabled={!blob}>
             Share result
           </button>
-          <a className="button button--whatsapp" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+          <button className="button button--whatsapp" type="button" onClick={shareToWhatsApp}>
             WhatsApp
-          </a>
+          </button>
           <button className="button button--outline" type="button" onClick={download} disabled={!blob}>
             Download image
           </button>

@@ -32,6 +32,8 @@ export async function generateMetadata({ params }: TestLandingPageProps) {
     title: `${test.title} | Free Online Test | UTpaper`,
     description: describeTest(test),
     path: testHref(test, test.seriesSlug!),
+    // The generated card for this test (opengraph-image.tsx next to this file).
+    image: `${testHref(test, test.seriesSlug!)}/opengraph-image`,
     keywords: [
       test.title,
       `${exam} ${KIND_LABEL[test.kind].toLowerCase()}`,

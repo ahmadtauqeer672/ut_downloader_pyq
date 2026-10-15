@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: SharedResultPageProps) {
     title: `${who} scored ${formatScore(result.score)}/${result.maxScore} in ${result.test.title} | UTpaper`,
     description: `${percentOf(result.score, result.maxScore)}% score, rank #${result.rank} of ${result.rankOutOf}. Attempt ${result.test.title} free on UTpaper and compare your rank.`,
     path: `/r/${share}`,
+    image: `/r/${share}/opengraph-image`,
     noIndex: true
   });
 }

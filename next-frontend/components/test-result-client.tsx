@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { RichContent } from '@/components/rich-content';
+import { ShareResult } from '@/components/share-result';
 import { StudentAuthForm } from '@/components/student-auth-form';
+import { SITE_URL } from '@/lib/data';
+import { testHref } from '@/lib/slug';
 import { ApiError, getAttemptResult } from '@/lib/student-api';
 import { AttemptResult, NOT_ATTEMPTED } from '@/lib/types';
 import { useStudentSession } from '@/lib/use-student-session';
@@ -25,7 +28,7 @@ function formatDuration(seconds: number) {
 }
 
 export function TestResultClient({ attemptId }: { attemptId: number }) {
-  const { ready, token, login, logout } = useStudentSession();
+  const { ready, token, student, login, logout } = useStudentSession();
   const [result, setResult] = useState<AttemptResult | null>(null);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -164,6 +167,23 @@ export function TestResultClient({ attemptId }: { attemptId: number }) {
           My tests
         </Link>
       </div>
+
+      <ShareResult
+        card={{
+          name: student?.name?.trim() || 'I',
+          testTitle: result.test.title,
+          seriesTitle: result.test.seriesTitle || '',
+          score: result.score,
+          maxScore: result.maxScore,
+          percent,
+          rank: result.rank,
+          rankOutOf: result.rankOutOf,
+          accuracy,
+          correct: result.correct,
+          wrong: result.wrong,
+          url: `${SITE_URL}${result.test.seriesSlug ? testHref(result.test, result.test.seriesSlug) : `/tests/${result.testId}`}`
+        }}
+      />
 
       {sectionScores.length > 0 ? (
         <section className="series-section">

@@ -164,7 +164,7 @@ export function TestSeriesTests({ series }: { series: TestSeriesDetail }) {
 
         <aside className="sd-cta">
           <span className="sd-cta__badge">100% Free</span>
-          <h2>{ready && student ? `Ready, ${student.name.trim().split(/\s+/)[0]}?` : 'Start your preparation today'}</h2>
+          <h2>{ready && student ? `Ready, ${student.name.trim()}?` : 'Start your preparation today'}</h2>
           <ul>
             <li>Real exam pattern &amp; timer</li>
             <li>Instant score and all-India rank</li>

@@ -551,7 +551,16 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
         // Signup never verified the email, so whoever set the old password may not own it. Google has now
         // proved ownership: drop the password so only the Google account can sign in from here on.
         await pool.query("UPDATE students SET google_id = $1, password_hash = '' WHERE id = $2", [payload.sub, student.id]);
-      } else if (!student) {
+      }
+      if (student) {
+        // Accounts created from email signup only have the email's local part as a name ("tauqeer123");
+        // replace that placeholder with the real name from Google.
+        const placeholder = !student.name.trim() || student.name.trim().toLowerCase() === student.email.split('@')[0];
+        if (placeholder && payload.name && student.name !== name) {
+          await pool.query('UPDATE students SET name = $1 WHERE id = $2', [name, student.id]);
+          student = { ...student, name };
+        }
+      } else {
         const created = await pool.query(
           `INSERT INTO students (name, email, password_hash, google_id) VALUES ($1, $2, '', $3)
            RETURNING id, name, email, phone`,

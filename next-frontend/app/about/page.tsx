@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { buildMetadata } from '@/lib/seo';
 
@@ -42,20 +41,6 @@ export default function AboutPage() {
             <Link className="button button--secondary" href="/question-papers/ptu">
               Browse papers
             </Link>
-          </div>
-        </div>
-
-        <div className="about-showcase__visual">
-          <div className="about-showcase__glow" />
-          <div className="about-showcase__photo-frame">
-            <Image
-              src="/about-founder.jpg"
-              alt={`${profile.name} portrait`}
-              width={900}
-              height={900}
-              priority
-              className="about-showcase__photo"
-            />
           </div>
         </div>
 

@@ -5481,3 +5481,10 @@ a.chip:focus-visible {
 .tp-samples > li > p {
   white-space: pre-line;
 }
+
+.about-showcase__love {
+  margin: 1.4rem 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: rgba(247, 250, 252, 0.6);
+}

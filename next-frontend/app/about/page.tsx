@@ -42,7 +42,7 @@ export default function AboutPage() {
               Browse papers
             </Link>
           </div>
-          <p className="about-showcase__love">❤️ Made with love with Jannat Khan ❤️</p>
+          <p className="about-showcase__love">❤️ Made with love, Jannat Khan ❤️</p>
         </div>
 
         <aside className="about-showcase__side">

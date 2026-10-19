@@ -1162,15 +1162,20 @@ function formatDuration(seconds: number) {
 
 function StudentAttempts({ studentId, token, onError }: { studentId: number; token: string; onError: (text: string) => void }) {
   const [attempts, setAttempts] = useState<StudentAttemptRecord[] | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     adminTestApi
       .listStudentAttempts(studentId, token)
       .then(setAttempts)
-      .catch((err) => onError(err instanceof ApiError ? err.message : errorText(err)));
+      .catch((err) => {
+        setFailed(true);
+        onError(err instanceof ApiError ? err.message : errorText(err));
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId, token]);
 
+  if (failed) return <p className="muted small">Could not load this student's tests.</p>;
   if (!attempts) return <p className="muted small">Loading tests…</p>;
   if (!attempts.length) return <p className="muted small">No submitted tests yet.</p>;
 

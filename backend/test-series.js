@@ -1167,9 +1167,29 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
     asyncHandler(async (_req, res) => {
       const { rows } = await pool.query(
         `SELECT st.id, st.name, st.email, st.phone, st.created_at AS "createdAt",
-                COUNT(a.id) FILTER (WHERE a.submitted_at IS NOT NULL)::int AS "attemptCount"
+                COUNT(a.id) FILTER (WHERE a.submitted_at IS NOT NULL)::int AS "attemptCount",
+                MAX(a.submitted_at) AS "lastAttemptAt"
          FROM students st LEFT JOIN attempts a ON a.student_id = st.id
          GROUP BY st.id ORDER BY st.created_at DESC LIMIT 1000`
+      );
+      res.json(rows);
+    })
+  );
+
+  app.get(
+    '/api/admin/students/:id/attempts',
+    requireAdminAuth,
+    asyncHandler(async (req, res) => {
+      const { rows } = await pool.query(
+        `SELECT a.id, a.test_id AS "testId", t.title AS "testTitle", s.title AS "seriesTitle",
+                a.score::float AS score, a.max_score::float AS "maxScore", a.correct, a.wrong, a.skipped, a.total,
+                a.time_taken_seconds AS "timeTakenSeconds", a.submitted_at AS "submittedAt"
+         FROM attempts a
+         JOIN tests t ON t.id = a.test_id
+         JOIN test_series s ON s.id = t.series_id
+         WHERE a.student_id = $1 AND a.submitted_at IS NOT NULL
+         ORDER BY a.submitted_at DESC`,
+        [toInt(req.params.id)]
       );
       res.json(rows);
     })

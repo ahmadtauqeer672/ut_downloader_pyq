@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { RichContent } from '@/components/rich-content';
 import { parseQuestionBlock } from '@/lib/parse-questions';
 import { adminTestApi, ApiError, QuestionInput, SeriesInput, TestInput } from '@/lib/student-api';
-import { MockTest, StudentRecord, TestQuestion, TestSeries } from '@/lib/types';
+import { MockTest, StudentAttemptRecord, StudentRecord, TestQuestion, TestSeries } from '@/lib/types';
 import { useAdminSession } from '@/lib/use-admin-session';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -1087,6 +1087,7 @@ function QuestionEditor({ value, onChange, sectionNames, onSubmit, onCancel, bus
 function StudentsTable({ token, onError }: { token: string; onError: (text: string) => void }) {
   const [students, setStudents] = useState<StudentRecord[] | null>(null);
   const [query, setQuery] = useState('');
+  const [openId, setOpenId] = useState<number | null>(null);
 
   useEffect(() => {
     adminTestApi
@@ -1114,17 +1115,35 @@ function StudentsTable({ token, onError }: { token: string; onError: (text: stri
               <th>Mobile</th>
               <th>Joined</th>
               <th>Tests taken</th>
+              <th>Last test</th>
             </tr>
           </thead>
           <tbody>
             {visible.map((s) => (
-              <tr key={s.id}>
-                <td>{s.name}</td>
-                <td>{s.email}</td>
-                <td>{s.phone || '—'}</td>
-                <td>{new Date(s.createdAt).toLocaleDateString('en-IN')}</td>
-                <td>{s.attemptCount}</td>
-              </tr>
+              <Fragment key={s.id}>
+                <tr
+                  className={s.attemptCount ? 'is-clickable' : undefined}
+                  onClick={s.attemptCount ? () => setOpenId(openId === s.id ? null : s.id) : undefined}
+                  title={s.attemptCount ? 'Show tests taken' : undefined}
+                >
+                  <td>
+                    {s.attemptCount ? <span aria-hidden="true">{openId === s.id ? '▾ ' : '▸ '}</span> : null}
+                    {s.name}
+                  </td>
+                  <td>{s.email}</td>
+                  <td>{s.phone || '—'}</td>
+                  <td>{new Date(s.createdAt).toLocaleDateString('en-IN')}</td>
+                  <td>{s.attemptCount}</td>
+                  <td>{s.lastAttemptAt ? new Date(s.lastAttemptAt).toLocaleDateString('en-IN') : '—'}</td>
+                </tr>
+                {openId === s.id ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <StudentAttempts studentId={s.id} token={token} onError={onError} />
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -1132,5 +1151,71 @@ function StudentsTable({ token, onError }: { token: string; onError: (text: stri
       {students && visible.length === 0 ? <p className="muted">No students found.</p> : null}
       <p className="muted small">Passwords are stored encrypted (hashed) and cannot be seen by anyone, including admins.</p>
     </section>
+  );
+}
+
+function formatDuration(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function StudentAttempts({ studentId, token, onError }: { studentId: number; token: string; onError: (text: string) => void }) {
+  const [attempts, setAttempts] = useState<StudentAttemptRecord[] | null>(null);
+
+  useEffect(() => {
+    adminTestApi
+      .listStudentAttempts(studentId, token)
+      .then(setAttempts)
+      .catch((err) => onError(err instanceof ApiError ? err.message : errorText(err)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentId, token]);
+
+  if (!attempts) return <p className="muted small">Loading tests…</p>;
+  if (!attempts.length) return <p className="muted small">No submitted tests yet.</p>;
+
+  const percents = attempts.map((a) => (a.maxScore > 0 ? (a.score / a.maxScore) * 100 : 0));
+  const avg = percents.reduce((sum, p) => sum + p, 0) / percents.length;
+  const best = Math.max(...percents);
+
+  return (
+    <div className="student-attempts">
+      <p className="small">
+        <strong>{attempts.length}</strong> tests · average <strong>{avg.toFixed(1)}%</strong> · best <strong>{best.toFixed(1)}%</strong>
+      </p>
+      <div className="table-wrap">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Test</th>
+              <th>Score</th>
+              <th>Correct</th>
+              <th>Wrong</th>
+              <th>Skipped</th>
+              <th>Time</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {attempts.map((a, i) => (
+              <tr key={a.id}>
+                <td>
+                  {a.testTitle}
+                  <div className="muted small">{a.seriesTitle}</div>
+                </td>
+                <td>
+                  {+a.score.toFixed(2)} / {+a.maxScore.toFixed(2)} ({percents[i].toFixed(1)}%)
+                </td>
+                <td>{a.correct}</td>
+                <td>{a.wrong}</td>
+                <td>{a.skipped}</td>
+                <td>{formatDuration(a.timeTakenSeconds)}</td>
+                <td>{new Date(a.submittedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

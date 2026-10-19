@@ -3210,6 +3210,19 @@ a.chip:focus-visible {
   font-weight: 700;
 }
 
+.data-table tr.is-clickable {
+  cursor: pointer;
+}
+
+.data-table tr.is-clickable:hover td {
+  background: var(--surface-soft);
+}
+
+.student-attempts {
+  padding: 0.5rem 0 0.75rem 1rem;
+  border-left: 3px solid var(--border);
+}
+
 /* ==========================================================================
    Responsive for the new screens
    ========================================================================== */

@@ -9,6 +9,7 @@ import {
   TestQuestion,
   TestSeries,
   TestSection,
+  StudentAttemptRecord,
   StudentRecord
 } from '@/lib/types';
 
@@ -160,5 +161,7 @@ export const adminTestApi = {
     request(`admin/questions/${id}`, { method: 'PUT', token, body: input }),
   deleteQuestion: (id: number, token: string) => request(`admin/questions/${id}`, { method: 'DELETE', token }),
 
-  listStudents: (token: string) => request<StudentRecord[]>('admin/students', { token })
+  listStudents: (token: string) => request<StudentRecord[]>('admin/students', { token }),
+  listStudentAttempts: (studentId: number, token: string) =>
+    request<StudentAttemptRecord[]>(`admin/students/${studentId}/attempts`, { token })
 };

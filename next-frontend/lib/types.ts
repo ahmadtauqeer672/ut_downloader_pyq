@@ -221,4 +221,20 @@ export interface AttemptSummary {
 export interface StudentRecord extends StudentProfile {
   createdAt: string;
   attemptCount: number;
+  lastAttemptAt: string | null;
+}
+
+export interface StudentAttemptRecord {
+  id: number;
+  testId: number;
+  testTitle: string;
+  seriesTitle: string;
+  score: number;
+  maxScore: number;
+  correct: number;
+  wrong: number;
+  skipped: number;
+  total: number;
+  timeTakenSeconds: number;
+  submittedAt: string;
 }

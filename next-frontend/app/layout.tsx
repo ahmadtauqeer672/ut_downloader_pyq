@@ -7,6 +7,8 @@ import { SiteHeader } from '@/components/site-header';
 import { JsonLdScript } from '@/components/json-ld-script';
 import { buildMetadata, organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 
+const ADSENSE_CLIENT = 'ca-pub-1650044891896708';
+
 const lato = Lato({
   subsets: ['latin'],
   weight: ['400', '700', '900'],
@@ -24,12 +26,17 @@ export const metadata: Metadata = {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
     apple: '/favicon.svg'
-  }
+  },
+  other: { 'google-adsense-account': ADSENSE_CLIENT }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={lato.variable}>
+      <head>
+        {/* Plain tag rather than next/script: AdSense's checker rejects the data-nscript attribute. */}
+        <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`} crossOrigin="anonymous" />
+      </head>
       <body>
         <JsonLdScript payload={organizationJsonLd()} />
         <JsonLdScript payload={websiteJsonLd()} />

@@ -62,23 +62,20 @@ export function StudentUpdatesBanner() {
     }
   };
 
+  // One short notice at a time (most recent series first); the next one shows after this is dismissed.
+  const u = visible[0];
   return (
-    <div className="updates-banner-wrap">
-      {visible.map((u) => (
-        <div className="updates-banner" key={u.seriesSlug} role="status">
-          <span className="updates-banner__badge">New</span>
-          <p className="updates-banner__text">
-            <b>{u.tests.length === 1 ? '1 new test' : `${u.tests.length} new tests`}</b> added to <b>{u.seriesTitle}</b>
-            <span className="updates-banner__names">{u.tests.map((t) => t.title).join(' · ')}</span>
-          </p>
-          <Link className="updates-banner__link" href={`/test-series/${u.seriesSlug}`} onClick={() => dismiss(u)}>
-            View tests
-          </Link>
-          <button className="updates-banner__close" type="button" aria-label="Dismiss" onClick={() => dismiss(u)}>
-            ×
-          </button>
-        </div>
-      ))}
+    <div className="updates-banner" role="status">
+      <span className="updates-banner__badge">New</span>
+      <p className="updates-banner__text">
+        <b>{u.tests.length === 1 ? '1 new test' : `${u.tests.length} new tests`}</b> in {u.seriesTitle}
+      </p>
+      <Link className="updates-banner__link" href={`/test-series/${u.seriesSlug}`} onClick={() => dismiss(u)}>
+        View
+      </Link>
+      <button className="updates-banner__close" type="button" aria-label="Dismiss" onClick={() => dismiss(u)}>
+        ×
+      </button>
     </div>
   );
 }

@@ -4701,17 +4701,13 @@ a.chip:focus-visible {
   color: #ffffff;
 }
 
-.updates-banner-wrap {
-  display: grid;
-  gap: 0.6rem;
-  margin-bottom: 1.25rem;
-}
-
 .updates-banner {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 0.9rem;
+  gap: 0.6rem;
+  max-width: 100%;
+  margin-bottom: 1.25rem;
+  padding: 0.55rem 0.75rem;
   border: 1px solid var(--primary);
   border-radius: var(--radius);
   background: var(--primary-soft);
@@ -4731,22 +4727,15 @@ a.chip:focus-visible {
   flex: 1;
   min-width: 0;
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--text);
-  font-size: 0.92rem;
-}
-
-.updates-banner__names {
-  display: block;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.8rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 .updates-banner__link {
   flex: none;
-  padding: 0.45rem 0.8rem;
+  padding: 0.35rem 0.75rem;
   border-radius: 8px;
   background: var(--primary);
   color: #ffffff;
@@ -4763,16 +4752,6 @@ a.chip:focus-visible {
   font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
-}
-
-@media (max-width: 640px) {
-  .updates-banner {
-    flex-wrap: wrap;
-  }
-
-  .updates-banner__text {
-    flex-basis: calc(100% - 4rem);
-  }
 }
 
 .sd-tag--easy {

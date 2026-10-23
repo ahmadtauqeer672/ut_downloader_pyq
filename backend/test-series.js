@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const multer = require('multer');
 const { OAuth2Client } = require('google-auth-library');
+const { notifyIndexNow } = require('./indexnow');
 
 // Test series: candidate accounts, mock tests, attempts and admin management.
 // Registered from server.js via registerTestSeriesRoutes(app, deps).
@@ -170,6 +171,11 @@ function slugify(input = '') {
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+// Same as testHref() in next-frontend/lib/slug.ts.
+function testPagePath(test, seriesSlug) {
+  return `/test-series/${seriesSlug}/${slugify(test.title).slice(0, 80).replace(/-+$/, '')}-${test.id}`;
 }
 
 function toInt(value, fallback = 0) {
@@ -921,6 +927,20 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
     })
   );
 
+  // Let search engines (IndexNow) know about a published test page and its series page. Fire and forget.
+  async function announceTestPage(testId) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT t.id, t.title, s.slug FROM tests t JOIN test_series s ON s.id = t.series_id
+         WHERE t.id = $1 AND t.is_published AND s.is_published`,
+        [testId]
+      );
+      if (rows[0]) await notifyIndexNow([testPagePath(rows[0], rows[0].slug), `/test-series/${rows[0].slug}`]);
+    } catch (error) {
+      console.warn('Could not announce test page:', error.message);
+    }
+  }
+
   async function saveSeries(req, res, id) {
     const title = String(req.body?.title || '').trim();
     if (!title) return res.status(400).json({ message: 'Series title is required' });
@@ -950,6 +970,7 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
       `SELECT ${SERIES_COLUMNS}, ${seriesStatsSql(false)} FROM test_series s WHERE s.id = $1`,
       [rows[0].id]
     );
+    if (saved.rows[0]?.isPublished) void notifyIndexNow([`/test-series/${saved.rows[0].slug}`, '/test-series']);
     return res.status(id ? 200 : 201).json(saved.rows[0]);
   }
 
@@ -1075,6 +1096,7 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
         [seriesId, t.title, t.kind, t.category, t.language, t.difficulty, t.durationMinutes, t.marksPerQuestion,
           t.negativeMarks, t.isFeatured, t.isPublished, t.sortOrder, JSON.stringify(t.sections), t.notAttemptedOption]
       );
+      void announceTestPage(rows[0].id);
       res.status(201).json(await loadTest(rows[0].id, { publishedOnly: false }));
     })
   );
@@ -1096,6 +1118,7 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
           t.isFeatured, t.isPublished, t.sortOrder, toInt(req.params.id), JSON.stringify(t.sections), t.notAttemptedOption]
       );
       if (!rowCount) return res.status(404).json({ message: 'Test not found' });
+      void announceTestPage(toInt(req.params.id));
       res.json(await loadTest(toInt(req.params.id), { publishedOnly: false }));
     })
   );

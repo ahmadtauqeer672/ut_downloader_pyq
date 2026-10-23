@@ -5,6 +5,7 @@ import {
   AttemptStart,
   AttemptSummary,
   MockTest,
+  SeriesUpdate,
   StudentSession,
   TestQuestion,
   TestSeries,
@@ -65,6 +66,10 @@ export function googleLoginStudent(credential: string) {
 
 export function listMyAttempts(token: string) {
   return request<AttemptSummary[]>('students/me/attempts', { token });
+}
+
+export function listMyUpdates(token: string) {
+  return request<SeriesUpdate[]>('students/me/updates', { token });
 }
 
 export function getTest(id: number) {

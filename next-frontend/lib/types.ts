@@ -224,6 +224,12 @@ export interface StudentRecord extends StudentProfile {
   lastAttemptAt: string | null;
 }
 
+export interface SeriesUpdate {
+  seriesSlug: string;
+  seriesTitle: string;
+  tests: { id: number; title: string; createdAt: string }[];
+}
+
 export interface StudentAttemptRecord {
   id: number;
   testId: number;

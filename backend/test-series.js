@@ -626,6 +626,35 @@ function registerTestSeriesRoutes(app, { pool, asyncHandler, requireAdminAuth, r
     })
   );
 
+  // Tests added to a series after the student first took a test in it (last 30 days, not yet attempted),
+  // so returning students hear about new papers in the series they follow.
+  app.get(
+    '/api/students/me/updates',
+    requireStudentAuth,
+    asyncHandler(async (req, res) => {
+      const { rows } = await pool.query(
+        `WITH followed AS (
+           SELECT t.series_id, MIN(a.submitted_at) AS first_at
+           FROM attempts a JOIN tests t ON t.id = a.test_id
+           WHERE a.student_id = $1 AND a.submitted_at IS NOT NULL
+           GROUP BY t.series_id
+         )
+         SELECT s.slug AS "seriesSlug", s.title AS "seriesTitle",
+                json_agg(json_build_object('id', t.id, 'title', t.title, 'createdAt', t.created_at) ORDER BY t.sort_order) AS tests
+         FROM followed f
+         JOIN test_series s ON s.id = f.series_id AND s.is_published
+         JOIN tests t ON t.series_id = f.series_id AND t.is_published
+         WHERE t.created_at > f.first_at
+           AND t.created_at > NOW() - INTERVAL '30 days'
+           AND NOT EXISTS (SELECT 1 FROM attempts a2 WHERE a2.test_id = t.id AND a2.student_id = $1)
+         GROUP BY s.id
+         ORDER BY MAX(t.created_at) DESC`,
+        [req.studentId]
+      );
+      res.json(rows);
+    })
+  );
+
   // -- Public catalogue --
   app.get(
     '/api/test-series',

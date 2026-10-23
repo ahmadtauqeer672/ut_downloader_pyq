@@ -28,6 +28,7 @@ export function TestCard({ test, index, seriesSlug, onAttempt }: TestCardProps) 
       <div className="sd-test__top">
         <span className="sd-test__index">{String(index).padStart(2, '0')}</span>
         <span className="sd-test__tags">
+          {isNewTest(test.createdAt) ? <span className="sd-tag sd-tag--new">New</span> : null}
           {test.isFeatured ? <span className="sd-tag sd-tag--pick">Must attempt</span> : null}
           <span className="sd-tag sd-tag--free">Free</span>
           <span className={`sd-tag sd-tag--${test.difficulty.toLowerCase()}`}>{test.difficulty.toLowerCase()}</span>
@@ -73,6 +74,13 @@ export function TestCard({ test, index, seriesSlug, onAttempt }: TestCardProps) 
       </button>
     </article>
   );
+}
+
+const NEW_TEST_DAYS = 10;
+
+function isNewTest(createdAt: string) {
+  const age = Date.now() - new Date(createdAt).getTime();
+  return age >= 0 && age < NEW_TEST_DAYS * 24 * 60 * 60 * 1000;
 }
 
 function formatCount(value: number) {

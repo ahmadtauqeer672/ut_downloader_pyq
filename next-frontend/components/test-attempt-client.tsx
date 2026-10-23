@@ -9,6 +9,7 @@ import { StudentAuthForm } from '@/components/student-auth-form';
 import { formatMarks } from '@/components/test-card';
 import { ApiError, getTest, saveAnswers, startAttempt, submitAttempt } from '@/lib/student-api';
 import { AttemptStart, MockTest, NOT_ATTEMPTED, TestQuestion } from '@/lib/types';
+import { markTestOpened } from '@/lib/new-tests';
 import { useStudentSession } from '@/lib/use-student-session';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -45,6 +46,10 @@ export function TestAttemptClient({ testId }: { testId: number }) {
   const [attempt, setAttempt] = useState<AttemptStart | null>(null);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
+
+  useEffect(() => {
+    markTestOpened(testId);
+  }, [testId]);
 
   useEffect(() => {
     getTest(testId)

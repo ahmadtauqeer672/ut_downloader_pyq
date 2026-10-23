@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChevronIcon, ClockIcon, LanguageIcon, MarksIcon, QuestionIcon, UsersIcon } from '@/components/icons';
 import { JsonLdScript } from '@/components/json-ld-script';
+import { MarkTestOpened } from '@/components/mark-test-opened';
 import { FaqItem, breadcrumbJsonLd, faqJsonLd } from '@/lib/seo';
 import { testHref } from '@/lib/slug';
 import { MockTest, TestPreview, TestSeriesDetail } from '@/lib/types';
@@ -90,6 +91,7 @@ export function TestLanding({ test, series, preview }: TestLandingProps) {
 
   return (
     <>
+      <MarkTestOpened testId={test.id} />
       <JsonLdScript
         payload={breadcrumbJsonLd([
           { name: 'Home', path: '/' },

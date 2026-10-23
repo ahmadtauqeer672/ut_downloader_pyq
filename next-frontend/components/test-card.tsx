@@ -8,6 +8,8 @@ interface TestCardProps {
   index: number;
   seriesSlug?: string;
   onAttempt: (test: MockTest) => void;
+  /** New for the logged-in student; when not given, any test added in the last few days counts as new. */
+  isNew?: boolean;
 }
 
 // Marks like 0.25 or 1/3 read better as fractions ("1/3") than as long decimals ("0.3333").
@@ -20,7 +22,7 @@ export function formatMarks(value: number) {
   return value.toFixed(2).replace(/0+$/, '');
 }
 
-export function TestCard({ test, index, seriesSlug, onAttempt }: TestCardProps) {
+export function TestCard({ test, index, seriesSlug, onAttempt, isNew }: TestCardProps) {
   const totalMarks = formatMarks(test.questionCount * test.marksPerQuestion);
 
   return (
@@ -28,7 +30,7 @@ export function TestCard({ test, index, seriesSlug, onAttempt }: TestCardProps) 
       <div className="sd-test__top">
         <span className="sd-test__index">{String(index).padStart(2, '0')}</span>
         <span className="sd-test__tags">
-          {isNewTest(test.createdAt) ? <span className="sd-tag sd-tag--new">New</span> : null}
+          {(isNew ?? isNewTest(test.createdAt)) ? <span className="sd-tag sd-tag--new">New</span> : null}
           {test.isFeatured ? <span className="sd-tag sd-tag--pick">Must attempt</span> : null}
           <span className="sd-tag sd-tag--free">Free</span>
           <span className={`sd-tag sd-tag--${test.difficulty.toLowerCase()}`}>{test.difficulty.toLowerCase()}</span>

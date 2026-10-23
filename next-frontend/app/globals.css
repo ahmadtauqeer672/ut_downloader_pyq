@@ -4378,9 +4378,16 @@ a.chip:focus-visible {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
+  position: relative;
   text-align: left;
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease;
+}
+
+.sd-inside__new {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
 }
 
 .sd-inside__tile:hover,

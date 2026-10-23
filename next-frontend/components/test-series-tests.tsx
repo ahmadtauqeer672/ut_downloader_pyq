@@ -8,6 +8,7 @@ import { StudentAuthForm } from '@/components/student-auth-form';
 import { TestCard } from '@/components/test-card';
 import { cloudinaryThumb } from '@/lib/image';
 import { MockTest, TestKind, TestSeriesDetail } from '@/lib/types';
+import { useMyNewTestIds } from '@/lib/new-tests';
 import { useStudentSession } from '@/lib/use-student-session';
 
 const KIND_LABELS: Record<TestKind, string> = {
@@ -51,6 +52,7 @@ export function TestSeriesTests({ series }: { series: TestSeriesDetail }) {
   const [chosenGroup, setGroup] = useState('');
   const [chosenKind, setKind] = useState<TestKind | 'all'>('all');
   const listRef = useRef<HTMLElement>(null);
+  const newIds = useMyNewTestIds();
 
   const tests = useMemo(
     () => [...series.tests].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || a.sortOrder - b.sortOrder || a.id - b.id),
@@ -151,6 +153,9 @@ export function TestSeriesTests({ series }: { series: TestSeriesDetail }) {
               <div className="sd-inside__grid">
                 {groups.map(([name, count]) => (
                   <button key={name} type="button" className="sd-inside__tile" onClick={() => openGroup(name)}>
+                    {newIds && tests.some((test) => groupOf(test) === name && newIds.has(test.id)) ? (
+                      <span className="sd-tag sd-tag--new sd-inside__new">New</span>
+                    ) : null}
                     <strong>{count}</strong>
                     <span>{name}</span>
                   </button>
@@ -255,7 +260,14 @@ export function TestSeriesTests({ series }: { series: TestSeriesDetail }) {
           ) : (
             <div className="sd-grid">
               {visible.map((test, index) => (
-                <TestCard key={test.id} test={test} index={index + 1} seriesSlug={series.slug} onAttempt={handleAttempt} />
+                <TestCard
+                  key={test.id}
+                  test={test}
+                  index={index + 1}
+                  seriesSlug={series.slug}
+                  onAttempt={handleAttempt}
+                  isNew={newIds ? newIds.has(test.id) : undefined}
+                />
               ))}
             </div>
           )}
